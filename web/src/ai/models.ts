@@ -34,7 +34,7 @@ export function readerModel(schema: ObjectSchema, mode?: ReadMode): GenerativeMo
       generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0 },
     },
     onDeviceParams: {
-      createOptions: { expectedInputs: [{ type: 'text' }, { type: 'image' }] },
+      createOptions: { expectedInputs: [{ type: 'text', languages: ['en'] }, { type: 'image' }], expectedOutputs: [{ type: 'text', languages: ['en'] }] },
       promptOptions: { responseConstraint: plainJsonSchema(schema) },
     },
   }, { timeout: REQUEST_TIMEOUT_MS });
@@ -48,7 +48,10 @@ export function judgeModel(schema: ObjectSchema, mode?: ReadMode): GenerativeMod
       model: config('cloud_read_model'),
       generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0 },
     },
-    onDeviceParams: { promptOptions: { responseConstraint: plainJsonSchema(schema) } },
+    onDeviceParams: {
+      createOptions: { expectedInputs: [{ type: 'text', languages: ['en'] }], expectedOutputs: [{ type: 'text', languages: ['en'] }] },
+      promptOptions: { responseConstraint: plainJsonSchema(schema) },
+    },
   }, { timeout: REQUEST_TIMEOUT_MS });
 }
 
@@ -87,7 +90,7 @@ export async function onDeviceAvailability(): Promise<DeviceAvailability> {
   const lm = (globalThis as { LanguageModel?: { availability: (o?: object) => Promise<string> } }).LanguageModel;
   if (!lm) return 'unsupported';
   try {
-    const status = await lm.availability({ expectedInputs: [{ type: 'text' }, { type: 'image' }] });
+    const status = await lm.availability({ expectedInputs: [{ type: 'text', languages: ['en'] }, { type: 'image' }], expectedOutputs: [{ type: 'text', languages: ['en'] }] });
     return (['available', 'downloadable', 'downloading', 'unavailable'].includes(status) ? status : 'unavailable') as DeviceAvailability;
   } catch {
     return 'unavailable';

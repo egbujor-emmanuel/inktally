@@ -1,0 +1,28 @@
+rules_version = '2';
+// Each teacher can only read and write their own assignments, marks and telemetry.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function owns(data) { return signedIn() && data.ownerUid == request.auth.uid; }
+
+    match /assignments/{assignmentId} {
+      allow read: if owns(resource.data);
+      allow create: if owns(request.resource.data)
+        && request.resource.data.keys().hasAll(['title', 'className', 'scheme', 'ownerUid']);
+      allow update: if owns(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if owns(resource.data);
+
+      match /submissions/{submissionId} {
+        allow read: if owns(resource.data);
+        allow create: if owns(request.resource.data)
+          && get(/databases/$(database)/documents/assignments/$(assignmentId)).data.ownerUid == request.auth.uid;
+        allow update: if owns(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid;
+        allow delete: if owns(resource.data);
+      }
+    }
+
+    match /users/{userId}/telemetry/{day} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+  }
+}

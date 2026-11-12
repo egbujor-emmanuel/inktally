@@ -1,7 +1,16 @@
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+/// <reference types="vitest/config" />
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
-})
+  plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id: string) => (/node_modules[\\/](firebase|@firebase)[\\/]/.test(id) ? 'firebase' : undefined),
+      },
+    },
+  },
+  test: { environment: 'node', include: ['src/**/*.test.ts'] },
+});
