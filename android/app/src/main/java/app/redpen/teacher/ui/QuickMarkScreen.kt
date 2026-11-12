@@ -1,3 +1,5 @@
+@file:OptIn(com.google.firebase.ai.type.PublicPreviewAPI::class)
+
 package app.redpen.teacher.ui
 
 import android.graphics.Bitmap

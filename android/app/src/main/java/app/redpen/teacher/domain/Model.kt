@@ -48,7 +48,7 @@ data class Profile(val institution: String = "", val details: String = "", val t
         const val INSTITUTION_LIMIT = 120
         const val DETAILS_LIMIT = 240
         const val TEACHER_LIMIT = 80
-        private fun clip(s: String, n: Int) = s.replace(Regex("\s+"), " ").trim().take(n)
+        private fun clip(s: String, n: Int) = s.replace(Regex("\\s+"), " ").trim().take(n)
         fun clean(institution: String, details: String, teacher: String) =
             Profile(clip(institution, INSTITUTION_LIMIT), clip(details, DETAILS_LIMIT), clip(teacher, TEACHER_LIMIT))
     }
