@@ -1,7 +1,8 @@
 // Full click-through of the LIVE site, the way a teacher uses it. Every step reports PASS/FAIL with the error.
 // Usage: REDPEN_CODE=... node e2e/live-walkthrough.mjs [url] [--mobile]
 import { chromium } from '@playwright/test';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
+import ExcelJS from 'exceljs';
 import { resolve } from 'node:path';
 
 const URL_ = process.argv[2]?.startsWith('http') ? process.argv[2] : 'https://redpen-hybrid.web.app';
@@ -44,6 +45,19 @@ await step('open site + passcode', async () => {
   return await page.locator('[role=status]').first().innerText();
 });
 
+const SCHOOL = 'Walkthrough Academy';
+await step('school details: save institution profile', async () => {
+  await page.goto(`${URL_}/school`);
+  await page.getByLabel('Institution name').fill(SCHOOL);
+  await page.getByLabel(/Details under the name/).fill('12 Test Road, Lagos · First Term');
+  await page.getByLabel(/Teacher or examiner name/).fill('Mrs Tester');
+  await page.getByRole('button', { name: 'Save details' }).click();
+  await page.getByText(/^Saved/).waitFor({ timeout: 10_000 });
+  await page.reload(); await page.getByLabel('Institution name').waitFor();
+  await page.waitForFunction((v) => document.querySelector('input')?.value === v, SCHOOL, { timeout: 15_000 });
+  return 'saved + survived reload';
+});
+
 await step('new assignment: draft scheme from TYPED questions', async () => {
   await page.goto(`${URL_}/new`);
   await page.getByText('Draft the marking scheme').waitFor();
@@ -62,7 +76,9 @@ await step('new assignment: save -> print sheet', async () => {
   await page.getByRole('button', { name: 'Save and print answer sheets' }).click();
   await page.waitForURL(/\/print$/, { timeout: 30_000 });
   await page.locator('svg.sheet-page').first().waitFor();
-  return `${await page.locator('svg.sheet-page').count()} sheet page(s)`;
+  const header = await page.locator('svg.sheet-page').first().textContent();
+  if (!header.includes(SCHOOL.toUpperCase())) throw new Error('institution name missing from the printed sheet');
+  return `${await page.locator('svg.sheet-page').count()} sheet page(s) with institution header`;
 });
 
 await step('new assignment: draft scheme from PHOTO of a page', async () => {
@@ -89,12 +105,22 @@ await step('sample English -> mark printed sheet photo', async () => {
   await page.waitForURL(/\/print$/);
   await page.goto(`${base()}/mark`);
   await page.getByText('Photograph answer sheet').waitFor();
-  await page.getByLabel('Pupil name or number').fill('Walkthrough Pupil');
+  await page.getByLabel('Student name or number').fill('Walkthrough Pupil');
   await page.locator('input[type=file]').setInputFiles(`${SAMPLES}/english-sheet-photo.jpg`);
   await page.getByText(/^Total:/).waitFor({ timeout: 120_000 });
   const total = await page.getByText(/^Total:/).innerText();
   await page.getByText('Marked copy for').waitFor({ timeout: 30_000 });
   return `${total} + marked copy`;
+});
+
+await step('comment after marking -> on the marked copy', async () => {
+  const box = page.getByLabel(/^Comment for/);
+  await box.fill('Good work. Revise past tenses before Friday.');
+  await page.getByRole('button', { name: 'Save comment' }).click();
+  await page.getByText(/^Saved\. It is on the marked copy/).waitFor({ timeout: 10_000 });
+  // The letterhead copy is taller than the bare copy (header + comment footer).
+  await page.waitForFunction(() => { const i = document.querySelector('img[alt^="Marked copy"]'); return i && i.naturalHeight > i.naturalWidth * 1.45; }, null, { timeout: 15_000 });
+  return 'comment saved, copy re-rendered with letterhead + comment';
 });
 
 await step('exercise-book mode on the same assignment', async () => {
@@ -112,10 +138,18 @@ await step('review tab', async () => {
 
 await step('mark register + Excel download', async () => {
   await page.goto(`${base()}/register`);
-  await page.getByRole('button', { name: /Export to Excel/ }).waitFor({ timeout: 30_000 });
+  await page.getByRole('button', { name: /Download Excel/ }).waitFor({ timeout: 30_000 });
   const rows = await page.locator('tbody tr').count();
-  const [download] = await Promise.all([page.waitForEvent('download', { timeout: 15_000 }), page.getByRole('button', { name: /Export to Excel/ }).click()]);
-  return `${rows} rows, downloaded ${download.suggestedFilename()}`;
+  const nameCell = page.getByLabel(/^Student name for Walkthrough Pupil/).first();
+  await nameCell.fill('Ada Renamed'); await nameCell.press('Enter');
+  await page.getByLabel(/^Student name for Ada Renamed/).waitFor({ timeout: 10_000 });
+  const [download] = await Promise.all([page.waitForEvent('download', { timeout: 30_000 }), page.getByRole('button', { name: /Download Excel/ }).click()]);
+  const file = `${OUT}/${download.suggestedFilename()}`; await download.saveAs(file);
+  const wb = new ExcelJS.Workbook(); await wb.xlsx.load(readFileSync(file));
+  const text = []; wb.worksheets[0].eachRow((r) => text.push(r.values.filter(Boolean).join(' | ')));
+  const all = text.join(String.fromCharCode(10));
+  for (const want of [SCHOOL, 'Mrs Tester', 'Ada Renamed', 'Revise past tenses']) if (!all.includes(want)) throw new Error(`xlsx missing "${want}"`);
+  return `${rows} rows; ${download.suggestedFilename()} has letterhead, renamed student, comment`;
 });
 
 await step('insights + catch-up sheet', async () => {

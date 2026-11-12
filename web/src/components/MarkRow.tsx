@@ -19,7 +19,7 @@ export function MarkRow({ mark, cropUrl, index = 0, actions }: Props) {
       <span className="font-display text-2xl font-bold">Q{mark.q}</span>
       {cropUrl && (
         <div className="min-h-12 overflow-hidden rounded-md border border-[oklch(88%_0.02_85)] bg-white">
-          <img src={cropUrl} alt={`Pupil's handwriting for question ${mark.q}`} className="max-h-24 w-full object-contain" />
+          <img src={cropUrl} alt={`Student's handwriting for question ${mark.q}`} className="max-h-24 w-full object-contain" />
         </div>
       )}
       <div className="grid gap-1.5">

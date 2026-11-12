@@ -1,22 +1,21 @@
 import { useMemo, useState, type ChangeEvent } from 'react';
 import type { Mark } from '../../domain/types';
-import { createSubmission, saveCrop, saveMarks, type Assignment } from '../../data/store';
+import { MARKED_KEY, PAGE_KEY, createSubmission, saveCrop, saveMarks, type Assignment, type Submission } from '../../data/store';
 import { markAnswer, markPage } from '../../marking/markAnswer';
 import { layoutSheet } from '../../scan/layout';
 import { scanSheet } from '../../scan/pipeline';
 import { MarkRow } from '../../components/MarkRow';
 import { MarkedCopy } from '../../components/MarkedCopy';
+import { PupilRecord } from '../../components/PupilRecord';
+import { useProfile } from '../../data/profile';
 import { markedPageCopy, markedSheetCopy } from '../../scan/markedCopy';
 import { friendlyCloudError } from '../../ai/errors';
 
-type Props = { assignment: Assignment };
+type Props = { assignment: Assignment; submissions: Submission[] };
 
 type SheetMode = 'sheet' | 'page';
 
-/** Device-only key for a whole exercise-book page photo (q = 0). */
-export const PAGE_KEY = 0;
-/** Device-only key for the generated marked copy of the pupil's work (q = -1). */
-export const MARKED_KEY = -1;
+export { PAGE_KEY, MARKED_KEY };
 
 type Phase =
   | { kind: 'idle' }
@@ -35,7 +34,8 @@ function failedMark(q: number, max: number, error: unknown): Mark {
   };
 }
 
-export function MarkTab({ assignment }: Props) {
+export function MarkTab({ assignment, submissions }: Props) {
+  const profile = useProfile();
   const pages = useMemo(() => layoutSheet(assignment.scheme.questions), [assignment.scheme.questions]);
   const [pupil, setPupil] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
@@ -43,20 +43,20 @@ export function MarkTab({ assignment }: Props) {
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
   const [marks, setMarks] = useState<Mark[]>([]);
   const [crops, setCrops] = useState<Record<number, string>>({});
-  const [copy, setCopy] = useState<{ blob: Blob; pupil: string } | null>(null);
+  const [copy, setCopy] = useState<{ blob: Blob; pupil: string; submissionId: string } | null>(null);
 
   /** Builds the marked copy (best effort: marking already succeeded if this fails). */
   async function makeCopy(submissionId: string, label: string, build: () => Promise<Blob>) {
     try {
       const blob = await build();
       await saveCrop(submissionId, MARKED_KEY, blob);
-      setCopy({ blob, pupil: label });
+      setCopy({ blob, pupil: label, submissionId });
     } catch { /* the marks are saved; the copy can be regenerated later */ }
   }
 
   async function markExercisePage(photo: File) {
     setCrops({ [PAGE_KEY]: URL.createObjectURL(photo) });
-    const label = pupil.trim() || `Pupil ${new Date().toLocaleTimeString()}`;
+    const label = pupil.trim() || `Student ${new Date().toLocaleTimeString()}`;
     const submissionId = await createSubmission(assignment.id, label, []);
     await saveCrop(submissionId, PAGE_KEY, photo);
     setPhase({ kind: 'marking', done: 0, total: assignment.scheme.questions.length });
@@ -83,7 +83,7 @@ export function MarkTab({ assignment }: Props) {
       if (!scan.ok) { setPhase({ kind: 'error', message: scan.reason }); return; }
       setCrops(Object.fromEntries(scan.crops.map((c) => [c.q, c.dataUrl])));
 
-      const label = pupil.trim() || `Pupil ${new Date().toLocaleTimeString()}`;
+      const label = pupil.trim() || `Student ${new Date().toLocaleTimeString()}`;
       const submissionId = await createSubmission(assignment.id, label, []);
       const collected: Mark[] = [];
       setPhase({ kind: 'marking', done: 0, total: scan.crops.length });
@@ -118,8 +118,8 @@ export function MarkTab({ assignment }: Props) {
           </button>
         ))}
       </div>
-      <section className="paper-card grid gap-4 p-6 sm:grid-cols-[1fr_auto_auto] sm:items-end" aria-label="Mark a pupil">
-        <label className="text-sm font-medium">Pupil name or number
+      <section className="paper-card grid gap-4 p-6 sm:grid-cols-[1fr_auto_auto] sm:items-end" aria-label="Mark a student">
+        <label className="text-sm font-medium">Student name or number
           <input className={field} value={pupil} onChange={(e) => setPupil(e.target.value)} placeholder="e.g. Ada O. or 14" disabled={busy} />
         </label>
         {mode === 'sheet' && pages.length > 1 && (
@@ -142,7 +142,12 @@ export function MarkTab({ assignment }: Props) {
         {phase.kind === 'error' && <p className="text-pen" role="alert">{phase.message}</p>}
       </div>
 
-      {copy && <MarkedCopy blob={copy.blob} pupil={copy.pupil} />}
+      {copy && (() => {
+        const record = submissions.find((x) => x.id === copy.submissionId);
+        return record
+          ? <PupilRecord assignment={assignment} submission={record} profile={profile} copy={copy.blob} />
+          : <MarkedCopy blob={copy.blob} pupil={copy.pupil} />;
+      })()}
 
       {marks.length > 0 && (
         <div className={crops[PAGE_KEY] ? 'grid gap-6 lg:grid-cols-[18rem_1fr] lg:items-start' : ''}>

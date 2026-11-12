@@ -1,7 +1,12 @@
 import type { Question } from '../domain/types';
+import type { Profile } from '../data/profile';
 import { A4, FIDUCIAL_CENTRES, FIDUCIAL_SIZE_MM, layoutSheet } from '../scan/layout';
 
-type Props = { title: string; className: string; questions: Question[] };
+type Props = { title: string; className: string; questions: Question[]; profile?: Profile };
+
+/** Header text must stay between the top fiducials; squeeze long lines instead of overflowing. */
+const HEADER_WIDTH_MM = 150;
+const fit = (text: string, fontSize: number) => (text.length * fontSize * 0.5 > HEADER_WIDTH_MM ? { textLength: HEADER_WIDTH_MM, lengthAdjust: 'spacingAndGlyphs' as const } : {});
 
 const HINT: Record<Question['type'], string> = {
   objective: 'Write ONE letter',
@@ -11,7 +16,7 @@ const HINT: Record<Question['type'], string> = {
 };
 
 /** Printable A4 answer sheets. Geometry comes from scan/layout.ts, the same module the scanner uses. */
-export function AnswerSheet({ title, className, questions }: Props) {
+export function AnswerSheet({ title, className, questions, profile }: Props) {
   const pages = layoutSheet(questions);
   const byQ = new Map(questions.map((q) => [q.q, q]));
   return (
@@ -30,10 +35,18 @@ export function AnswerSheet({ title, className, questions }: Props) {
           {FIDUCIAL_CENTRES.map((c) => (
             <rect key={`${c.x}-${c.y}`} x={c.x - FIDUCIAL_SIZE_MM / 2} y={c.y - FIDUCIAL_SIZE_MM / 2} width={FIDUCIAL_SIZE_MM} height={FIDUCIAL_SIZE_MM} fill="#000" />
           ))}
-          <text x={32} y={21} fontFamily="Fraunces, serif" fontSize={7} fontWeight={700} fill="#1f2a44">{title}</text>
+          {profile?.institution && (
+            <text x={32} y={13.5} fontFamily="Inter Tight, sans-serif" fontSize={3.8} fontWeight={700} letterSpacing={0.2} fill="#c8102e" {...fit(profile.institution.toUpperCase(), 3.8)}>
+              {profile.institution.toUpperCase()}
+            </text>
+          )}
+          <text x={32} y={21} fontFamily="Fraunces, serif" fontSize={7} fontWeight={700} fill="#1f2a44" {...fit(title, 7)}>{title}</text>
           <text x={32} y={28} fontFamily="Inter Tight, sans-serif" fontSize={3.6} fill="#555">
             {className} · Page {page.page} of {pages.length} · Keep the four black squares in the photo
           </text>
+          {profile?.details && (
+            <text x={32} y={34} fontFamily="Inter Tight, sans-serif" fontSize={3} fill="#777" {...fit(profile.details, 3)}>{profile.details}</text>
+          )}
           <text x={32} y={41} fontFamily="Inter Tight, sans-serif" fontSize={4.2} fill="#1f2a44">Name</text>
           <line x1={46} y1={41.5} x2={130} y2={41.5} stroke="#1f2a44" strokeWidth={0.3} />
           <text x={136} y={41} fontFamily="Inter Tight, sans-serif" fontSize={4.2} fill="#1f2a44">No.</text>

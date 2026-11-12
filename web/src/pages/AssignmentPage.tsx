@@ -7,6 +7,7 @@ import { ReviewTab } from './assignment/ReviewTab';
 import { InsightsTab } from './assignment/InsightsTab';
 import { RegisterTab } from './assignment/RegisterTab';
 import { friendlyCloudError } from '../ai/errors';
+import { useProfile } from '../data/profile';
 
 const TABS = [
   { to: 'print', label: 'Print sheets' },
@@ -22,6 +23,7 @@ export function AssignmentPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const profile = useProfile();
 
   useEffect(() => watchAssignment(id, setAssignment, (e) => setError(e.message)), [id]);
   useEffect(() => watchSubmissions(id, setSubmissions, (e) => setError(e.message)), [id]);
@@ -32,7 +34,7 @@ export function AssignmentPage() {
 
   async function handleDelete() {
     if (!assignment) return;
-    if (!window.confirm(`Delete "${assignment.title}" and every pupil's marks for it? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete "${assignment.title}" and every student's marks for it? This cannot be undone.`)) return;
     try { await deleteAssignment(assignment.id); navigate('/'); } catch (e: unknown) { setError(friendlyCloudError(e).message); }
   }
 
@@ -46,7 +48,7 @@ export function AssignmentPage() {
           <h1 className="font-display text-4xl font-bold">{assignment.title}</h1>
         </div>
         <div className="grid justify-items-end gap-2">
-          <p className="text-ink-soft">{submissions.length} pupil{submissions.length === 1 ? '' : 's'} marked{toCheck > 0 && ` · ${toCheck} to check`}</p>
+          <p className="text-ink-soft">{submissions.length} student{submissions.length === 1 ? '' : 's'} marked{toCheck > 0 && ` · ${toCheck} to check`}</p>
           <div className="flex gap-2 text-sm">
             <button type="button" className="btn-ghost px-3 py-1 text-xs"
               onClick={() => setAssignmentStatus(assignment.id, (assignment.status ?? 'active') === 'active' ? 'finished' : 'active')}>
@@ -71,12 +73,12 @@ export function AssignmentPage() {
             <div className="grid gap-4">
               <div className="flex flex-wrap items-center gap-3">
                 <button type="button" className="btn-pen" onClick={() => window.print()}>Print answer sheets</button>
-                <p className="text-sm text-ink-soft">Print one per pupil. The black corner squares let REDPEN find every answer box, even offline.</p>
+                <p className="text-sm text-ink-soft">Print one per student. The black corner squares let REDPEN find every answer box, even offline.</p>
               </div>
-              <AnswerSheet title={assignment.title} className={assignment.className} questions={assignment.scheme.questions} />
+              <AnswerSheet title={assignment.title} className={assignment.className} questions={assignment.scheme.questions} profile={profile} />
             </div>
           } />
-          <Route path="mark" element={<MarkTab assignment={assignment} />} />
+          <Route path="mark" element={<MarkTab assignment={assignment} submissions={submissions} />} />
           <Route path="review" element={<ReviewTab assignment={assignment} submissions={submissions} />} />
           <Route path="register" element={<RegisterTab assignment={assignment} submissions={submissions} />} />
           <Route path="insights" element={<InsightsTab assignment={assignment} submissions={submissions} />} />

@@ -45,7 +45,7 @@ export function InsightsTab({ assignment, submissions }: Props) {
     }
   }
 
-  if (!submissions.length) return <p className="font-hand text-3xl text-ink-soft">Mark a few pupils to see where the class is struggling.</p>;
+  if (!submissions.length) return <p className="font-hand text-3xl text-ink-soft">Mark a few students to see where the class is struggling.</p>;
 
   return (
     <div className="grid gap-8">
@@ -65,7 +65,7 @@ export function InsightsTab({ assignment, submissions }: Props) {
                 <div className="h-3 overflow-hidden rounded-full bg-paper-deep">
                   <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct < 50 ? 'var(--color-pen)' : 'var(--color-device)' }} />
                 </div>
-                <p className="mt-1 text-sm text-ink-soft">{pct}% average · {row.attempts} pupils</p>
+                <p className="mt-1 text-sm text-ink-soft">{pct}% average · {row.attempts} students</p>
               </div>
               <button type="button" className="btn-ghost text-sm" disabled={!isOnline || !row.wrong.length || busyQ !== null} onClick={() => void handleCatchUp(row)}>
                 {busyQ === row.question.q ? 'Writing…' : 'Catch-up sheet'}

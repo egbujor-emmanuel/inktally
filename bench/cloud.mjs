@@ -6,20 +6,23 @@ import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { extname, normalize } from 'node:path';
 
 const MODEL = process.argv[2] || 'gemini-3.8-flash';
-const SECRETS = '../secrets';
+const SECRETS = process.env.SECRETS || '../../secrets';
 const MIME = { '.html': 'text/html', '.json': 'application/json', '.png': 'image/png', '.js': 'text/javascript' };
 const config = {
   firebaseConfig: JSON.parse(readFileSync(`${SECRETS}/firebase-web-config.json`, 'utf8')),
   debugToken: readFileSync(`${SECRETS}/appcheck-debug-token.txt`, 'utf8').trim(),
   model: MODEL,
+  thinking: process.env.THINKING || '',
 };
 
 const server = createServer((req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^[/\\]+/, '') || 'cloud.html';
   if (path === 'config.json') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify(config)); return; }
-  if (path.includes('..') || !existsSync(path)) { res.writeHead(404); res.end(); return; }
+  // Sample photos live in the repo's top-level samples/ folder.
+  const file = path.split('\\').join('/').startsWith('samples/') ? `../${path}` : path;
+  if (path.includes('..') || !existsSync(file)) { res.writeHead(404); res.end(); return; }
   res.writeHead(200, { 'content-type': MIME[extname(path)] || 'application/octet-stream' });
-  res.end(readFileSync(path));
+  res.end(readFileSync(file));
 });
 await new Promise((r) => server.listen(8090, '127.0.0.1', r));
 
@@ -34,7 +37,7 @@ await page.click('#go');
 await page.waitForFunction(() => window.__bench.done, null, { timeout: 10 * 60 * 1000, polling: 2000 });
 const bench = await page.evaluate(() => window.__bench);
 mkdirSync('out-cloud', { recursive: true });
-writeFileSync(`out-cloud/cloud-${MODEL}.json`, JSON.stringify(bench, null, 2));
+writeFileSync(`out-cloud/cloud-${MODEL}${process.env.THINKING ? '-' + process.env.THINKING : ''}.json`, JSON.stringify(bench, null, 2));
 console.log(bench.log.join('\n'));
 await browser.close();
 server.close();

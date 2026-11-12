@@ -1,11 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
+import { withLetterhead, type LetterheadInfo } from '../scan/letterhead';
 
-type Props = { blob: Blob; pupil: string };
+type Props = { blob: Blob; pupil: string; letterhead?: LetterheadInfo };
 
-const safeName = (s: string) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'pupil';
+const safeName = (s: string) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'student';
 
 /** Shows the marked copy with Download / Share / Print, so the teacher never re-marks the paper by hand. */
-export function MarkedCopy({ blob, pupil }: Props) {
+export function MarkedCopy({ blob: raw, pupil, letterhead }: Props) {
+  // Compose the letterhead + comment onto the copy; fall back to the bare copy if that fails.
+  const [blob, setBlob] = useState<Blob>(raw);
+  const key = letterhead ? JSON.stringify(letterhead) : '';
+  useEffect(() => {
+    if (!letterhead) { setBlob(raw); return; }
+    let alive = true;
+    withLetterhead(raw, letterhead).then((b) => { if (alive) setBlob(b); }, () => { if (alive) setBlob(raw); });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- key captures every letterhead field
+  }, [raw, key]);
   // Create and revoke the object URL in the same effect so StrictMode re-mounts never leave a dead link.
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -41,7 +52,7 @@ export function MarkedCopy({ blob, pupil }: Props) {
       <div className="grid content-start gap-3">
         <p className="font-hand text-2xl text-pen">no second round of marking</p>
         <h2 id="marked-copy" className="font-display text-2xl font-bold">Marked copy for {pupil}</h2>
-        <p className="text-ink-soft">The pupil’s own work with every tick, cross and score — print it or send it to the parent. On the original paper, just write the total.</p>
+        <p className="text-ink-soft">The student’s own work with every tick, cross and score — print it or send it to the parent. On the original paper, just write the total.</p>
         <div className="flex flex-wrap gap-2">
           <a href={url} download={fileName} className="btn-pen">Download</a>
           {canShare && <button type="button" className="btn-ghost" onClick={() => void handleShare()}>Share</button>}

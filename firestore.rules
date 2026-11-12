@@ -18,13 +18,25 @@ service cloud.firestore {
         allow read: if resource == null || owns(resource.data);
         allow create: if owns(request.resource.data)
           && get(/databases/$(database)/documents/assignments/$(assignmentId)).data.ownerUid == request.auth.uid;
-        allow update: if owns(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid;
+        allow update: if owns(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid
+          && (!('comment' in request.resource.data) || (request.resource.data.comment is string && request.resource.data.comment.size() <= 1000))
+          && request.resource.data.pupil is string && request.resource.data.pupil.size() <= 120;
         allow delete: if owns(resource.data);
       }
     }
 
     match /users/{userId}/telemetry/{day} {
       allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+    // Institution details shown on sheets, marked copies and the register.
+    match /users/{userId}/settings/profile {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if signedIn() && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['institution', 'details', 'teacher', 'updatedAt'])
+        && request.resource.data.institution is string && request.resource.data.institution.size() <= 120
+        && request.resource.data.details is string && request.resource.data.details.size() <= 240
+        && request.resource.data.teacher is string && request.resource.data.teacher.size() <= 80;
     }
   }
 }

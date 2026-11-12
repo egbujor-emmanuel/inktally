@@ -27,8 +27,13 @@ export interface Submission {
   /** Pupil label typed by the teacher (name or register number). Stays in the teacher's own account. */
   pupil: string;
   marks: Mark[];
+  /** Teacher's comment for this pupil; editable any time after marking. */
+  comment?: string;
   createdAt?: unknown;
 }
+
+export const COMMENT_LIMIT = 1000;
+export const PUPIL_LIMIT = 80;
 
 function uid(): string {
   const id = auth.currentUser?.uid;
@@ -44,7 +49,7 @@ const assignments = () => collection(db, 'assignments');
  * and surface failures (e.g. rules rejections) through an event instead.
  */
 export const WRITE_ERROR_EVENT = 'redpen:write-error';
-function queueWrite(write: Promise<unknown>, what: string): void {
+export function queueWrite(write: Promise<unknown>, what: string): void {
   write.catch((error: unknown) => {
     console.error(`[redpen] write failed: ${what}`, error);
     window.dispatchEvent(new CustomEvent(WRITE_ERROR_EVENT, { detail: `Could not save ${what}: ${friendlyCloudError(error).message}` }));
@@ -133,12 +138,26 @@ export async function saveMarks(assignmentId: string, submissionId: string, mark
   queueWrite(updateDoc(doc(db, 'assignments', assignmentId, 'submissions', submissionId), { marks }), 'the marks');
 }
 
+/** Edits a pupil's record after marking: rename the pupil or add the teacher's comment. */
+export function updateSubmission(assignmentId: string, submissionId: string, patch: { pupil?: string; comment?: string }): void {
+  const clean: Record<string, string> = {};
+  if (patch.pupil !== undefined) clean.pupil = patch.pupil.trim().slice(0, PUPIL_LIMIT) || 'Pupil';
+  if (patch.comment !== undefined) clean.comment = patch.comment.trim().slice(0, COMMENT_LIMIT);
+  if (!Object.keys(clean).length) return;
+  queueWrite(updateDoc(doc(db, 'assignments', assignmentId, 'submissions', submissionId), clean), patch.comment !== undefined ? 'the comment' : 'the pupil name');
+}
+
 export function watchSubmissions(assignmentId: string, onChange: (items: Submission[]) => void, onError: (e: Error) => void): Unsubscribe {
   const q = query(submissions(assignmentId), where('ownerUid', '==', uid()), orderBy('createdAt', 'asc'));
   return resilientSnapshot((fail) => onSnapshot(q, (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Submission)), fail), onError);
 }
 
 // ---- Device-only crop storage ----
+
+/** Device-only key for a whole exercise-book page photo (q = 0). */
+export const PAGE_KEY = 0;
+/** Device-only key for the generated marked copy of the pupil's work (q = -1). */
+export const MARKED_KEY = -1;
 
 const CROP_DB = 'redpen-crops';
 let cropDb: Promise<IDBPDatabase> | null = null;

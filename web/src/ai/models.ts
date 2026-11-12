@@ -1,5 +1,5 @@
 // Hybrid model factories. Every call through here goes via Firebase AI Logic.
-import { getGenerativeModel, InferenceMode, Schema, type GenerativeModel, type ObjectSchema, type Part } from 'firebase/ai';
+import { getGenerativeModel, InferenceMode, Schema, ThinkingLevel, type GenerativeModel, type ObjectSchema, type Part, type ThinkingConfig } from 'firebase/ai';
 import { getValue } from 'firebase/remote-config';
 import { ai, remoteConfig } from '../firebase/app';
 import type { RemoteKey } from './config';
@@ -11,6 +11,12 @@ const REQUEST_TIMEOUT_MS = 120_000;
 
 export function config(key: RemoteKey): string {
   return getValue(remoteConfig, key).asString();
+}
+
+/** Thinking level from Remote Config; anything unrecognised falls back to the model's default. */
+function thinking(key: 'read_thinking' | 'author_thinking'): { thinkingConfig?: ThinkingConfig } {
+  const level = config(key).trim().toUpperCase();
+  return (Object.values(ThinkingLevel) as string[]).includes(level) ? { thinkingConfig: { thinkingLevel: level as ThinkingConfig['thinkingLevel'] } } : {};
 }
 
 /** Chrome's Prompt API wants a plain JSON Schema object; serialising the SDK schema produces one. */
@@ -42,7 +48,7 @@ export function readerModel(schema: ObjectSchema, mode?: ReadMode): GenerativeMo
     mode: readMode(mode),
     inCloudParams: {
       model: config('cloud_read_model'),
-      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0 },
+      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...thinking('read_thinking') },
     },
     onDeviceParams: {
       createOptions: { expectedInputs: [{ type: 'text', languages: ['en'] }, { type: 'image' }], expectedOutputs: [{ type: 'text', languages: ['en'] }] },
@@ -57,7 +63,7 @@ export function judgeModel(schema: ObjectSchema, mode?: ReadMode): GenerativeMod
     mode: readMode(mode),
     inCloudParams: {
       model: config('cloud_read_model'),
-      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0 },
+      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...thinking('read_thinking') },
     },
     onDeviceParams: {
       createOptions: { expectedInputs: [{ type: 'text', languages: ['en'] }], expectedOutputs: [{ type: 'text', languages: ['en'] }] },
@@ -72,14 +78,15 @@ export function authorModel(schema: ObjectSchema, modelName = config('cloud_auth
     mode: InferenceMode.ONLY_IN_CLOUD,
     inCloudParams: {
       model: modelName,
-      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.2 },
+      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.2, ...thinking('author_thinking') },
     },
   }, { timeout });
 }
 
-const AUTHOR_TIMEOUT_MS = 30_000;
+/** A full question-paper photo took 10-45 s in testing; give the first attempt room before retrying. */
+const AUTHOR_TIMEOUT_MS = 60_000;
 const AUTHOR_ATTEMPTS = 1;
-const FALLBACK_ATTEMPTS = 3;
+const FALLBACK_ATTEMPTS = 2;
 
 /**
  * Generates with the stronger authoring model, falling back to the fast read model when the

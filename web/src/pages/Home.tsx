@@ -9,7 +9,7 @@ import { useReducedMotion } from '../hooks/useStatus';
 import { friendlyCloudError } from '../ai/errors';
 
 const STEPS = [
-  { n: '1', title: 'Questions in', body: 'Snap the question paper. The cloud drafts the marking scheme — it never sees a pupil.' },
+  { n: '1', title: 'Questions in', body: 'Snap the question paper. The cloud drafts the marking scheme — it never sees a student.' },
   { n: '2', title: 'Marks out, offline', body: 'Photograph each answer sheet. Gemini Nano reads the handwriting on your device; code does the marking.' },
   { n: '3', title: 'Checked when online', body: 'Back on data, every on-device mark is double-checked in the cloud. Disagreements come to you.' },
 ];
@@ -46,13 +46,17 @@ export function Home() {
   return (
     <>
       <section ref={hero} className="ruled -mx-4 px-4 pb-16 pt-14 sm:-mx-6 sm:px-6 sm:pl-20" aria-labelledby="hero-title">
-        <p data-rise className="font-hand text-2xl text-pen">for teachers with 50 exercise books tonight</p>
+        <p data-rise className="font-hand text-2xl text-pen">for anyone with a stack of scripts to mark tonight</p>
         <h1 id="hero-title" data-rise className="mt-2 max-w-4xl font-display text-[length:var(--text-hero)] font-bold leading-[0.95] tracking-tight">
           A stack of classwork, marked in minutes. <span className="text-pen">Even offline.</span>
         </h1>
         <p data-rise className="mt-6 max-w-2xl text-lg text-ink-soft">
-          REDPEN reads pupils’ handwriting with the AI already on your device and marks it against <em>your</em> marking scheme.
-          Children’s work stays in the classroom. When you’re back online, the cloud double-checks every mark.
+          REDPEN reads students’ handwriting with the AI already on your device and marks it against <em>your</em> marking scheme.
+          Students’ work stays with you. When you’re back online, the cloud double-checks every mark.
+        </p>
+        <p data-rise className="mt-3 max-w-2xl text-sm text-ink-soft">
+          Any subject, any level — if you have a marking guide, REDPEN can use it: primary and secondary schools, colleges and
+          universities, exam centres, training and certification courses, and private tutors.
         </p>
         <div data-rise className="mt-8 flex flex-wrap gap-3">
           <Link to="/quick" className="btn-pen">Quick mark a page</Link>

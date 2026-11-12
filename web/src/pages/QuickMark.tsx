@@ -58,7 +58,7 @@ export function QuickMark() {
     try {
       const today = new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
       const assignmentId = await createAssignment({ title: `Quick mark — ${subject}, ${today}`, className: level, scheme: { subject, level, questions } });
-      const submissionId = await createSubmission(assignmentId, pupil.trim() || 'Pupil', []);
+      const submissionId = await createSubmission(assignmentId, pupil.trim() || 'Student', []);
       await saveCrop(submissionId, PAGE_KEY, photo);
       const marks = await markPage(questions, photo);
       await saveMarks(assignmentId, submissionId, marks);
@@ -77,7 +77,7 @@ export function QuickMark() {
       <header>
         <p className="font-hand text-2xl text-pen">no preparation needed</p>
         <h1 className="font-display text-4xl font-bold">Quick mark</h1>
-        <p className="mt-2 max-w-2xl text-ink-soft">Photograph one pupil’s page with the questions on it. REDPEN works out the answers from the questions,
+        <p className="mt-2 max-w-2xl text-ink-soft">Photograph one student’s page with the questions on it. REDPEN works out the answers from the questions,
           you check them in seconds, then it marks the page. The answer key is saved so you can mark the rest of the class.</p>
       </header>
 
@@ -88,7 +88,7 @@ export function QuickMark() {
             <input className={field} value={level} onChange={(e) => setLevel(e.target.value)} list="redpen-levels" placeholder="e.g. Grade 5, Year 7, JSS 2" />
             <datalist id="redpen-levels">{ALL_LEVELS.map((l) => <option key={l} value={l} />)}</datalist>
           </label>
-          <label className="text-sm font-medium">Pupil<input className={field} value={pupil} onChange={(e) => setPupil(e.target.value)} placeholder="Name or number" /></label>
+          <label className="text-sm font-medium">Student<input className={field} value={pupil} onChange={(e) => setPupil(e.target.value)} placeholder="Name or number" /></label>
           <label className={`btn-pen cursor-pointer text-center ${isOnline ? '' : 'pointer-events-none opacity-50'}`}>
             {isOnline ? 'Photograph the page' : 'Quick mark needs internet'}
             <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => void handlePhoto(e)} disabled={!isOnline} />
@@ -101,7 +101,7 @@ export function QuickMark() {
       {photoUrl && step.kind !== 'snap' && (
         <div className="grid gap-6 lg:grid-cols-[18rem_1fr] lg:items-start">
           <figure className="paper-card overflow-hidden p-2 lg:sticky lg:top-36">
-            <img src={photoUrl} alt="The pupil's page" className="w-full rounded-md" />
+            <img src={photoUrl} alt="The student's page" className="w-full rounded-md" />
           </figure>
           <div className="grid gap-4" aria-live="polite">
             {step.kind === 'drafting' && <p className="font-hand text-3xl text-ink-soft">Working out the answers from the questions…</p>}

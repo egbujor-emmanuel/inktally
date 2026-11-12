@@ -12,6 +12,7 @@ import { useReducedMotion } from './hooks/useStatus';
 import { Home } from './pages/Home';
 const NewAssignment = lazy(() => import('./pages/NewAssignment').then((m) => ({ default: m.NewAssignment })));
 const QuickMark = lazy(() => import('./pages/QuickMark').then((m) => ({ default: m.QuickMark })));
+const School = lazy(() => import('./pages/School').then((m) => ({ default: m.School })));
 const AssignmentPage = lazy(() => import('./pages/AssignmentPage').then((m) => ({ default: m.AssignmentPage })));
 
 gsap.registerPlugin(ScrollTrigger);
@@ -75,7 +76,12 @@ export function App() {
           </div>
           <div className="flex flex-wrap items-start justify-between gap-2">
             <StatusBar />
-            {boot.state === 'ready' && <AccountMenu />}
+            {boot.state === 'ready' && (
+              <div className="flex items-start gap-3">
+                <Link to="/school" className="pt-1 text-xs font-medium underline decoration-pen/40 underline-offset-4 hover:decoration-pen">School details</Link>
+                <AccountMenu />
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -96,6 +102,7 @@ export function App() {
               <Route path="/" element={<Home />} />
               <Route path="/new" element={<NewAssignment />} />
               <Route path="/quick" element={<QuickMark />} />
+              <Route path="/school" element={<School />} />
               <Route path="/a/:id/*" element={<AssignmentPage />} />
             </Routes>
           </Suspense>

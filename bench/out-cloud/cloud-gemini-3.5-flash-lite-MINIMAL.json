@@ -1,0 +1,204 @@
+{
+  "done": true,
+  "log": [
+    "[A maths] 12625 ms src=in_cloud exact 6/6 total 5/5\n   Q1 read \"7 x 8 = 56\" 1/1\n   Q2 read \"15 + 9 = 23\" 0/0\n   Q3 read \"144 ÷ 12 = 12\" 1/1\n   Q4 read \"3/4 + 1/4 = 1\" 1/1\n   Q5 read \"25% of 80 = 25\" 0/0\n   Q6 read \"6 crates x 4,500 = ₦27,000 Answer = 27,000\" 2/2",
+    "[A bio-good] 11963 ms src=in_cloud exact 4/4 total 5/5\n   Q1 read \"Blood carries oxygen round the body and it figt germs\" 2/2\n   Q2 read \"It maes bile and stores sugar\" 2/2\n   Q3 read \"Photosynthesis\" 1/1\n   Q4 read \"To fight diseases\" 0/0",
+    "[A bio-dim] 20278 ms src=in_cloud exact 4/4 total 5/5\n   Q1 read \"Blood carries oxygen round the body and it figt germs\" 2/2\n   Q2 read \"It maes bile and stores sugar\" 2/2\n   Q3 read \"Photosynthesis\" 1/1\n   Q4 read \"To fight diseases\" 0/0",
+    "[B m1] 1553 ms read \"= 56\" | truth \"56\"",
+    "[B m2] 10440 ms read \"= 23\" | truth \"23\"",
+    "[B m3] 1974 ms read \"12\" | truth \"12\"",
+    "[B m4] 1635 ms read \"=-1\" | truth \"1\"",
+    "[B m5] 1526 ms read \"=25\" | truth \"25\"",
+    "[B m6b] 1453 ms read \"= 27,000\" | truth \"27,000\"",
+    "[B b1] 3601 ms read \"Blood caries oxygen round the body and it figt germs\" | truth \"Blood carries oxygen round the body and it fights germs\"",
+    "[B b2] 2330 ms read \"It makes bile and stores sugar\" | truth \"It makes bile and stores sugar\"",
+    "[B b3] 2552 ms read \"Photosynthesis\" | truth \"Photosynthesis\"",
+    "[B b4] 2108 ms read \"2. To fight diseases -\" | truth \"To fight diseases\"",
+    "SUMMARY {\"mathsCropsReadCorrectly\":\"5/6\"}",
+    "DONE"
+  ],
+  "results": [
+    {
+      "design": "A-page",
+      "id": "maths",
+      "ms": 12625,
+      "source": "in_cloud",
+      "perQ": [
+        {
+          "q": 1,
+          "exp": 1,
+          "got": 1,
+          "read": "7 x 8 = 56"
+        },
+        {
+          "q": 2,
+          "exp": 0,
+          "got": 0,
+          "read": "15 + 9 = 23"
+        },
+        {
+          "q": 3,
+          "exp": 1,
+          "got": 1,
+          "read": "144 ÷ 12 = 12"
+        },
+        {
+          "q": 4,
+          "exp": 1,
+          "got": 1,
+          "read": "3/4 + 1/4 = 1"
+        },
+        {
+          "q": 5,
+          "exp": 0,
+          "got": 0,
+          "read": "25% of 80 = 25"
+        },
+        {
+          "q": 6,
+          "exp": 2,
+          "got": 2,
+          "read": "6 crates x 4,500 = ₦27,000 Answer = 27,000"
+        }
+      ]
+    },
+    {
+      "design": "A-page",
+      "id": "bio-good",
+      "ms": 11963,
+      "source": "in_cloud",
+      "perQ": [
+        {
+          "q": 1,
+          "exp": 2,
+          "got": 2,
+          "read": "Blood carries oxygen round the body and it figt germs"
+        },
+        {
+          "q": 2,
+          "exp": 2,
+          "got": 2,
+          "read": "It maes bile and stores sugar"
+        },
+        {
+          "q": 3,
+          "exp": 1,
+          "got": 1,
+          "read": "Photosynthesis"
+        },
+        {
+          "q": 4,
+          "exp": 0,
+          "got": 0,
+          "read": "To fight diseases"
+        }
+      ]
+    },
+    {
+      "design": "A-page",
+      "id": "bio-dim",
+      "ms": 20278,
+      "source": "in_cloud",
+      "perQ": [
+        {
+          "q": 1,
+          "exp": 2,
+          "got": 2,
+          "read": "Blood carries oxygen round the body and it figt germs"
+        },
+        {
+          "q": 2,
+          "exp": 2,
+          "got": 2,
+          "read": "It maes bile and stores sugar"
+        },
+        {
+          "q": 3,
+          "exp": 1,
+          "got": 1,
+          "read": "Photosynthesis"
+        },
+        {
+          "q": 4,
+          "exp": 0,
+          "got": 0,
+          "read": "To fight diseases"
+        }
+      ]
+    },
+    {
+      "design": "B-crop",
+      "id": "m1",
+      "ms": 1553,
+      "text": "= 56",
+      "truth": "56"
+    },
+    {
+      "design": "B-crop",
+      "id": "m2",
+      "ms": 10440,
+      "text": "= 23",
+      "truth": "23"
+    },
+    {
+      "design": "B-crop",
+      "id": "m3",
+      "ms": 1974,
+      "text": "12",
+      "truth": "12"
+    },
+    {
+      "design": "B-crop",
+      "id": "m4",
+      "ms": 1635,
+      "text": "=-1",
+      "truth": "1"
+    },
+    {
+      "design": "B-crop",
+      "id": "m5",
+      "ms": 1526,
+      "text": "=25",
+      "truth": "25"
+    },
+    {
+      "design": "B-crop",
+      "id": "m6b",
+      "ms": 1453,
+      "text": "= 27,000",
+      "truth": "27,000"
+    },
+    {
+      "design": "B-crop",
+      "id": "b1",
+      "ms": 3601,
+      "text": "Blood caries oxygen round the body and it figt germs",
+      "truth": "Blood carries oxygen round the body and it fights germs"
+    },
+    {
+      "design": "B-crop",
+      "id": "b2",
+      "ms": 2330,
+      "text": "It makes bile and stores sugar",
+      "truth": "It makes bile and stores sugar"
+    },
+    {
+      "design": "B-crop",
+      "id": "b3",
+      "ms": 2552,
+      "text": "Photosynthesis",
+      "truth": "Photosynthesis"
+    },
+    {
+      "design": "B-crop",
+      "id": "b4",
+      "ms": 2108,
+      "text": "2. To fight diseases -",
+      "truth": "To fight diseases"
+    }
+  ],
+  "error": null,
+  "summary": {
+    "mathsCropsReadCorrectly": "5/6"
+  }
+}

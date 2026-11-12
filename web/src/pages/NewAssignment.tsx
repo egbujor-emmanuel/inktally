@@ -71,7 +71,7 @@ export function NewAssignment() {
 
       <section className="paper-card grid gap-4 p-6" aria-labelledby="paper">
         <h2 id="paper" className="font-display text-2xl font-bold">Draft the marking scheme from your question paper</h2>
-        <p className="text-ink-soft">Only the questions go to the cloud — never pupils’ work. You review every answer before marking.</p>
+        <p className="text-ink-soft">Only the questions go to the cloud — never students’ work. You review every answer before marking.</p>
         <label className="text-sm font-medium">Photo(s) or PDF of the question paper
           <input className={field} type="file" accept="image/*,application/pdf" multiple capture="environment"
             onChange={(e) => setPaperImages(Array.from(e.target.files ?? []))} />

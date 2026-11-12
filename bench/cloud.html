@@ -23,7 +23,7 @@
   const logEl = document.getElementById('log');
   const log = (m) => { bench.log.push(m); logEl.textContent = bench.log.join('\n'); };
 
-  const { firebaseConfig, debugToken, model: MODEL } = await (await fetch('/config.json')).json();
+  const { firebaseConfig, debugToken, model: MODEL, thinking: THINKING } = await (await fetch('/config.json')).json();
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken; // dev-only debug token, served locally, never committed
   const app = initializeApp(firebaseConfig);
   initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider('dev-debug-only'), isTokenAutoRefreshEnabled: true });
@@ -36,7 +36,7 @@
   const REQUEST_TIMEOUT_MS = 180_000;
   const cloud = (schema) => getGenerativeModel(ai, {
     mode: InferenceMode.ONLY_IN_CLOUD,
-    inCloudParams: { model: MODEL, generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0 } },
+    inCloudParams: { model: MODEL, generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...(THINKING ? { thinkingConfig: { thinkingLevel: THINKING } } : {}) } },
   }, { timeout: REQUEST_TIMEOUT_MS });
   const ONLY = new URLSearchParams(location.search).get('only'); // e.g. ?only=bio-dim,crops
 
