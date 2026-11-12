@@ -15,11 +15,13 @@ function glyphFor(mark: Mark): GlyphKind {
 export function MarkRow({ mark, cropUrl, index = 0, actions }: Props) {
   const glyph = glyphFor(mark);
   return (
-    <li className="paper-card grid gap-3 p-4 sm:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1.2fr)_auto] sm:items-center">
+    <li className={`paper-card grid gap-3 p-4 sm:items-center ${cropUrl ? 'sm:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1.2fr)_auto]' : 'sm:grid-cols-[3rem_minmax(0,1fr)_auto]'}`}>
       <span className="font-display text-2xl font-bold">Q{mark.q}</span>
-      <div className="min-h-12 overflow-hidden rounded-md border border-[oklch(88%_0.02_85)] bg-white">
-        {cropUrl ? <img src={cropUrl} alt={`Pupil's handwriting for question ${mark.q}`} className="max-h-24 w-full object-contain" /> : <span className="block p-3 text-sm text-ink-soft">image kept on the marking device</span>}
-      </div>
+      {cropUrl && (
+        <div className="min-h-12 overflow-hidden rounded-md border border-[oklch(88%_0.02_85)] bg-white">
+          <img src={cropUrl} alt={`Pupil's handwriting for question ${mark.q}`} className="max-h-24 w-full object-contain" />
+        </div>
+      )}
       <div className="grid gap-1.5">
         <p className="text-sm text-ink-soft">AI read: <span className="font-medium text-ink">“{mark.read || '—'}”</span></p>
         <div className="flex flex-wrap gap-1.5">

@@ -4,8 +4,12 @@
 export const REMOTE_DEFAULTS = {
   /** Cloud model that reads crops and whole pages. Free tier, measured 14/14 on our handwriting set. */
   cloud_read_model: 'gemini-3.5-flash-lite',
-  /** Cloud model that drafts marking schemes and catch-up worksheets. */
-  cloud_author_model: 'gemini-3.8-flash',
+  /**
+   * Cloud model that drafts marking schemes and catch-up worksheets. Defaults to the fast free model:
+   * gemini-3.8-flash returned "high demand" errors and >90 s stalls in testing (2026-11-12).
+   * Switch in Remote Config without shipping an update.
+   */
+  cloud_author_model: 'gemini-3.5-flash-lite',
   /** prefer_on_device | prefer_in_cloud | only_on_device | only_in_cloud */
   read_mode: 'prefer_on_device',
 

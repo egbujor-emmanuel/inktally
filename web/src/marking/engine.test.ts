@@ -106,6 +106,17 @@ describe('markPoints (AI answers yes/no per point; code adds them up)', () => {
     expect(m.status).toBe('verified');
   });
 
+  it('gives a confident zero (no flag) when the answer is a listed unacceptable answer', () => {
+    const redCell: PointsQuestion = {
+      q: 4, prompt: 'Function of the red blood cell?', max: 1, type: 'points',
+      points: ['transports oxygen'], reject: ['fights disease (that is the white blood cell)'],
+    };
+    const m = markPoints(redCell, 'To fight diseases.', 'in_cloud', [], ['fights disease (that is the white blood cell)']);
+    expect(m.awarded).toBe(0);
+    expect(m.status).toBe('verified');
+    expect(m.reasons.join(' ')).toMatch(/not accepted/i);
+  });
+
   it('ignores points the model claims that are not in the scheme', () => {
     const m = markPoints(liver, 'x', 'in_cloud', ['made up point']);
     expect(m.awarded).toBe(0);

@@ -95,8 +95,8 @@ export function MarkTab({ assignment }: Props) {
       <div role="radiogroup" aria-label="What are you photographing?" className="flex flex-wrap gap-2">
         {([['sheet', 'Printed REDPEN sheet', 'Names never leave the device · works fully offline'], ['page', 'Exercise book page', 'No printer needed · best when online']] as const).map(([value, title, note]) => (
           <button key={value} type="button" role="radio" aria-checked={mode === value} onClick={() => setMode(value)}
-            className={`paper-card px-4 py-3 text-left transition ${mode === value ? 'ring-2 ring-pen' : 'opacity-75 hover:opacity-100'}`}>
-            <span className="block font-semibold">{title}</span><span className="text-xs text-ink-soft">{note}</span>
+            className={`paper-card border-2 px-4 py-3 text-left transition ${mode === value ? '!border-pen bg-white' : 'opacity-70 hover:opacity-100'}`}>
+            <span className="flex items-center gap-2 font-semibold"><span aria-hidden className={`size-3 rounded-full border-2 border-pen ${mode === value ? 'bg-pen' : ''}`} />{title}</span><span className="text-xs text-ink-soft">{note}</span>
           </button>
         ))}
       </div>
@@ -125,9 +125,17 @@ export function MarkTab({ assignment }: Props) {
       </div>
 
       {marks.length > 0 && (
-        <ol className="grid gap-3">
-          {marks.map((m, i) => <MarkRow key={m.q} mark={m} cropUrl={crops[m.q] ?? crops[PAGE_KEY]} index={i} />)}
-        </ol>
+        <div className={crops[PAGE_KEY] ? 'grid gap-6 lg:grid-cols-[18rem_1fr] lg:items-start' : ''}>
+          {crops[PAGE_KEY] && (
+            <figure className="paper-card overflow-hidden p-2 lg:sticky lg:top-36">
+              <img src={crops[PAGE_KEY]} alt="The exercise book page that was marked" className="w-full rounded-md" />
+              <figcaption className="p-2 text-xs text-ink-soft">Kept on this device</figcaption>
+            </figure>
+          )}
+          <ol className="grid gap-3">
+            {marks.map((m, i) => <MarkRow key={m.q} mark={m} cropUrl={crops[m.q]} index={i} />)}
+          </ol>
+        </div>
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import { getGenerativeModel, InferenceMode, Schema, type GenerativeModel, type O
 import { getValue } from 'firebase/remote-config';
 import { ai, remoteConfig } from '../firebase/app';
 import type { RemoteKey } from './config';
+import { withRetry } from './retry';
 
 export type ReadMode = (typeof InferenceMode)[keyof typeof InferenceMode];
 const REQUEST_TIMEOUT_MS = 120_000;
@@ -56,14 +57,35 @@ export function judgeModel(schema: ObjectSchema, mode?: ReadMode): GenerativeMod
 }
 
 /** Long-form authoring (marking schemes, catch-up worksheets): cloud only, needs PDFs and long output. */
-export function authorModel(schema: ObjectSchema): GenerativeModel {
+export function authorModel(schema: ObjectSchema, modelName = config('cloud_author_model'), timeout = AUTHOR_TIMEOUT_MS): GenerativeModel {
   return getGenerativeModel(ai, {
     mode: InferenceMode.ONLY_IN_CLOUD,
     inCloudParams: {
-      model: config('cloud_author_model'),
+      model: modelName,
       generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.2 },
     },
-  }, { timeout: REQUEST_TIMEOUT_MS });
+  }, { timeout });
+}
+
+const AUTHOR_TIMEOUT_MS = 30_000;
+const AUTHOR_ATTEMPTS = 1;
+const FALLBACK_ATTEMPTS = 3;
+
+/**
+ * Generates with the stronger authoring model, falling back to the fast read model when the
+ * stronger one is overloaded or slow (we measured "high demand" errors during testing).
+ */
+export async function authorGenerate(schema: ObjectSchema, request: string | (string | Part)[]): Promise<{ text: string; model: string }> {
+  const primary = config('cloud_author_model');
+  try {
+    const r = await withRetry(() => authorModel(schema, primary).generateContent(request), AUTHOR_ATTEMPTS);
+    return { text: r.response.text(), model: primary };
+  } catch {
+    const fallback = config('cloud_read_model');
+    if (fallback === primary) throw new Error('The cloud is busy right now. Please try again in a minute.');
+    const r = await withRetry(() => authorModel(schema, fallback, REQUEST_TIMEOUT_MS).generateContent(request), FALLBACK_ATTEMPTS);
+    return { text: r.response.text(), model: fallback };
+  }
 }
 
 export async function blobToPart(blob: Blob): Promise<Part> {

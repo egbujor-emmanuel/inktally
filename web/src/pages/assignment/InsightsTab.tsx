@@ -57,7 +57,7 @@ export function InsightsTab({ assignment, submissions }: Props) {
               <div>
                 <p className="font-medium">{row.question.prompt}</p>
                 {row.wrong.length > 0 && (
-                  <p className="mt-1 text-sm text-ink-soft">Common wrong answers: {topCounts(row.wrong).map(([v, n]) => `“${v}” ×${n}`).join(', ')}</p>
+                  <p className="mt-1 text-sm text-ink-soft">Answers that lost marks: {topCounts(row.wrong).map(([v, n]) => `“${v}” ×${n}`).join(', ')}</p>
                 )}
               </div>
               <div aria-label={`${pct}% average`}>

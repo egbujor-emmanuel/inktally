@@ -14,8 +14,8 @@ async function markFromRead(question: Question, read: string, source: ReadSource
     case 'short': return markShort(question, read, source);
     case 'numeric': return markNumericWithMethod(question, read, source, mode);
     case 'points': {
-      const { found } = await checkPoints(read, question.points, question.reject, mode);
-      return markPoints(question, read, source, found);
+      const { found, rejected } = await checkPoints(read, question.points, question.reject, mode);
+      return markPoints(question, read, source, found, rejected);
     }
   }
 }

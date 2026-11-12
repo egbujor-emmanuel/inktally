@@ -83,12 +83,18 @@ export function markShort(question: ShortQuestion, read: string, readSource: Rea
  * Sums marking points that the model judged present. Points not in the scheme are ignored,
  * so a model cannot invent credit. A non-empty answer with zero points is flagged as a likely misread.
  */
-export function markPoints(question: PointsQuestion, read: string, readSource: ReadSource, claimedPoints: string[]): Mark {
+export function markPoints(
+  question: PointsQuestion, read: string, readSource: ReadSource, claimedPoints: string[], claimedRejects: string[] = [],
+): Mark {
   const input = { q: question.q, max: question.max, read, readSource };
   const found = question.points.filter((p) => claimedPoints.includes(p));
+  const rejected = (question.reject ?? []).filter((r) => claimedRejects.includes(r));
   const awarded = Math.min(found.length, question.max);
   const extra = { engine: 'ai-points' as const, pointsFound: found };
   if (!read.trim()) return result(input, 0, settled(readSource), ['No answer written.'], extra);
+  if (found.length === 0 && rejected.length > 0) {
+    return result(input, 0, settled(readSource), [`This answer is not accepted: ${rejected.join('; ')}.`], extra);
+  }
   if (found.length === 0) {
     return result(input, 0, 'flagged', ['No marking point found in a written answer — the handwriting may have been misread.'], extra);
   }

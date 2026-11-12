@@ -35,7 +35,7 @@ export function StatusBar() {
           <span style={{ color: 'var(--color-device)' }}>{counts.on_device} on-device</span>
           {' · '}
           <span style={{ color: 'var(--color-cloud)' }}>{counts.in_cloud} cloud</span>
-          {onDeviceShare !== null && <span className="text-ink-soft"> ({onDeviceShare}% free & private)</span>}
+          {onDeviceShare !== null && onDeviceShare > 0 && <span className="text-ink-soft"> ({onDeviceShare}% free & private)</span>}
         </span>
       )}
     </div>

@@ -4,8 +4,7 @@ import { Schema } from 'firebase/ai';
 import { z } from 'zod';
 import type { Question } from '../domain/types';
 import { fillTemplate } from './config';
-import { authorModel, config } from './models';
-import { withRetry } from './retry';
+import { authorGenerate, config } from './models';
 import { recordInference } from './telemetry';
 
 const CATCH_UP_SCHEMA = Schema.object({
@@ -29,9 +28,9 @@ export async function makeCatchUp(question: Question, mistakes: string[], subjec
     level, subject, q: question.q, prompt: question.prompt, mistakes: unique.map((m) => `"${m}"`).join(', '),
   });
   const started = performance.now();
-  const response = await withRetry(() => authorModel(CATCH_UP_SCHEMA).generateContent(prompt));
+  const { text } = await authorGenerate(CATCH_UP_SCHEMA, prompt);
   recordInference({ kind: 'author', source: 'in_cloud', ms: Math.round(performance.now() - started) });
-  const parsed = CatchUp.safeParse(JSON.parse(response.response.text()));
+  const parsed = CatchUp.safeParse(JSON.parse(text));
   if (!parsed.success) throw new Error('The catch-up sheet came back incomplete. Please try again.');
   return parsed.data;
 }

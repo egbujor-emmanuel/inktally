@@ -37,9 +37,9 @@ export function AssignmentPage() {
         </div>
         <p className="text-ink-soft">{submissions.length} pupil{submissions.length === 1 ? '' : 's'} marked{toCheck > 0 && ` · ${toCheck} to check`}</p>
       </header>
-      <nav className="mt-6 flex gap-1 overflow-x-auto border-b border-[oklch(85%_0.02_85)]" aria-label="Assignment sections">
+      <nav className="mt-6 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-[oklch(85%_0.02_85)]" aria-label="Assignment sections">
         {TABS.map((t) => (
-          <NavLink key={t.to} to={t.to}
+          <NavLink key={t.to} to={`/a/${id}/${t.to}`}
             className={({ isActive }) => `-mb-px whitespace-nowrap border-b-2 px-4 py-2 font-semibold ${isActive ? 'border-pen text-pen' : 'border-transparent text-ink-soft hover:text-ink'}`}>
             {t.label}
           </NavLink>

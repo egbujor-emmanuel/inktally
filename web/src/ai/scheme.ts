@@ -4,8 +4,7 @@ import { Schema, type Part } from 'firebase/ai';
 import { z } from 'zod';
 import type { MarkingScheme, Question } from '../domain/types';
 import { fillTemplate } from './config';
-import { authorModel, blobToPart, config } from './models';
-import { withRetry } from './retry';
+import { authorGenerate, blobToPart, config } from './models';
 import { recordInference } from './telemetry';
 
 const QUESTION_TYPES = ['objective', 'numeric', 'short', 'points'] as const;
@@ -69,9 +68,9 @@ export async function draftScheme(source: SchemeSource, subject: string, level: 
   if (parts.length === 1) throw new Error('Add the question paper (photo, PDF or typed questions) first.');
 
   const started = performance.now();
-  const response = await withRetry(() => authorModel(DRAFT_SCHEMA).generateContent(parts));
+  const { text } = await authorGenerate(DRAFT_SCHEMA, parts);
   recordInference({ kind: 'author', source: 'in_cloud', ms: Math.round(performance.now() - started) });
-  const parsed = Draft.safeParse(JSON.parse(response.response.text()));
+  const parsed = Draft.safeParse(JSON.parse(text));
   if (!parsed.success) throw new Error('The drafted marking scheme was incomplete. Try a clearer photo or type the questions.');
   const questions = parsed.data.questions.map(toQuestion).filter((q): q is Question => q !== null).sort((a, b) => a.q - b.q);
   return { subject, level, questions };
