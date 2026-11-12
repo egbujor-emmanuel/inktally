@@ -87,6 +87,16 @@ fun MarkGlyph(mark: Mark, size: Int = 40) {
     }
 }
 
+/** Static red tick for list rows. */
+@Composable
+fun TickGlyph(size: Int = 30) {
+    Canvas(Modifier.size(size.dp)) {
+        val s = this.size.width / 56f
+        val path = Path().apply { moveTo(6f * s, 30f * s); lineTo(20f * s, 44f * s); lineTo(50f * s, 10f * s) }
+        drawPath(path, RP.Pen, style = Stroke(width = 6f * s, cap = StrokeCap.Round))
+    }
+}
+
 @Composable
 fun MarkCard(mark: Mark, crop: Bitmap?, extra: @Composable () -> Unit = {}) {
     Card(colors = CardDefaults.cardColors(containerColor = RP.Paper), border = BorderStroke(1.dp, Color(0xFFE5DECF)), modifier = Modifier.fillMaxWidth()) {
@@ -120,28 +130,35 @@ fun MarkCard(mark: Mark, crop: Bitmap?, extra: @Composable () -> Unit = {}) {
 }
 
 @Composable
+private fun Chip(text: String, dot: Color? = null, colour: Color = RP.InkSoft) {
+    Row(Modifier.border(BorderStroke(1.dp, RP.Border), RoundedCornerShape(50)).background(Color.White, RoundedCornerShape(50))
+        .padding(horizontal = 10.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (dot != null) { Spacer(Modifier.size(7.dp).background(dot, CircleShape)); Spacer(Modifier.width(6.dp)) }
+        Text(text, fontSize = 12.sp, color = colour, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
 fun StatusStrip() {
     val online by Connectivity.online.collectAsState()
     val device by DeviceModel.state.collectAsState()
     val counts by Telemetry.counts.collectAsState()
     val scope = rememberCoroutineScope()
-    Column(Modifier.fillMaxWidth().background(RP.Paper).padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Spacer(Modifier.size(8.dp).background(if (online) RP.Device else RP.Flag, CircleShape))
-            Spacer(Modifier.width(6.dp))
-            Text(if (online) "Online" else "Offline — marking on this phone, cloud checks later", fontSize = 13.sp)
+    val deviceText = when (val d = device) {
+        DeviceModel.State.Checking -> "Checking on-device AI…"
+        DeviceModel.State.Ready -> "Gemini Nano ready"
+        DeviceModel.State.Unavailable -> "Using the cloud (no on-device AI)"
+        DeviceModel.State.Downloadable -> "Gemini Nano not downloaded"
+        is DeviceModel.State.Downloading -> "Downloading Gemini Nano… ${d.bytes / 1_000_000} MB"
+        is DeviceModel.State.Failed -> d.message
+    }
+    Column(Modifier.fillMaxWidth().background(RP.Paper).padding(horizontal = 16.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Chip(if (online) "Online" else "Offline — cloud checks later", dot = if (online) RP.Device else RP.Flag, colour = RP.Ink)
+            Chip(deviceText, dot = if (device == DeviceModel.State.Ready) RP.Device else RP.Cloud)
+            val total = (counts[ReadSource.ON_DEVICE] ?: 0) + (counts[ReadSource.IN_CLOUD] ?: 0)
+            if (total > 0) Chip("${counts[ReadSource.ON_DEVICE]} on-device · ${counts[ReadSource.IN_CLOUD]} cloud", colour = RP.Ink)
         }
-        val deviceText = when (device) {
-            DeviceModel.State.Checking -> "Checking on-device AI…"
-            DeviceModel.State.Ready -> "Gemini Nano ready on this phone"
-            DeviceModel.State.Unavailable -> "This phone can’t run on-device AI — using the cloud"
-            DeviceModel.State.Downloadable -> "Gemini Nano not downloaded yet"
-            is DeviceModel.State.Downloading -> "Downloading Gemini Nano… ${(device as DeviceModel.State.Downloading).bytes / 1_000_000} MB"
-            is DeviceModel.State.Failed -> "Model download failed: ${(device as DeviceModel.State.Failed).message}"
-        }
-        Text(deviceText, fontSize = 13.sp, color = RP.InkSoft)
         if (device == DeviceModel.State.Downloadable) Button(onClick = { scope.launch { DeviceModel.download() } }) { Text("Download on-device AI") }
-        val total = (counts[ReadSource.ON_DEVICE] ?: 0) + (counts[ReadSource.IN_CLOUD] ?: 0)
-        if (total > 0) Text("${counts[ReadSource.ON_DEVICE]} on-device · ${counts[ReadSource.IN_CLOUD]} cloud", fontSize = 13.sp, fontWeight = FontWeight.Medium)
     }
 }

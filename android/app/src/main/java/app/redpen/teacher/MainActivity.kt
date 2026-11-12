@@ -49,10 +49,10 @@ class MainActivity : ComponentActivity() {
                     }
                     Column(Modifier.safeDrawingPadding()) {
                         Row(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Image(painterResource(R.drawable.ic_launcher_foreground), null, Modifier.size(40.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("RED", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = RP.Ink)
-                            Text("PEN", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = RP.Pen)
+                            Image(painterResource(R.drawable.logo_mark), contentDescription = null, modifier = Modifier.size(38.dp))
+                            Spacer(Modifier.width(10.dp))
+                            Text("RED", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = RP.Ink)
+                            Text("PEN", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = RP.Pen)
                         }
                         StatusStrip()
                         val message = boot
