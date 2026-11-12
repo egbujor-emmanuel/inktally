@@ -40,7 +40,10 @@ data class Assignment(
     val maxTotal get() = scheme.questions.sumOf { it.max }
 }
 
-data class Submission(val id: String, val pupil: String, val marks: List<Mark>, val comment: String = "")
+/** Saved offline on a phone without on-device AI; marked automatically when the phone is back online. */
+data class Queued(val mode: String, val page: Int)
+
+data class Submission(val id: String, val pupil: String, val marks: List<Mark>, val comment: String = "", val queued: Queued? = null)
 
 /**
  * Same Firestore layout and rules as the web app (assignments/{id}/submissions/{sid}, users/{uid}/settings/profile).
@@ -56,6 +59,8 @@ object Repo {
     const val PAGE_KEY = 0
     /** Device-only key for the generated marked copy of the student's work. */
     const val MARKED_KEY = -1
+    /** Device-only key for the original photo of a student waiting to be marked (offline queue). */
+    const val PHOTO_KEY = -2
 
     private val db get() = Firebase.firestore
     private fun uid() = Firebase.auth.currentUser?.uid ?: error("Not signed in yet")
@@ -138,7 +143,8 @@ object Repo {
 
     @Suppress("UNCHECKED_CAST")
     private fun submissionOf(d: DocumentSnapshot) = Submission(d.id, d.getString("pupil") ?: "",
-        ((d.get("marks") as? List<*>) ?: emptyList<Any>()).mapNotNull { (it as? Map<String, Any?>)?.let(::markOf) }, d.getString("comment") ?: "")
+        ((d.get("marks") as? List<*>) ?: emptyList<Any>()).mapNotNull { (it as? Map<String, Any?>)?.let(::markOf) }, d.getString("comment") ?: "",
+        (d.get("queued") as? Map<String, Any?>)?.let { q -> Queued(q["mode"] as? String ?: "sheet", (q["page"] as? Number)?.toInt() ?: 0) })
 
     /**
      * Snapshot listener that survives transient denials: a listener can reach the server before a doc we just
@@ -204,12 +210,21 @@ object Repo {
     }
 
     // ---- submissions ----
-    fun createSubmission(assignmentId: String, pupil: String): String {
+    fun createSubmission(assignmentId: String, pupil: String, queued: Queued? = null): String {
         val ref = db.collection("assignments").document(assignmentId).collection("submissions").document()
-        queue("the student", ref.set(mapOf("assignmentId" to assignmentId, "ownerUid" to uid(), "pupil" to pupil.take(PUPIL_LIMIT),
-            "marks" to emptyList<Any>(), "createdAt" to FieldValue.serverTimestamp())))
+        val data = buildMap<String, Any> {
+            put("assignmentId", assignmentId); put("ownerUid", uid()); put("pupil", pupil.take(PUPIL_LIMIT))
+            put("marks", emptyList<Any>()); put("createdAt", FieldValue.serverTimestamp())
+            queued?.let { put("queued", mapOf("mode" to it.mode, "page" to it.page)) }
+        }
+        queue("the student", ref.set(data))
         return ref.id
     }
+
+    /** A queued student has now been marked: store the marks and take them off the waiting list. */
+    fun finishQueued(assignmentId: String, submissionId: String, marks: List<Mark>) = queue("the marks",
+        db.collection("assignments").document(assignmentId).collection("submissions").document(submissionId)
+            .update(mapOf("marks" to marks.map { it.toMap() }, "queued" to FieldValue.delete())))
 
     fun saveMarks(assignmentId: String, submissionId: String, marks: List<Mark>) =
         queue("the marks", db.collection("assignments").document(assignmentId).collection("submissions").document(submissionId).update("marks", marks.map { it.toMap() }))
@@ -253,7 +268,7 @@ object Repo {
     private fun cropFile(ctx: Context, submissionId: String, q: Int) = File(File(ctx.filesDir, "crops").apply { mkdirs() }, "${submissionId}_$q.img")
 
     fun saveCrop(ctx: Context, submissionId: String, q: Int, bmp: Bitmap) = cropFile(ctx, submissionId, q).outputStream().use {
-        if (q == PAGE_KEY) bmp.compress(Bitmap.CompressFormat.JPEG, 90, it) else bmp.compress(Bitmap.CompressFormat.PNG, 100, it)
+        if (q == PAGE_KEY || q == PHOTO_KEY) bmp.compress(Bitmap.CompressFormat.JPEG, 90, it) else bmp.compress(Bitmap.CompressFormat.PNG, 100, it)
     }
 
     fun loadCrop(ctx: Context, submissionId: String, q: Int): Bitmap? =

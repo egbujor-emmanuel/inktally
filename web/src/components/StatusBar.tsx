@@ -22,7 +22,9 @@ export function StatusBar() {
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm" role="status" aria-live="polite">
       <span className="inline-flex items-center gap-2">
         <span className="size-2 rounded-full" style={{ background: isOnline ? 'var(--color-device)' : 'var(--color-flag)' }} aria-hidden />
-        {isOnline ? 'Online' : 'Offline — marking on this device, cloud checks will run later'}
+        {isOnline ? 'Online' : device.availability === 'available'
+          ? 'Offline — marking on this device, cloud checks will run later'
+          : 'Offline — photos are saved and marked when you’re back online'}
       </span>
       <span className="text-ink-soft">{DEVICE_COPY[device.availability]}</span>
       {canEnable && device.progress === null && (

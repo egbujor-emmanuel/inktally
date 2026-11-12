@@ -64,7 +64,7 @@ export function RegisterTab({ assignment, submissions }: Props) {
     const header = ['Student', ...questions.map((q) => `Q${q.q} (/${q.max})`), `Total (/${max})`, 'Percent', 'Status', 'Teacher comment'];
     const lines = rows.map((r) => [
       r.submission.pupil, ...r.scores.map((v) => v ?? ''), r.total, `${Math.round((r.total / (max || 1)) * 100)}%`,
-      r.unchecked ? `${r.unchecked} to check` : 'final', r.submission.comment ?? '',
+      r.submission.queued ? 'waiting to be marked' : r.unchecked ? `${r.unchecked} to check` : 'final', r.submission.comment ?? '',
     ]);
     const csv = [...letterhead, header, ...lines].map((l) => l.map(csvCell).join(',')).join('\n');
     downloadBlob(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }), registerFileName(assignment, 'csv'));
@@ -121,7 +121,7 @@ export function RegisterTab({ assignment, submissions }: Props) {
                   <td key={questions[i].q} className={`p-2 text-center font-hand text-xl ${v !== null && v < questions[i].max ? 'text-pen' : ''}`}>{v ?? '–'}</td>
                 ))}
                 <td className="p-2 text-center font-hand text-2xl text-pen">{r.total}</td>
-                <td className="p-2 text-xs text-ink-soft">{r.unchecked ? `${r.unchecked} to check` : 'Final'}</td>
+                <td className="p-2 text-xs text-ink-soft">{r.submission.queued ? 'Waiting to be marked' : r.unchecked ? `${r.unchecked} to check` : 'Final'}</td>
                 <td className="p-1">
                   <EditableCell value={r.submission.comment ?? ''} label={`Comment for ${r.submission.pupil}`} maxLength={COMMENT_LIMIT} multiline
                     onSave={(v) => updateSubmission(assignment.id, r.submission.id, { comment: v })} />

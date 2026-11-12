@@ -66,7 +66,7 @@ export async function buildRegisterWorkbook(assignment: Assignment, submissions:
     const xr = ws.getRow(r);
     xr.values = [
       safeText(row.submission.pupil), ...row.scores.map((v) => v ?? ''), row.total, max ? row.total / max : 0,
-      row.unchecked ? `${row.unchecked} to check` : 'Final', safeText(row.submission.comment ?? ''),
+      row.submission.queued ? 'Waiting to be marked' : row.unchecked ? `${row.unchecked} to check` : 'Final', safeText(row.submission.comment ?? ''),
     ];
     xr.getCell(percentCol).numFmt = '0%';
     xr.getCell(totalCol).font = { bold: true, color: { argb: 'FFC8102E' } };

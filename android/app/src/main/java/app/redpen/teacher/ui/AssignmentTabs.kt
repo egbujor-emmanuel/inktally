@@ -62,6 +62,7 @@ import app.redpen.teacher.domain.maxTotal
 import app.redpen.teacher.domain.needsCheck
 import app.redpen.teacher.domain.total
 import app.redpen.teacher.marking.Marker
+import app.redpen.teacher.marking.MarkSubmission
 import app.redpen.teacher.scan.Render
 import app.redpen.teacher.scan.Scanner
 import app.redpen.teacher.scan.SheetLayout
@@ -76,60 +77,50 @@ private fun failed(q: Int, max: Int, e: Throwable) = Mark(q, "", ReadSource.ON_D
 // ---------------------------------------------------------------- Mark
 
 @Composable
-fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile) {
+fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queue: QueueState) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
+    val online by Connectivity.online.collectAsState()
+    val device by app.redpen.teacher.DeviceModel.state.collectAsState()
     val pages = remember(a.scheme.questions) { SheetLayout.pages(a.scheme.questions) }
     var sheetMode by remember { mutableStateOf(true) }
     var page by remember { mutableIntStateOf(0) }
     var pupil by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
+    var queuedFor by remember { mutableStateOf<String?>(null) }
     var marks by remember { mutableStateOf<List<Mark>>(emptyList()) }
     var crops by remember { mutableStateOf<Map<Int, Bitmap>>(emptyMap()) }
     var busy by remember { mutableStateOf(false) }
     var done by remember { mutableStateOf<Pair<String, Bitmap?>?>(null) } // submission id + marked copy
 
     fun markPhoto(photo: Bitmap) {
-        busy = true; marks = emptyList(); crops = emptyMap(); done = null
+        busy = true; marks = emptyList(); crops = emptyMap(); done = null; queuedFor = null; status = null
         val label = pupil.ifBlank { "Student ${java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date())}" }
+        val mode = if (sheetMode) MarkSubmission.SHEET else MarkSubmission.PAGE
         scope.launch {
             try {
-                if (!sheetMode) {
-                    status = "Reading the page…"
-                    val sid = Repo.createSubmission(a.id, label)
-                    withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PAGE_KEY, photo) }
-                    val collected = Marker.markPage(a.scheme.questions, photo)
-                    marks = collected
-                    Repo.saveMarks(a.id, sid, collected)
-                    val copy = runCatching { withContext(Dispatchers.Default) { Render.pageCopy(ctx, photo, collected, label) } }.getOrNull()
-                    copy?.let { withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.MARKED_KEY, it) } }
-                    status = "Total: ${collected.total()}/${collected.maxTotal()}"
-                    done = sid to copy
-                } else {
-                    status = "Finding the answer boxes…"
-                    val boxes = pages[page.coerceIn(0, pages.size - 1)]
-                    when (val scan = withContext(Dispatchers.Default) { Scanner.scan(photo, boxes) }) {
-                        is Scanner.Result.Failed -> status = scan.reason
-                        is Scanner.Result.Ok -> {
-                            crops = scan.crops
-                            val sid = Repo.createSubmission(a.id, label)
-                            val collected = mutableListOf<Mark>()
-                            for ((q, crop) in scan.crops) {
-                                val question = a.scheme.questions.firstOrNull { it.q == q } ?: continue
-                                withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, q, crop) }
-                                status = "Marking ${collected.size + 1} of ${scan.crops.size}…"
-                                collected += runCatching { Marker.mark(question, crop) }.getOrElse { failed(q, question.max, it) }
-                                marks = collected.toList()
-                                Repo.saveMarks(a.id, sid, collected)
-                            }
-                            val copy = runCatching { withContext(Dispatchers.Default) { Render.sheetCopy(ctx, photo, scan.sheetToPhoto, boxes, collected, label) } }.getOrNull()
-                            copy?.let { withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.MARKED_KEY, it) } }
-                            status = "Total: ${collected.total()}/${collected.maxTotal()}"
-                            done = sid to copy
-                        }
+                // No connection and no on-device AI: keep the photo on this phone and mark it when the connection is back.
+                if (!online && device != app.redpen.teacher.DeviceModel.State.Ready) {
+                    val sid = Repo.createSubmission(a.id, label, app.redpen.teacher.data.Queued(mode, page))
+                    withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PHOTO_KEY, photo) }
+                    queuedFor = label; pupil = ""
+                    return@launch
+                }
+                status = if (sheetMode) "Finding the answer boxes…" else "Reading the page…"
+                val sid = Repo.createSubmission(a.id, label)
+                when (val outcome = MarkSubmission.mark(ctx, a, mode, photo, page, sid, label) { p ->
+                    if (p.crops.isNotEmpty()) crops = p.crops
+                    marks = p.marks
+                    status = if (p.marks.size < p.total) "Marking ${p.marks.size + 1} of ${p.total}…" else status
+                }) {
+                    is MarkSubmission.Outcome.Failed -> status = outcome.reason
+                    is MarkSubmission.Outcome.Ok -> {
+                        marks = outcome.marks
+                        status = "Total: ${outcome.marks.total()}/${outcome.marks.maxTotal()}"
+                        done = sid to outcome.copy
+                        pupil = ""
                     }
                 }
-                pupil = ""
             } catch (e: Exception) {
                 status = "Something went wrong: ${Repo.friendly(e)}"
             } finally { busy = false }
@@ -158,6 +149,16 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile) {
         }
         status?.let { item { Text(it, fontFamily = if (it.startsWith("Total")) RP.Display else RP.Hand, fontWeight = FontWeight.Bold,
             fontSize = if (it.startsWith("Total")) 30.sp else 24.sp, color = if (it.startsWith("Total")) RP.Ink else RP.InkSoft, modifier = Modifier.padding(horizontal = 16.dp)) } }
+        queuedFor?.let { who ->
+            item {
+                Paper(borderColor = RP.Flag) {
+                    Text("Saved for marking: $who", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Text("You’re offline and this phone can’t read handwriting without a connection. The photo stays on this phone and REDPEN marks it automatically as soon as you’re back online. Keep photographing the rest of the class.",
+                        color = RP.InkSoft, fontSize = 14.sp)
+                }
+            }
+        }
+        if (queue.waiting.isNotEmpty()) item { QueuePanel(queue, online) }
         done?.let { (sid, copy) ->
             submissions.find(sid)?.let { s -> item { PupilRecord(a, s, profile, copy) } }
         }
@@ -172,6 +173,52 @@ private fun ModeOption(selected: Boolean, title: String, subtitle: String, onCli
         .selectable(selected, onClick = onClick).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
         RadioButton(selected, onClick)
         Column { Text(title, fontWeight = FontWeight.SemiBold); Text(subtitle, color = RP.InkSoft, fontSize = 12.sp) }
+    }
+}
+
+class QueueState(val waiting: List<Submission>, val current: Submission?, val error: String?)
+
+/**
+ * The offline queue: photos taken offline on a phone without on-device AI are saved on the phone and marked here
+ * automatically once the connection is back. Runs while the assignment is open (any tab).
+ */
+@Composable
+fun rememberMarkingQueue(a: Assignment, submissions: List<Submission>): QueueState {
+    val ctx = LocalContext.current
+    val online by Connectivity.online.collectAsState()
+    var current by remember { mutableStateOf<Submission?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val waiting = submissions.filter { it.queued != null }
+    LaunchedEffect(online, waiting.joinToString(",") { it.id }) {
+        if (!online) return@LaunchedEffect
+        for (s in waiting) {
+            val q = s.queued ?: continue
+            val photo = withContext(Dispatchers.IO) { Repo.loadCrop(ctx, s.id, Repo.PHOTO_KEY) } ?: continue // taken on another device
+            current = s
+            try {
+                when (val outcome = MarkSubmission.mark(ctx, a, q.mode, photo, q.page, s.id, s.pupil)) {
+                    is MarkSubmission.Outcome.Ok -> { Repo.finishQueued(a.id, s.id, outcome.marks); error = null }
+                    is MarkSubmission.Outcome.Failed -> error = "${s.pupil}: ${outcome.reason}"
+                }
+            } catch (e: Exception) {
+                error = "${s.pupil}: ${Repo.friendly(e)}"; break // connection probably dropped again; retry later
+            }
+        }
+        current = null
+    }
+    return QueueState(waiting, current, error)
+}
+
+@Composable
+private fun QueuePanel(queue: QueueState, online: Boolean) {
+    Paper {
+        Text("${queue.waiting.size} waiting to be marked", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        Text(queue.current?.let { "Marking ${it.pupil} now…" } ?: if (online) "Starting…" else "They will be marked automatically when you’re back online.",
+            color = RP.InkSoft, fontSize = 14.sp)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            queue.waiting.forEach { s -> Pill(s.pupil, if (queue.current?.id == s.id) RP.Pen else RP.InkSoft) }
+        }
+        queue.error?.let { Text("Could not mark $it. It stays in the queue.", color = RP.Pen, fontSize = 13.sp) }
     }
 }
 
@@ -326,7 +373,7 @@ fun RegisterTab(a: Assignment, submissions: List<Submission>, profile: Profile, 
                         Cell(r.submission.pupil, 130, bold = true, onClick = { editing = r.submission to "pupil" })
                         r.scores.forEachIndexed { i, v -> Cell(v?.toString() ?: "–", 54, hand = true, red = v != null && v < a.scheme.questions[i].max) }
                         Cell("${r.total}", 70, hand = true, red = true)
-                        Cell(if (r.unchecked > 0) "${r.unchecked} to check" else "Final", 86, small = true)
+                        Cell(if (r.submission.queued != null) "Waiting" else if (r.unchecked > 0) "${r.unchecked} to check" else "Final", 86, small = true)
                         Cell(r.submission.comment.ifBlank { "Add a comment" }, 200, hand = r.submission.comment.isNotBlank(), red = r.submission.comment.isNotBlank(),
                             small = r.submission.comment.isBlank(), onClick = { editing = r.submission to "comment" })
                         Box(Modifier.width(92.dp)) { TextButton(onClick = { openId = if (openId == r.submission.id) null else r.submission.id }) { Text(if (openId == r.submission.id) "Close" else "Marked copy", fontSize = 12.sp) } }

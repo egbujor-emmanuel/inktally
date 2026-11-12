@@ -35,7 +35,7 @@ object Register {
         val header = listOf("Student") + a.scheme.questions.map { "Q${it.q} (/${it.max})" } + listOf("Total (/$max)", "Percent", "Status", "Teacher comment")
         val lines = rows(a, submissions).map { r ->
             listOf(r.submission.pupil) + r.scores.map { it?.toString() ?: "" } +
-                listOf(r.total.toString(), "${if (max > 0) r.total * 100 / max else 0}%", if (r.unchecked > 0) "${r.unchecked} to check" else "final", r.submission.comment)
+                listOf(r.total.toString(), "${if (max > 0) r.total * 100 / max else 0}%", if (r.submission.queued != null) "waiting to be marked" else if (r.unchecked > 0) "${r.unchecked} to check" else "final", r.submission.comment)
         }
         return "﻿" + (head + listOf(header) + lines).joinToString("\n") { l -> l.joinToString(",") { csvCell(it) } }
     }
@@ -106,7 +106,7 @@ object Register {
         rows.forEach { r ->
             sheet += listOf<Cell?>(Txt(safeText(r.submission.pupil), 7)) + r.scores.map { it?.let { v -> Num(v.toDouble(), 7) } ?: Txt("", 7) } +
                 listOf(Num(r.total.toDouble(), Style.TOTAL), Num(if (max > 0) r.total.toDouble() / max else 0.0, Style.PERCENT),
-                    Txt(if (r.unchecked > 0) "${r.unchecked} to check" else "Final", 7), Txt(safeText(r.submission.comment), Style.WRAP))
+                    Txt(if (r.submission.queued != null) "Waiting to be marked" else if (r.unchecked > 0) "${r.unchecked} to check" else "Final", 7), Txt(safeText(r.submission.comment), Style.WRAP))
         }
         if (rows.isNotEmpty()) {
             sheet += emptyList<Cell?>()

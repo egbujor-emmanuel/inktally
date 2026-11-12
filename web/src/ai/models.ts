@@ -26,9 +26,13 @@ function plainJsonSchema(schema: ObjectSchema): object {
 
 /** Cached once per session: if Chrome cannot run Gemini Nano here, skip the doomed on-device attempt. */
 let deviceUsable: boolean | null = null;
+/** True only when Gemini Nano is downloaded and ready, i.e. reading works with no connection at all. */
+let deviceReadyOffline = false;
+export const canReadOffline = (): boolean => deviceReadyOffline;
 export async function refreshDeviceCapability(): Promise<void> {
   const status = await onDeviceAvailability();
   deviceUsable = status === 'available' || status === 'downloadable' || status === 'downloading';
+  deviceReadyOffline = status === 'available';
 }
 
 function readMode(override?: ReadMode): ReadMode {

@@ -1,19 +1,17 @@
 import { useMemo, useState, type ChangeEvent } from 'react';
 import type { Mark } from '../../domain/types';
-import { MARKED_KEY, PAGE_KEY, createSubmission, saveCrop, saveMarks, type Assignment, type Submission } from '../../data/store';
-import { markAnswer, markPage } from '../../marking/markAnswer';
+import { MARKED_KEY, PAGE_KEY, PHOTO_KEY, createSubmission, saveCrop, type Assignment, type Submission } from '../../data/store';
 import { layoutSheet } from '../../scan/layout';
-import { scanSheet } from '../../scan/pipeline';
 import { MarkRow } from '../../components/MarkRow';
 import { MarkedCopy } from '../../components/MarkedCopy';
 import { PupilRecord } from '../../components/PupilRecord';
 import { useProfile } from '../../data/profile';
-import { markedPageCopy, markedSheetCopy } from '../../scan/markedCopy';
 import { friendlyCloudError } from '../../ai/errors';
+import { canReadOffline } from '../../ai/models';
+import { markSubmission, type CaptureMode } from '../../marking/markSubmission';
+import type { QueueState } from '../../hooks/useMarkingQueue';
 
-type Props = { assignment: Assignment; submissions: Submission[] };
-
-type SheetMode = 'sheet' | 'page';
+type Props = { assignment: Assignment; submissions: Submission[]; queue: QueueState };
 
 export { PAGE_KEY, MARKED_KEY };
 
@@ -22,85 +20,51 @@ type Phase =
   | { kind: 'scanning' }
   | { kind: 'marking'; done: number; total: number }
   | { kind: 'done'; total: number; max: number }
+  | { kind: 'queued'; pupil: string }
   | { kind: 'error'; message: string };
 
 const field = 'mt-1 w-full rounded-lg border border-[oklch(82%_0.02_85)] bg-white px-3 py-2';
 
-function failedMark(q: number, max: number, error: unknown): Mark {
-  const message = error instanceof Error ? error.message : 'Unknown error';
-  return {
-    q, max, read: '', readSource: 'on_device', awarded: 0, engine: 'code', status: 'flagged',
-    reasons: [`Could not read this answer (${message}). Check it by hand or retry when online.`],
-  };
-}
-
-export function MarkTab({ assignment, submissions }: Props) {
+export function MarkTab({ assignment, submissions, queue }: Props) {
   const profile = useProfile();
   const pages = useMemo(() => layoutSheet(assignment.scheme.questions), [assignment.scheme.questions]);
   const [pupil, setPupil] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
-  const [mode, setMode] = useState<SheetMode>('sheet');
+  const [mode, setMode] = useState<CaptureMode>('sheet');
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
   const [marks, setMarks] = useState<Mark[]>([]);
   const [crops, setCrops] = useState<Record<number, string>>({});
   const [copy, setCopy] = useState<{ blob: Blob; pupil: string; submissionId: string } | null>(null);
-
-  /** Builds the marked copy (best effort: marking already succeeded if this fails). */
-  async function makeCopy(submissionId: string, label: string, build: () => Promise<Blob>) {
-    try {
-      const blob = await build();
-      await saveCrop(submissionId, MARKED_KEY, blob);
-      setCopy({ blob, pupil: label, submissionId });
-    } catch { /* the marks are saved; the copy can be regenerated later */ }
-  }
-
-  async function markExercisePage(photo: File) {
-    setCrops({ [PAGE_KEY]: URL.createObjectURL(photo) });
-    const label = pupil.trim() || `Student ${new Date().toLocaleTimeString()}`;
-    const submissionId = await createSubmission(assignment.id, label, []);
-    await saveCrop(submissionId, PAGE_KEY, photo);
-    setPhase({ kind: 'marking', done: 0, total: assignment.scheme.questions.length });
-    const collected = await markPage(assignment.scheme.questions, photo);
-    setMarks(collected);
-    await saveMarks(assignment.id, submissionId, collected);
-    setPhase({ kind: 'done', total: collected.reduce((a, m) => a + m.awarded, 0), max: collected.reduce((a, m) => a + m.max, 0) });
-    setPupil('');
-    await makeCopy(submissionId, label, () => markedPageCopy(photo, collected, label));
-  }
 
   async function handlePhoto(event: ChangeEvent<HTMLInputElement>) {
     const photo = event.target.files?.[0];
     event.target.value = '';
     if (!photo) return;
     setMarks([]);
-    setCrops({});
+    setCrops(mode === 'page' ? { [PAGE_KEY]: URL.createObjectURL(photo) } : {});
     setCopy(null);
-    setPhase({ kind: 'scanning' });
+    const label = pupil.trim() || `Student ${new Date().toLocaleTimeString()}`;
     try {
-      if (mode === 'page') { await markExercisePage(photo); return; }
-      const page = pages[pageIndex];
-      const scan = await scanSheet(photo, page.boxes);
-      if (!scan.ok) { setPhase({ kind: 'error', message: scan.reason }); return; }
-      setCrops(Object.fromEntries(scan.crops.map((c) => [c.q, c.dataUrl])));
-
-      const label = pupil.trim() || `Student ${new Date().toLocaleTimeString()}`;
-      const submissionId = await createSubmission(assignment.id, label, []);
-      const collected: Mark[] = [];
-      setPhase({ kind: 'marking', done: 0, total: scan.crops.length });
-      for (const crop of scan.crops) {
-        const question = assignment.scheme.questions.find((q) => q.q === crop.q);
-        if (!question) continue;
-        await saveCrop(submissionId, crop.q, crop.blob);
-        let mark: Mark;
-        try { mark = await markAnswer(question, crop.blob); } catch (e: unknown) { mark = failedMark(question.q, question.max, e); }
-        collected.push(mark);
-        setMarks([...collected]);
-        setPhase({ kind: 'marking', done: collected.length, total: scan.crops.length });
-        await saveMarks(assignment.id, submissionId, collected);
+      // No connection and no on-device AI: keep the photo on this device and mark it when the connection is back.
+      if (!navigator.onLine && !canReadOffline()) {
+        const submissionId = await createSubmission(assignment.id, label, [], { mode, page: pageIndex });
+        await saveCrop(submissionId, PHOTO_KEY, photo);
+        setPupil('');
+        setPhase({ kind: 'queued', pupil: label });
+        return;
       }
-      setPhase({ kind: 'done', total: collected.reduce((a, m) => a + m.awarded, 0), max: collected.reduce((a, m) => a + m.max, 0) });
+      setPhase({ kind: 'scanning' });
+      const submissionId = await createSubmission(assignment.id, label, []);
+      const outcome = await markSubmission(assignment, mode, photo, pageIndex, submissionId, label, (p) => {
+        if (p.crops) setCrops(p.crops);
+        setMarks(p.marks);
+        setPhase({ kind: 'marking', done: p.marks.length, total: p.total });
+      });
+      if (!outcome.ok) { setPhase({ kind: 'error', message: outcome.reason }); return; }
+      setMarks(outcome.marks);
+      setPhase({ kind: 'done', total: outcome.marks.reduce((a, m) => a + m.awarded, 0), max: outcome.marks.reduce((a, m) => a + m.max, 0) });
       setPupil('');
-      await makeCopy(submissionId, label, () => markedSheetCopy(photo, scan.sheetToPhoto, page.boxes, collected, label));
+      if (outcome.copy) setCopy({ blob: outcome.copy, pupil: label, submissionId });
     } catch (e: unknown) {
       setPhase({ kind: 'error', message: friendlyCloudError(e).message });
     }
@@ -139,8 +103,19 @@ export function MarkTab({ assignment, submissions }: Props) {
         {phase.kind === 'scanning' && <p className="font-hand text-3xl text-ink-soft">{mode === 'sheet' ? 'Finding the answer boxes…' : 'Reading the page…'}</p>}
         {phase.kind === 'marking' && <p className="font-hand text-3xl text-ink-soft">Marking {phase.done} of {phase.total}…</p>}
         {phase.kind === 'done' && <p className="font-display text-3xl font-bold">Total: <span className="font-hand text-5xl text-pen">{phase.total}/{phase.max}</span></p>}
+        {phase.kind === 'queued' && (
+          <div className="paper-card border-2 !border-flag p-4" role="status">
+            <p className="font-display text-xl font-bold">Saved for marking: {phase.pupil}</p>
+            <p className="text-ink-soft">
+              You’re offline and this device can’t read handwriting without a connection. The photo stays on this device and
+              REDPEN marks it automatically as soon as you’re back online. Keep photographing the rest of the class.
+            </p>
+          </div>
+        )}
         {phase.kind === 'error' && <p className="text-pen" role="alert">{phase.message}</p>}
       </div>
+
+      {queue.waiting.length > 0 && <QueuePanel queue={queue} />}
 
       {copy && (() => {
         const record = submissions.find((x) => x.id === copy.submissionId);
@@ -163,5 +138,24 @@ export function MarkTab({ assignment, submissions }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+function QueuePanel({ queue }: { queue: QueueState }) {
+  return (
+    <section className="paper-card grid gap-2 p-5" aria-labelledby="queue-title">
+      <h2 id="queue-title" className="font-display text-xl font-bold">
+        {queue.waiting.length} waiting to be marked
+      </h2>
+      <p className="text-ink-soft" aria-live="polite">
+        {queue.current ? `Marking ${queue.current.pupil} now…` : navigator.onLine ? 'Starting…' : 'They will be marked automatically when you’re back online.'}
+      </p>
+      <ul className="flex flex-wrap gap-2">
+        {queue.waiting.map((s) => (
+          <li key={s.id} className={`rounded-full border px-3 py-1 text-sm ${queue.current?.id === s.id ? 'border-pen text-pen' : 'border-[oklch(85%_0.02_85)]'}`}>{s.pupil}</li>
+        ))}
+      </ul>
+      {queue.error && <p className="text-sm text-pen" role="alert">Could not mark {queue.error}. It stays in the queue.</p>}
+    </section>
   );
 }

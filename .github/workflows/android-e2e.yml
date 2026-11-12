@@ -57,6 +57,7 @@ jobs:
             maestro test android/e2e/1-core.yaml --test-output-dir e2e-out/core --debug-output e2e-out/core-debug || echo "CORE_FAILED" >> e2e-out/status.txt
             maestro test android/e2e/2-mark-photo.yaml --test-output-dir e2e-out/photo --debug-output e2e-out/photo-debug || echo "PHOTO_FAILED" >> e2e-out/status.txt
             maestro test android/e2e/3-teacher-scheme.yaml --test-output-dir e2e-out/scheme --debug-output e2e-out/scheme-debug || echo "SCHEME_FAILED" >> e2e-out/status.txt
+            maestro test android/e2e/4-offline-queue.yaml --test-output-dir e2e-out/offline --debug-output e2e-out/offline-debug || echo "OFFLINE_FAILED" >> e2e-out/status.txt
             adb logcat -d -s Repo:* AndroidRuntime:E FirebaseAI:* > e2e-out/logcat.txt || true
             touch e2e-out/status.txt; cat e2e-out/status.txt
       - uses: actions/upload-artifact@v4

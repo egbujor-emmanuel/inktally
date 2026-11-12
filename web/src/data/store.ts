@@ -1,7 +1,7 @@
 // Persistence. Assignments + marks live in Firestore (offline-first cache, per-teacher security rules).
 // Answer-box images stay ONLY on this device in IndexedDB — they are never uploaded to Firebase.
 import {
-  collection, deleteDoc, getDocs, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where,
+  collection, deleteDoc, deleteField, getDocs, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { openDB, type IDBPDatabase } from 'idb';
@@ -29,8 +29,12 @@ export interface Submission {
   marks: Mark[];
   /** Teacher's comment for this pupil; editable any time after marking. */
   comment?: string;
+  /** Saved offline on a device without on-device AI: marked automatically when the device is back online. */
+  queued?: QueuedCapture;
   createdAt?: unknown;
 }
+
+export interface QueuedCapture { mode: 'sheet' | 'page'; page: number }
 
 export const COMMENT_LIMIT = 1000;
 export const PUPIL_LIMIT = 80;
@@ -128,10 +132,15 @@ export async function saveScheme(assignmentId: string, scheme: MarkingScheme): P
   queueWrite(updateDoc(doc(db, 'assignments', assignmentId), { scheme }), 'the marking scheme');
 }
 
-export async function createSubmission(assignmentId: string, pupil: string, marks: Mark[]): Promise<string> {
+export async function createSubmission(assignmentId: string, pupil: string, marks: Mark[], queued?: QueuedCapture): Promise<string> {
   const ref = doc(submissions(assignmentId));
-  queueWrite(setDoc(ref, { assignmentId, ownerUid: uid(), pupil, marks, createdAt: serverTimestamp() }), 'the pupil');
+  queueWrite(setDoc(ref, { assignmentId, ownerUid: uid(), pupil, marks, createdAt: serverTimestamp(), ...(queued ? { queued } : {}) }), 'the student');
   return ref.id;
+}
+
+/** A queued student has now been marked: store the marks and take them off the waiting list. */
+export function finishQueued(assignmentId: string, submissionId: string, marks: Mark[]): void {
+  queueWrite(updateDoc(doc(db, 'assignments', assignmentId, 'submissions', submissionId), { marks, queued: deleteField() }), 'the marks');
 }
 
 export async function saveMarks(assignmentId: string, submissionId: string, marks: Mark[]): Promise<void> {
@@ -158,6 +167,8 @@ export function watchSubmissions(assignmentId: string, onChange: (items: Submiss
 export const PAGE_KEY = 0;
 /** Device-only key for the generated marked copy of the pupil's work (q = -1). */
 export const MARKED_KEY = -1;
+/** Device-only key for the original photo of a student waiting to be marked (offline queue). */
+export const PHOTO_KEY = -2;
 
 const CROP_DB = 'redpen-crops';
 let cropDb: Promise<IDBPDatabase> | null = null;

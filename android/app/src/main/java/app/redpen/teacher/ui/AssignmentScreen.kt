@@ -58,6 +58,8 @@ fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
     var confirmDelete by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val a = assignment ?: return Busy("Opening…")
+    val queue = rememberMarkingQueue(a, submissions)
+    val markedCount = submissions.count { it.queued == null }
     val toCheck = submissions.sumOf { s -> s.marks.count { it.needsCheck() } }
 
     if (confirmDelete) AlertDialog(
@@ -78,7 +80,7 @@ fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
             Text("${a.className} · ${a.scheme.subject}", fontFamily = RP.Hand, fontSize = 20.sp, color = RP.Pen)
             Text(a.title, fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 28.sp)
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Text("${submissions.size} student${if (submissions.size == 1) "" else "s"} marked${if (toCheck > 0) " · $toCheck to check" else ""}",
+                Text("$markedCount student${if (markedCount == 1) "" else "s"} marked${if (toCheck > 0) " · $toCheck to check" else ""}${if (queue.waiting.isNotEmpty()) " · ${queue.waiting.size} waiting" else ""}",
                     color = RP.InkSoft, fontSize = 13.sp, modifier = Modifier.weight(1f))
                 TextButton(onClick = { Repo.setStatus(a.id, if (a.isFinished) "active" else "finished") }) { Text(if (a.isFinished) "Reopen" else "Mark as finished", fontSize = 13.sp) }
                 TextButton(onClick = { confirmDelete = true }) { Text("Delete", color = RP.Pen, fontSize = 13.sp) }
@@ -90,7 +92,7 @@ fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
         }
         when (ASSIGNMENT_TABS[tab].first) {
             "print" -> PrintTab(a, profile)
-            "mark" -> MarkTab(a, submissions, profile)
+            "mark" -> MarkTab(a, submissions, profile, queue)
             "review" -> ReviewTab(a, submissions)
             "register" -> RegisterTab(a, submissions, profile, onSchool = { tab = 0 })
             else -> InsightsTab(a, submissions)

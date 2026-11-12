@@ -154,6 +154,26 @@ await step('exercise-book mode on the same assignment', async () => {
   return await page.getByText(/^Total:/).innerText();
 });
 
+await step('OFFLINE without on-device AI: queued, then marked automatically back online', async () => {
+  await page.goto(`${base()}/mark`);
+  await page.getByText('Photograph answer sheet').waitFor();
+  await ctx.setOffline(true);
+  await page.getByLabel('Student name or number').fill('Offline Student');
+  await page.locator('input[type=file]').setInputFiles(`${SAMPLES}/english-sheet-photo.jpg`);
+  await page.getByText('Saved for marking: Offline Student').waitFor({ timeout: 20_000 });
+  await page.getByText(/1 waiting to be marked/).waitFor({ timeout: 20_000 });
+  await ctx.setOffline(false);
+  await page.waitForFunction(() => !/waiting to be marked/.test(document.body.innerText), null, { timeout: 180_000 });
+  await page.goto(`${base()}/register`);
+  await page.getByRole('button', { name: /Download Excel/ }).waitFor({ timeout: 30_000 });
+  // Names sit in editable inputs, so read input values as well as cell text.
+  const rows = await page.locator('tbody tr').evaluateAll((trs) => trs.map((tr) =>
+    [...tr.querySelectorAll('input,textarea')].map((i) => i.value).join(' ') + ' ' + tr.innerText));
+  const row = rows.find((t) => t.includes('Offline Student')) ?? '';
+  if (!/\b3\b/.test(row)) throw new Error(`queued student should total 3/5 once marked, row: ${row.replace(/\s+/g, ' ')}`);
+  return 'saved offline, marked automatically on reconnect: 3/5';
+});
+
 await step('review tab', async () => {
   await page.goto(`${base()}/review`);
   await page.getByText(/to check|All marks are verified/).first().waitFor({ timeout: 30_000 });

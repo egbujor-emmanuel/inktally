@@ -1,0 +1,42 @@
+# Offline on a phone WITHOUT on-device AI (like the emulator): the photo is saved, then marked automatically when back online.
+appId: app.redpen.teacher
+---
+- launchApp
+- runFlow:
+    when:
+      visible: ".*isn't responding"
+    commands:
+      - tapOn: "Wait"
+- extendedWaitUntil:
+    visible: "Quick mark"
+    timeout: 120000
+- scrollUntilVisible:
+    element: "English — Grammar Check"
+    timeout: 30000
+- tapOn: "English — Grammar Check"
+- extendedWaitUntil:
+    visible: "Share PDF"
+    timeout: 30000
+- tapOn: "Mark"
+- tapOn: "Student name or number"
+- inputText: "Offline Student"
+- hideKeyboard
+- setAirplaneMode: enabled
+- waitForAnimationToEnd
+- tapOn: "Choose photo"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Photo taken on.*"
+    optional: true
+- extendedWaitUntil:
+    visible: "Saved for marking: Offline Student"
+    timeout: 30000
+- takeScreenshot: 30-offline-saved
+- setAirplaneMode: disabled
+- extendedWaitUntil:
+    notVisible: ".*waiting to be marked"
+    timeout: 300000
+- takeScreenshot: 31-marked-after-reconnect
+- tapOn: "Mark register"
+- assertVisible: "Offline Student"
+- takeScreenshot: 32-offline-in-register

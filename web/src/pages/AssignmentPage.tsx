@@ -8,6 +8,7 @@ import { InsightsTab } from './assignment/InsightsTab';
 import { RegisterTab } from './assignment/RegisterTab';
 import { friendlyCloudError } from '../ai/errors';
 import { useProfile } from '../data/profile';
+import { useMarkingQueue } from '../hooks/useMarkingQueue';
 
 const TABS = [
   { to: 'print', label: 'Print sheets' },
@@ -24,6 +25,7 @@ export function AssignmentPage() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const profile = useProfile();
+  const queue = useMarkingQueue(assignment, submissions);
 
   useEffect(() => watchAssignment(id, setAssignment, (e) => setError(e.message)), [id]);
   useEffect(() => watchSubmissions(id, setSubmissions, (e) => setError(e.message)), [id]);
@@ -38,6 +40,7 @@ export function AssignmentPage() {
     try { await deleteAssignment(assignment.id); navigate('/'); } catch (e: unknown) { setError(friendlyCloudError(e).message); }
   }
 
+  const markedCount = submissions.filter((s) => !s.queued).length;
   const toCheck = submissions.reduce((n, s) => n + s.marks.filter((m) => m.status === 'flagged' || m.status === 'provisional').length, 0);
 
   return (
@@ -48,7 +51,7 @@ export function AssignmentPage() {
           <h1 className="font-display text-4xl font-bold">{assignment.title}</h1>
         </div>
         <div className="grid justify-items-end gap-2">
-          <p className="text-ink-soft">{submissions.length} student{submissions.length === 1 ? '' : 's'} marked{toCheck > 0 && ` · ${toCheck} to check`}</p>
+          <p className="text-ink-soft">{markedCount} student{markedCount === 1 ? '' : 's'} marked{toCheck > 0 && ` · ${toCheck} to check`}{queue.waiting.length > 0 && ` · ${queue.waiting.length} waiting`}</p>
           <div className="flex gap-2 text-sm">
             <button type="button" className="btn-ghost px-3 py-1 text-xs"
               onClick={() => setAssignmentStatus(assignment.id, (assignment.status ?? 'active') === 'active' ? 'finished' : 'active')}>
@@ -78,7 +81,7 @@ export function AssignmentPage() {
               <AnswerSheet title={assignment.title} className={assignment.className} questions={assignment.scheme.questions} profile={profile} />
             </div>
           } />
-          <Route path="mark" element={<MarkTab assignment={assignment} submissions={submissions} />} />
+          <Route path="mark" element={<MarkTab assignment={assignment} submissions={submissions} queue={queue} />} />
           <Route path="review" element={<ReviewTab assignment={assignment} submissions={submissions} />} />
           <Route path="register" element={<RegisterTab assignment={assignment} submissions={submissions} />} />
           <Route path="insights" element={<InsightsTab assignment={assignment} submissions={submissions} />} />
