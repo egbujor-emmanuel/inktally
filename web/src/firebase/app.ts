@@ -30,7 +30,8 @@ const firebaseConfig = {
   appId: requireEnv('VITE_FIREBASE_APP_ID'),
 };
 
-const debugToken = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN;
+// Debug tokens are for local development only and must never ship in a production bundle.
+const debugToken = import.meta.env.DEV ? import.meta.env.VITE_APPCHECK_DEBUG_TOKEN : undefined;
 if (debugToken) globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken;
 
 export const app: FirebaseApp = initializeApp(firebaseConfig);

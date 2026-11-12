@@ -1,7 +1,7 @@
 // Persistence. Assignments + marks live in Firestore (offline-first cache, per-teacher security rules).
 // Answer-box images stay ONLY on this device in IndexedDB — they are never uploaded to Firebase.
 import {
-  addDoc, collection, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where,
+  collection, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { openDB, type IDBPDatabase } from 'idb';
@@ -34,10 +34,23 @@ function uid(): string {
 }
 
 const assignments = () => collection(db, 'assignments');
+
+/**
+ * Offline-first writes: Firestore applies them to the local cache instantly, but the returned promise
+ * only settles when the SERVER confirms. Awaiting it would freeze marking offline, so we queue the write
+ * and surface failures (e.g. rules rejections) through an event instead.
+ */
+export const WRITE_ERROR_EVENT = 'redpen:write-error';
+function queueWrite(write: Promise<unknown>): void {
+  write.catch((error: unknown) => {
+    window.dispatchEvent(new CustomEvent(WRITE_ERROR_EVENT, { detail: error instanceof Error ? error.message : String(error) }));
+  });
+}
 const submissions = (assignmentId: string) => collection(db, 'assignments', assignmentId, 'submissions');
 
 export async function createAssignment(input: Omit<Assignment, 'id' | 'ownerUid' | 'createdAt'>): Promise<string> {
-  const ref = await addDoc(assignments(), { ...input, ownerUid: uid(), createdAt: serverTimestamp() });
+  const ref = doc(assignments());
+  queueWrite(setDoc(ref, { ...input, ownerUid: uid(), createdAt: serverTimestamp() }));
   return ref.id;
 }
 
@@ -58,21 +71,21 @@ export function watchAssignment(id: string, onChange: (a: Assignment | null) => 
 /** Replaces one question in the scheme (used when a teacher adds an accepted answer). */
 export async function updateQuestion(assignment: Assignment, updated: Question): Promise<void> {
   const questions = assignment.scheme.questions.map((q) => (q.q === updated.q ? updated : q));
-  await updateDoc(doc(db, 'assignments', assignment.id), { 'scheme.questions': questions });
+  queueWrite(updateDoc(doc(db, 'assignments', assignment.id), { 'scheme.questions': questions }));
 }
 
 export async function saveScheme(assignmentId: string, scheme: MarkingScheme): Promise<void> {
-  await updateDoc(doc(db, 'assignments', assignmentId), { scheme });
+  queueWrite(updateDoc(doc(db, 'assignments', assignmentId), { scheme }));
 }
 
 export async function createSubmission(assignmentId: string, pupil: string, marks: Mark[]): Promise<string> {
   const ref = doc(submissions(assignmentId));
-  await setDoc(ref, { assignmentId, ownerUid: uid(), pupil, marks, createdAt: serverTimestamp() });
+  queueWrite(setDoc(ref, { assignmentId, ownerUid: uid(), pupil, marks, createdAt: serverTimestamp() }));
   return ref.id;
 }
 
 export async function saveMarks(assignmentId: string, submissionId: string, marks: Mark[]): Promise<void> {
-  await updateDoc(doc(db, 'assignments', assignmentId, 'submissions', submissionId), { marks });
+  queueWrite(updateDoc(doc(db, 'assignments', assignmentId, 'submissions', submissionId), { marks }));
 }
 
 export function watchSubmissions(assignmentId: string, onChange: (items: Submission[]) => void, onError: (e: Error) => void): Unsubscribe {

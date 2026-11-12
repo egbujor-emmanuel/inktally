@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, Route, Routes } from 'react-router-dom';
 import { ReactLenis, type LenisRef } from 'lenis/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ensureUser, refreshRemoteConfig } from './firebase/app';
+import { refreshDeviceCapability } from './ai/models';
+import { WRITE_ERROR_EVENT } from './data/store';
 import { StatusBar } from './components/StatusBar';
 import { useReducedMotion } from './hooks/useStatus';
 import { Home } from './pages/Home';
-import { NewAssignment } from './pages/NewAssignment';
-import { AssignmentPage } from './pages/AssignmentPage';
+const NewAssignment = lazy(() => import('./pages/NewAssignment').then((m) => ({ default: m.NewAssignment })));
+const AssignmentPage = lazy(() => import('./pages/AssignmentPage').then((m) => ({ default: m.AssignmentPage })));
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -31,10 +33,17 @@ export function App() {
 
   useEffect(() => {
     let alive = true;
-    Promise.all([ensureUser(), refreshRemoteConfig()])
+    Promise.all([ensureUser(), refreshRemoteConfig(), refreshDeviceCapability()])
       .then(() => { if (alive) setBoot({ state: 'ready' }); })
       .catch((e: unknown) => { if (alive) setBoot({ state: 'error', message: friendlyStartError(e) }); });
     return () => { alive = false; };
+  }, []);
+
+  const [writeError, setWriteError] = useState<string | null>(null);
+  useEffect(() => {
+    const onError = (e: Event) => setWriteError((e as CustomEvent<string>).detail);
+    window.addEventListener(WRITE_ERROR_EVENT, onError);
+    return () => window.removeEventListener(WRITE_ERROR_EVENT, onError);
   }, []);
 
   // Drive Lenis from GSAP's ticker so ScrollTrigger and smooth scroll share one clock.
@@ -63,16 +72,24 @@ export function App() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+        {writeError && (
+          <p className="mt-4 rounded-lg border border-pen bg-white p-3 text-pen" role="alert">
+            A change could not be saved: {writeError}{' '}
+            <button type="button" className="underline" onClick={() => setWriteError(null)}>Dismiss</button>
+          </p>
+        )}
         {boot.state === 'loading' && <p className="py-20 text-center font-hand text-3xl text-ink-soft">Getting your desk ready…</p>}
         {boot.state === 'error' && (
           <p className="py-20 text-center text-pen" role="alert">REDPEN could not start: {boot.message}</p>
         )}
         {boot.state === 'ready' && (
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/new" element={<NewAssignment />} />
-            <Route path="/a/:id/*" element={<AssignmentPage />} />
-          </Routes>
+          <Suspense fallback={<p className="py-20 text-center font-hand text-3xl text-ink-soft">Opening…</p>}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/new" element={<NewAssignment />} />
+              <Route path="/a/:id/*" element={<AssignmentPage />} />
+            </Routes>
+          </Suspense>
         )}
       </main>
     </div>

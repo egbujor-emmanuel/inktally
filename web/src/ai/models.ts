@@ -17,10 +17,19 @@ function plainJsonSchema(schema: ObjectSchema): object {
   return JSON.parse(JSON.stringify(schema)) as object;
 }
 
+/** Cached once per session: if Chrome cannot run Gemini Nano here, skip the doomed on-device attempt. */
+let deviceUsable: boolean | null = null;
+export async function refreshDeviceCapability(): Promise<void> {
+  const status = await onDeviceAvailability();
+  deviceUsable = status === 'available' || status === 'downloadable' || status === 'downloading';
+}
+
 function readMode(override?: ReadMode): ReadMode {
   if (override) return override;
   const fromConfig = config('read_mode') as ReadMode;
-  return Object.values(InferenceMode).includes(fromConfig) ? fromConfig : InferenceMode.PREFER_ON_DEVICE;
+  const mode = Object.values(InferenceMode).includes(fromConfig) ? fromConfig : InferenceMode.PREFER_ON_DEVICE;
+  if (deviceUsable === false && mode === InferenceMode.PREFER_ON_DEVICE) return InferenceMode.PREFER_IN_CLOUD;
+  return mode;
 }
 
 /**
