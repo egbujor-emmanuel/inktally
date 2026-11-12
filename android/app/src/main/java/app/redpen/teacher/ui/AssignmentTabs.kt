@@ -299,7 +299,7 @@ fun RegisterTab(a: Assignment, submissions: List<Submission>, profile: Profile, 
                     PenButton("Download Excel (.xlsx)", { export("xlsx") }, Modifier.weight(1.6f))
                     GhostButton("CSV", { export("csv") }, Modifier.weight(0.7f))
                 }
-                Text("${rows.size} students · class average ${"%.1f".format(rows.sumOf { it.total }.toDouble() / rows.size)}/$max", color = RP.InkSoft)
+                Text("${rows.size} student${if (rows.size == 1) "" else "s"} · class average ${"%.1f".format(rows.sumOf { it.total }.toDouble() / rows.size)}/$max", color = RP.InkSoft)
                 if (profile.institution.isBlank()) Text("Tip: add your school details (menu → School details) to put your institution’s name on the register, the Excel file and every marked copy.",
                     color = RP.InkSoft, fontSize = 13.sp)
                 Text("Tap a student’s name or comment to edit it. Changes save automatically and go into the Excel file.", color = RP.InkSoft, fontSize = 13.sp)
