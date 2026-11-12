@@ -1,0 +1,54 @@
+# Marks the English sample from a photo chosen in the gallery (CI pushes english-sheet-photo.jpg first),
+# then adds a comment, opens the register and exports Excel.
+appId: app.redpen.teacher
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Quick mark a page"
+    timeout: 120000
+- scrollUntilVisible:
+    element: "English — Grammar Check"
+    timeout: 30000
+- tapOn: "English — Grammar Check"
+- extendedWaitUntil:
+    visible: "Share PDF"
+    timeout: 30000
+- tapOn: "Mark"
+- tapOn: "Student name or number"
+- inputText: "Ada Obi"
+- hideKeyboard
+- tapOn: "Choose photo"
+- waitForAnimationToEnd
+- takeScreenshot: 10-picker
+- tapOn:
+    id: ".*icon_thumbnail.*|.*photo.*"
+    optional: true
+- tapOn:
+    text: "Photo taken on.*"
+    optional: true
+- extendedWaitUntil:
+    visible: "Total: .*"
+    timeout: 240000
+- takeScreenshot: 11-marked
+- scrollUntilVisible:
+    element: "Teacher’s comment"
+    timeout: 20000
+- tapOn: "Teacher’s comment"
+- inputText: "Good work. Revise past tenses."
+- hideKeyboard
+- tapOn: "Save comment"
+- assertVisible: "Saved. It is on the marked copy.*"
+- scrollUntilVisible:
+    element: "Marked copy for Ada Obi"
+    timeout: 20000
+- takeScreenshot: 12-marked-copy
+- scrollUntilVisible:
+    element: "Mark register"
+    direction: UP
+    timeout: 20000
+- tapOn: "Mark register"
+- assertVisible: "Ada Obi"
+- takeScreenshot: 13-register
+- tapOn: "Download Excel (.xlsx)"
+- waitForAnimationToEnd
+- takeScreenshot: 14-share-xlsx

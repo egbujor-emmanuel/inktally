@@ -1,0 +1,69 @@
+# Core click-through on a real emulator: home, school details, new assignment (typed -> drafted -> saved),
+# print tab, every assignment tab, sample assignment, finish/reopen, delete. Screenshots at each step.
+appId: app.redpen.teacher
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Quick mark a page"
+    timeout: 120000
+- takeScreenshot: 01-home
+- tapOn: "School details"
+- tapOn: "Institution name"
+- inputText: "Walkthrough Academy"
+- hideKeyboard
+- tapOn: "Save details"
+- assertVisible: "Saved.*"
+- takeScreenshot: 02-school
+- tapOn: "Back to my assignments"
+- tapOn: "New assignment"
+- assertVisible: "New assignment"
+- scrollUntilVisible:
+    element: "…or type / paste the questions"
+- tapOn: "…or type / paste the questions"
+- inputText: "1. What is 7 x 8?  2. The capital of Nigeria is ____  3. Which is a mammal? (A) shark (B) whale (C) trout"
+- hideKeyboard
+- takeScreenshot: 03-new-typed
+- scrollUntilVisible:
+    element: "Draft marking scheme"
+- tapOn: "Draft marking scheme"
+- extendedWaitUntil:
+    visible: "Check the marking scheme"
+    timeout: 150000
+- takeScreenshot: 04-drafted
+- scrollUntilVisible:
+    element: "Save and print answer sheets"
+    timeout: 30000
+- tapOn: "Save and print answer sheets"
+- extendedWaitUntil:
+    visible: "Share PDF"
+    timeout: 30000
+- takeScreenshot: 05-print
+- tapOn: "Mark"
+- assertVisible: "Exercise book page"
+- takeScreenshot: 06-mark
+- tapOn: "Review"
+- takeScreenshot: 07-review
+- tapOn: "Mark register"
+- assertVisible: "Mark a few students.*"
+- tapOn: "Insights"
+- takeScreenshot: 08-insights
+- tapOn: "Mark as finished"
+- assertVisible: "Reopen"
+- tapOn: "Reopen"
+- assertVisible: "Mark as finished"
+- tapOn: "Delete"
+- tapOn:
+    text: "Delete"
+    index: 1
+- extendedWaitUntil:
+    visible: "Quick mark a page"
+    timeout: 20000
+- scrollUntilVisible:
+    element: "English — Grammar Check"
+    timeout: 30000
+- tapOn: "English — Grammar Check"
+- extendedWaitUntil:
+    visible: "Share PDF"
+    timeout: 30000
+- takeScreenshot: 09-sample-print

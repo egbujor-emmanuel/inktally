@@ -1,0 +1,65 @@
+name: android-e2e
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [android]
+    types: [completed]
+
+jobs:
+  e2e:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '9.9.1' }
+      - name: Firebase config + signing key (secrets, never committed)
+        working-directory: android
+        env:
+          GOOGLE_SERVICES_JSON_B64: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
+          REDPEN_KEYSTORE_B64: ${{ secrets.REDPEN_KEYSTORE_B64 }}
+        run: |
+          echo "$GOOGLE_SERVICES_JSON_B64" | base64 -d > app/google-services.json
+          if [ -n "$REDPEN_KEYSTORE_B64" ]; then echo "$REDPEN_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/redpen.p12"; echo "REDPEN_KEYSTORE_FILE=$RUNNER_TEMP/redpen.p12" >> "$GITHUB_ENV"; fi
+      - name: Build debug APK
+        working-directory: android
+        env:
+          REDPEN_KEYSTORE_PASSWORD: ${{ secrets.REDPEN_KEYSTORE_PASSWORD }}
+          REDPEN_APPCHECK_DEBUG_TOKEN: ${{ secrets.REDPEN_APPCHECK_DEBUG_TOKEN }}
+        run: gradle --no-daemon assembleDebug
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Run the app on an Android emulator and click through it
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb push samples/english-sheet-photo.jpg /sdcard/Pictures/english-sheet-photo.jpg
+            adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Pictures/english-sheet-photo.jpg || true
+            mkdir -p e2e-out
+            maestro test android/e2e/1-core.yaml --test-output-dir e2e-out/core --debug-output e2e-out/core-debug || echo "CORE_FAILED" >> e2e-out/status.txt
+            maestro test android/e2e/2-mark-photo.yaml --test-output-dir e2e-out/photo --debug-output e2e-out/photo-debug || echo "PHOTO_FAILED" >> e2e-out/status.txt
+            adb logcat -d -s Repo:* AndroidRuntime:E FirebaseAI:* > e2e-out/logcat.txt || true
+            touch e2e-out/status.txt; cat e2e-out/status.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-e2e
+          path: |
+            e2e-out/
+            ~/.maestro/tests/
+      - name: Fail if a flow failed
+        run: test ! -s e2e-out/status.txt
