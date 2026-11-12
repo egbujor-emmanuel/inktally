@@ -1,0 +1,28 @@
+# The teacher already has a marking scheme: REDPEN must copy it exactly (alternatives, "do not accept", marks), not re-solve it.
+appId: app.redpen.teacher
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Quick mark"
+    timeout: 120000
+- tapOn: "New assignment"
+- scrollUntilVisible:
+    element: "…or type / paste your marking scheme"
+    timeout: 30000
+- tapOn: "…or type / paste your marking scheme"
+- inputText: "1. 56 (1 mark)  2. Abuja - accept FCT or Federal Capital Territory (1 mark)  3. went - do not accept goed (2 marks)"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Use my marking scheme"
+- tapOn: "Use my marking scheme"
+- extendedWaitUntil:
+    visible: "Check the marking scheme"
+    timeout: 150000
+- scrollUntilVisible:
+    element: ".*Federal Capital Territory.*"
+    timeout: 30000
+- takeScreenshot: 20-scheme-copied
+- scrollUntilVisible:
+    element: ".*goed.*"
+    timeout: 30000
+- takeScreenshot: 21-scheme-reject-copied

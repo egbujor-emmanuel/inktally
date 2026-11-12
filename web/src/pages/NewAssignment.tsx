@@ -19,6 +19,9 @@ export function NewAssignment() {
   const [level, setLevel] = useState('Grade 6');
   const [paperImages, setPaperImages] = useState<File[]>([]);
   const [paperText, setPaperText] = useState('');
+  const [guideFiles, setGuideFiles] = useState<File[]>([]);
+  const [guideText, setGuideText] = useState('');
+  const hasGuide = guideFiles.length > 0 || guideText.trim() !== '';
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isDrafting, setIsDrafting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -30,7 +33,12 @@ export function NewAssignment() {
     try {
       const pdf = paperImages.find((f) => f.type === 'application/pdf');
       const images = paperImages.filter((f) => f.type.startsWith('image/'));
-      const scheme = await draftScheme({ images, pdf, text: paperText || undefined }, subject, level);
+      const scheme = await draftScheme({
+        images, pdf, text: paperText || undefined,
+        guideImages: guideFiles.filter((f) => f.type.startsWith('image/')),
+        guidePdf: guideFiles.find((f) => f.type === 'application/pdf'),
+        guideText: guideText || undefined,
+      }, subject, level);
       setQuestions(scheme.questions);
     } catch (e: unknown) {
       setError(friendlyCloudError(e).message);
@@ -70,8 +78,12 @@ export function NewAssignment() {
       </section>
 
       <section className="paper-card grid gap-4 p-6" aria-labelledby="paper">
-        <h2 id="paper" className="font-display text-2xl font-bold">Draft the marking scheme from your question paper</h2>
-        <p className="text-ink-soft">Only the questions go to the cloud — never students’ work. You review every answer before marking.</p>
+        <h2 id="paper" className="font-display text-2xl font-bold">Draft the marking scheme</h2>
+        <p className="text-ink-soft">
+          Give REDPEN the question paper and it works out the answer key — or give it <strong>your own marking scheme</strong> and it copies
+          your answers and marks exactly. Use either or both. Only these go to the cloud — never students’ work. You check everything before marking.
+        </p>
+        <h3 className="font-display text-lg font-bold">1 · Question paper</h3>
         <label className="text-sm font-medium">Photo(s) or PDF of the question paper
           <input className={field} type="file" accept="image/*,application/pdf" multiple capture="environment"
             onChange={(e) => setPaperImages(Array.from(e.target.files ?? []))} />
@@ -79,9 +91,22 @@ export function NewAssignment() {
         <label className="text-sm font-medium">…or type / paste the questions
           <textarea className={field} rows={4} value={paperText} onChange={(e) => setPaperText(e.target.value)} placeholder={'1. 7 × 8\n2. State two functions of blood. (2 marks)'} />
         </label>
+        <h3 className="font-display text-lg font-bold">
+          2 · Already have a marking scheme? <span className="font-body text-sm font-normal text-ink-soft">(optional — REDPEN copies it exactly)</span>
+        </h3>
+        <label className="text-sm font-medium">Photo(s) or PDF of your marking scheme / answer key
+          <input className={field} type="file" accept="image/*,application/pdf" multiple
+            onChange={(e) => setGuideFiles(Array.from(e.target.files ?? []))} />
+        </label>
+        <label className="text-sm font-medium">…or type / paste your marking scheme
+          <textarea className={field} rows={4} value={guideText} onChange={(e) => setGuideText(e.target.value)}
+            placeholder={'1. 56 (1 mark)\n2. Abuja — accept FCT (1 mark)\n3. Any two: carries oxygen; fights germs; clots blood (2 marks)'} />
+        </label>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" className="btn-pen" disabled={isDrafting || !isOnline || (!paperImages.length && !paperText.trim())} onClick={() => void handleDraft()}>
-            {isDrafting ? 'Drafting…' : 'Draft marking scheme'}
+          <button type="button" className="btn-pen"
+            disabled={isDrafting || !isOnline || (!paperImages.length && !paperText.trim() && !hasGuide)}
+            onClick={() => void handleDraft()}>
+            {isDrafting ? 'Reading…' : hasGuide ? 'Use my marking scheme' : 'Draft marking scheme'}
           </button>
           {!isOnline && <span className="text-sm text-ink-soft">Drafting needs internet — you can still type the scheme below.</span>}
         </div>

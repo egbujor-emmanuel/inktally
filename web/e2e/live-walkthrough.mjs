@@ -84,10 +84,34 @@ await step('new assignment: save -> print sheet', async () => {
 await step('new assignment: draft scheme from PHOTO of a page', async () => {
   await page.goto(`${URL_}/new`);
   await page.getByText('Draft the marking scheme').waitFor();
-  await page.locator('input[type=file]').setInputFiles(`${SAMPLES}/maths.png`);
+  await page.locator('input[type=file]').first().setInputFiles(`${SAMPLES}/maths.png`);
   await page.getByRole('button', { name: 'Draft marking scheme' }).click();
   await page.locator('fieldset').first().waitFor({ timeout: 90_000 });
   return `${await page.locator('fieldset').count()} questions from photo`;
+});
+
+await step('new assignment: COPY teacher marking scheme from a PHOTO', async () => {
+  await page.goto(`${URL_}/new`);
+  await page.getByText('Draft the marking scheme').waitFor();
+  await page.locator('input[type=file]').nth(1).setInputFiles(`${SAMPLES}/english-marking-scheme.jpg`);
+  await page.getByRole('button', { name: 'Use my marking scheme' }).click();
+  await page.locator('fieldset').first().waitFor({ timeout: 90_000 });
+  const values = await page.locator('fieldset input, fieldset textarea').evaluateAll((els) => els.map((e) => e.value).join(' | '));
+  for (const want of [/F\.?C\.?T/i, /runned/i]) if (!want.test(values)) throw new Error(`scheme copy missing ${want}: ${values.slice(0, 300)}`);
+  const marks = await page.locator('fieldset input[type=number]').evaluateAll((els) => els.map((e) => e.value));
+  if (marks[4] !== '2') throw new Error(`Q5 should keep the teacher's 2 marks, got ${marks.join(',')}`);
+  return `${marks.length} questions copied; F.C.T. accepted, "runned" rejected, Q5 = 2 marks`;
+});
+
+await step('new assignment: COPY teacher marking scheme TYPED (no question paper)', async () => {
+  await page.goto(`${URL_}/new`);
+  await page.getByText('Draft the marking scheme').waitFor();
+  await page.getByPlaceholder(/1\. 56 \(1 mark\)/).fill('1. 56 (1 mark)\n2. Abuja — accept FCT or Federal Capital Territory (1 mark)\n3. went — do not accept goed (2 marks)');
+  await page.getByRole('button', { name: 'Use my marking scheme' }).click();
+  await page.locator('fieldset').first().waitFor({ timeout: 90_000 });
+  const values = await page.locator('fieldset input, fieldset textarea').evaluateAll((els) => els.map((e) => e.value).join(' | '));
+  for (const want of [/Federal Capital Territory/i, /goed/i, /went/i]) if (!want.test(values)) throw new Error(`typed scheme missing ${want}: ${values.slice(0, 300)}`);
+  return `${await page.locator('fieldset').count()} questions copied exactly`;
 });
 
 await step('quick mark: photo -> key -> marked', async () => {

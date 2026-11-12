@@ -35,6 +35,13 @@ export const REMOTE_DEFAULTS = {
     + 'the type (objective = A-E option, numeric = a number, short = a word or phrase, points = a theory answer marked point by point), '
     + 'and the answer key (correct option letters, accepted numbers, accepted words, or marking points with common acceptable wordings). '
     + 'Add answers that must not be accepted when students commonly confuse them.',
+  /** Used when the teacher supplies their OWN marking scheme: copy it, never invent or "correct" answers. */
+  prompt_scheme_from_guide:
+    'The teacher has provided their OWN marking scheme (labelled TEACHER’S MARKING SCHEME). Use it as the answer key exactly as written: '
+    + 'the same question numbers, maximum marks, correct options, accepted answers, marking points and any answers marked as not acceptable. '
+    + 'Do not add answers, remove answers, change marks or correct anything, even if you think the scheme is wrong. '
+    + 'Where the scheme lists alternatives (for example "accept X or Y"), include every alternative. '
+    + 'Use the question paper, if one is provided, only for the question text; if there is none, take the question text from the scheme or use a short label such as "Question 3".',
   prompt_remediation:
     'Students in a {level} {subject} class made these mistakes on question {q} ("{prompt}"): {mistakes}. '
     + 'Write a short catch-up activity for them: one plain-English explanation of the misunderstanding (max 60 words) '

@@ -50,6 +50,11 @@ val REMOTE_DEFAULTS: Map<String, Any> = mapOf(
         "the type (objective = A-E option, numeric = a number, short = a word or phrase, points = a theory answer marked point by point), " +
         "and the answer key (correct option letters, accepted numbers, accepted words, or marking points with common acceptable wordings). " +
         "Add answers that must not be accepted when students commonly confuse them.",
+    "prompt_scheme_from_guide" to "The teacher has provided their OWN marking scheme (labelled TEACHER’S MARKING SCHEME). Use it as the answer key exactly as written: " +
+        "the same question numbers, maximum marks, correct options, accepted answers, marking points and any answers marked as not acceptable. " +
+        "Do not add answers, remove answers, change marks or correct anything, even if you think the scheme is wrong. " +
+        "Where the scheme lists alternatives (for example \"accept X or Y\"), include every alternative. " +
+        "Use the question paper, if one is provided, only for the question text; if there is none, take the question text from the scheme or use a short label such as \"Question 3\".",
     "prompt_remediation" to "Students in a {level} {subject} class made these mistakes on question {q} (\"{prompt}\"): {mistakes}. " +
         "Write a short catch-up activity for them: one plain-English explanation of the misunderstanding (max 60 words) " +
         "and 4 practice questions of increasing difficulty with answers.",
@@ -233,14 +238,31 @@ object Ai {
     }
 
     /** Drafts a marking scheme from the question paper. Only the QUESTIONS go to the cloud; the teacher reviews the draft. */
-    suspend fun draftScheme(images: List<Bitmap>, typed: String?, subject: String, level: String, isStudentPage: Boolean = false, pdf: ByteArray? = null): MarkingScheme {
-        require(images.isNotEmpty() || !typed.isNullOrBlank() || pdf != null) { "Add the question paper (photo, PDF or typed questions) first." }
+    /** The teacher's own marking scheme / answer key: copied exactly, never re-solved. */
+    class Guide(val images: List<Bitmap> = emptyList(), val typed: String? = null, val pdf: ByteArray? = null) {
+        val isPresent get() = images.isNotEmpty() || !typed.isNullOrBlank() || pdf != null
+    }
+
+    suspend fun draftScheme(images: List<Bitmap>, typed: String?, subject: String, level: String, isStudentPage: Boolean = false,
+                            pdf: ByteArray? = null, guide: Guide = Guide()): MarkingScheme {
+        val hasPaper = images.isNotEmpty() || !typed.isNullOrBlank() || pdf != null
+        require(hasPaper || guide.isPresent) { "Add the question paper or your marking scheme (photo, PDF or typed) first." }
         val request: Content = content {
             text(fill(cfg("prompt_scheme_draft"), mapOf("subject" to subject, "level" to level)))
             if (isStudentPage) text(STUDENT_PAGE_NOTE)
-            if (!typed.isNullOrBlank()) text("QUESTION PAPER:\n$typed")
-            images.forEach { image(it) }
-            pdf?.let { inlineData(it, "application/pdf") }
+            if (guide.isPresent) text(cfg("prompt_scheme_from_guide"))
+            if (hasPaper) {
+                text("QUESTION PAPER:")
+                if (!typed.isNullOrBlank()) text(typed)
+                images.forEach { image(it) }
+                pdf?.let { inlineData(it, "application/pdf") }
+            }
+            if (guide.isPresent) {
+                text("TEACHER’S MARKING SCHEME:")
+                guide.typed?.takeIf { it.isNotBlank() }?.let { text(it) }
+                guide.images.forEach { image(it) }
+                guide.pdf?.let { inlineData(it, "application/pdf") }
+            }
         }
         val started = System.currentTimeMillis()
         val r = retry(2) { authorModel(DRAFT_SCHEMA).generateContent(request) }

@@ -68,6 +68,10 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
     var images by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
     var pdf by remember { mutableStateOf<Pair<String, ByteArray>?>(null) }
     var typed by remember { mutableStateOf("") }
+    var guideImages by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
+    var guidePdf by remember { mutableStateOf<Pair<String, ByteArray>?>(null) }
+    var guideTyped by remember { mutableStateOf("") }
+    val hasGuide = guideImages.isNotEmpty() || guidePdf != null || guideTyped.isNotBlank()
     var questions by remember { mutableStateOf<List<Question>>(emptyList()) }
     var drafting by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -87,10 +91,26 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
         }
     }
 
+    val guideGallery = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
+        scope.launch {
+            runCatching { withContext(Dispatchers.Default) { uris.map { loadPhoto(ctx, it, 2000) } } }
+                .onSuccess { guideImages = guideImages + it }.onFailure { error = it.message }
+        }
+    }
+    val guidePdfPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) scope.launch {
+            runCatching { withContext(Dispatchers.IO) { ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes() } } }
+                .onSuccess { bytes -> if (bytes.size > 15_000_000) error = "That PDF is over 15 MB — photograph the pages instead." else guidePdf = (uri.lastPathSegment ?: "marking scheme.pdf") to bytes }
+                .onFailure { error = it.message }
+        }
+    }
+    val guidePhoto = rememberPhotoInput(onPhoto = { guideImages = guideImages + it }, onError = { error = it })
+
     fun draft() {
         error = null; drafting = true
         scope.launch {
-            runCatching { Ai.draftScheme(images, typed.ifBlank { null }, subject, level, pdf = pdf?.second) }
+            runCatching { Ai.draftScheme(images, typed.ifBlank { null }, subject, level, pdf = pdf?.second,
+                guide = Ai.Guide(guideImages, guideTyped.ifBlank { null }, guidePdf?.second)) }
                 .onSuccess { questions = it.questions }
                 .onFailure { error = Repo.friendly(it) }
             drafting = false
@@ -105,7 +125,7 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
     }
 
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { PageTitle("step 1", "New assignment", "Give REDPEN the question paper. The cloud drafts the marking scheme from the questions — it never sees a student — and you check it before anything is marked.") }
+        item { PageTitle("step 1", "New assignment", "Give REDPEN the question paper and it works out the answer key — or give it your own marking scheme and it copies it exactly. Only these go to the cloud, never students’ work, and you check everything before marking.") }
         item {
             Paper {
                 Field(title, { title = it }, "Title", placeholder = "Fractions quiz")
@@ -135,9 +155,37 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
                     Row { Text("PDF: $name", fontSize = 14.sp, modifier = Modifier.weight(1f).padding(top = 12.dp)); TextButton(onClick = { pdf = null }) { Text("Remove") } }
                 }
                 Field(typed, { typed = it }, "…or type / paste the questions", placeholder = "1. 7 × 8 = ?\n2. State two functions of blood. (2 marks)", singleLine = false, minLines = 4, maxLength = 20_000)
-                PenButton(if (drafting) "Drafting the marking scheme…" else if (online) "Draft marking scheme" else "Drafting needs internet", ::draft,
-                    Modifier.fillMaxWidth(), enabled = online && !drafting && (images.isNotEmpty() || pdf != null || typed.isNotBlank()))
             }
+        }
+        item {
+            Paper {
+                Text("Already have a marking scheme?", fontFamily = RP.Display, fontSize = 22.sp)
+                Text("Optional. Give REDPEN your own marking scheme or answer key and it copies your answers and marks exactly — it never changes them.",
+                    color = RP.InkSoft, fontSize = 14.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    PenButton("Take photo", guidePhoto.takePhoto, Modifier.weight(1f))
+                    GhostButton("Photos", { guideGallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, Modifier.weight(1f))
+                    GhostButton("PDF", { guidePdfPicker.launch(arrayOf("application/pdf")) }, Modifier.weight(0.8f))
+                }
+                if (guideImages.isNotEmpty()) LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    itemsIndexed(guideImages) { i, bmp ->
+                        Column {
+                            Image(bmp.asImageBitmap(), "Marking scheme page ${i + 1}", Modifier.size(90.dp, 120.dp), contentScale = ContentScale.Crop)
+                            TextButton(onClick = { guideImages = guideImages.filterIndexed { j, _ -> j != i } }) { Text("Remove", fontSize = 12.sp) }
+                        }
+                    }
+                }
+                guidePdf?.let { (name, _) ->
+                    Row { Text("PDF: $name", fontSize = 14.sp, modifier = Modifier.weight(1f).padding(top = 12.dp)); TextButton(onClick = { guidePdf = null }) { Text("Remove") } }
+                }
+                Field(guideTyped, { guideTyped = it }, "…or type / paste your marking scheme",
+                    placeholder = "1. 56 (1 mark)\n2. Abuja — accept FCT (1 mark)", singleLine = false, minLines = 3, maxLength = 20_000)
+            }
+        }
+        item {
+            PenButton(if (drafting) "Reading…" else if (!online) "Drafting needs internet" else if (hasGuide) "Use my marking scheme" else "Draft marking scheme", ::draft,
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                enabled = online && !drafting && (images.isNotEmpty() || pdf != null || typed.isNotBlank() || hasGuide))
         }
         item { ErrorText(error) }
         if (drafting) item { Busy("Reading the questions and writing the answer key…") }

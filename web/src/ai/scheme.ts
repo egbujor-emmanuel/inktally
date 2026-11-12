@@ -64,18 +64,35 @@ export interface SchemeSource {
   text?: string;
   /** The photo is a pupil's page (questions + the pupil's own answers), not a clean question paper. */
   isPupilPage?: boolean;
+  /** The teacher's own marking scheme / answer key: copied exactly, never re-solved. */
+  guideImages?: Blob[];
+  guidePdf?: Blob;
+  guideText?: string;
 }
+
+export const hasGuide = (s: SchemeSource): boolean => Boolean(s.guideImages?.length || s.guidePdf || s.guideText?.trim());
+export const hasPaper = (s: SchemeSource): boolean => Boolean(s.images?.length || s.pdf || s.text?.trim());
 
 const PUPIL_PAGE_NOTE = "IMPORTANT: this photo shows a pupil's exercise page — the questions AND the pupil's own handwritten answers. "
   + "Work out the correct answers yourself from the QUESTIONS only. The pupil's answers may be wrong: never copy them into the marking scheme.";
 
 export async function draftScheme(source: SchemeSource, subject: string, level: string): Promise<MarkingScheme> {
+  if (!hasPaper(source) && !hasGuide(source)) throw new Error('Add the question paper or your marking scheme (photo, PDF or typed) first.');
   const parts: (string | Part)[] = [fillTemplate(config('prompt_scheme_draft'), { subject, level })];
   if (source.isPupilPage) parts.push(PUPIL_PAGE_NOTE);
-  if (source.text) parts.push(`QUESTION PAPER:\n${source.text}`);
-  for (const image of source.images ?? []) parts.push(await blobToPart(image));
-  if (source.pdf) parts.push(await blobToPart(source.pdf));
-  if (parts.length === (source.isPupilPage ? 2 : 1)) throw new Error('Add the question paper (photo, PDF or typed questions) first.');
+  if (hasGuide(source)) parts.push(config('prompt_scheme_from_guide'));
+  if (hasPaper(source)) {
+    parts.push('QUESTION PAPER:');
+    if (source.text) parts.push(source.text);
+    for (const image of source.images ?? []) parts.push(await blobToPart(image));
+    if (source.pdf) parts.push(await blobToPart(source.pdf));
+  }
+  if (hasGuide(source)) {
+    parts.push('TEACHER’S MARKING SCHEME:');
+    if (source.guideText) parts.push(source.guideText);
+    for (const image of source.guideImages ?? []) parts.push(await blobToPart(image));
+    if (source.guidePdf) parts.push(await blobToPart(source.guidePdf));
+  }
 
   const started = performance.now();
   const { text } = await authorGenerate(DRAFT_SCHEMA, parts);
