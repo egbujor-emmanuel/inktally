@@ -31,9 +31,16 @@ export function MarkedCopy({ blob: raw, pupil, letterhead }: Props) {
 
   async function handleShare() {
     setShareError(null);
-    try { await navigator.share({ files: [file], title: `${pupil} — marked by REDPEN` }); } catch (e: unknown) {
-      if (!(e instanceof DOMException && e.name === 'AbortError')) setShareError('Sharing is not available here — use Download instead.');
+    if (canShare) {
+      try { await navigator.share({ files: [file], title: `${pupil} — marked by REDPEN` }); return; } catch (e: unknown) {
+        if (e instanceof DOMException && e.name === 'AbortError') return;
+      }
     }
+    if (!url) return;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
   }
 
   function handlePrint() {
@@ -46,20 +53,18 @@ export function MarkedCopy({ blob: raw, pupil, letterhead }: Props) {
   }
 
   if (!url) return null;
+  // Same card as the Android marked copy: eyebrow, title, image, note, Share + Print.
   return (
-    <section className="paper-card grid gap-4 p-5 lg:grid-cols-[minmax(0,22rem)_1fr]" aria-labelledby="marked-copy">
-      <img src={url} alt={`Marked copy of ${pupil}'s work`} className="w-full rounded-md border border-[oklch(88%_0.02_85)]" />
-      <div className="grid content-start gap-3">
-        <p className="font-hand text-2xl text-pen">no second round of marking</p>
-        <h2 id="marked-copy" className="font-display text-2xl font-bold">Marked copy for {pupil}</h2>
-        <p className="text-ink-soft">The student’s own work with every tick, cross and score — print it or send it to the parent. On the original paper, just write the total.</p>
-        <div className="flex flex-wrap gap-2">
-          <a href={url} download={fileName} className="btn-pen">Download</a>
-          {canShare && <button type="button" className="btn-ghost" onClick={() => void handleShare()}>Share</button>}
-          <button type="button" className="btn-ghost" onClick={handlePrint}>Print</button>
-        </div>
-        {shareError && <p className="text-sm text-pen" role="alert">{shareError}</p>}
+    <section className="card card-pad mx-4" aria-labelledby="marked-copy">
+      <p className="font-hand text-xl text-pen">no second round of marking</p>
+      <h2 id="marked-copy" className="font-display text-[22px] font-bold">Marked copy for {pupil}</h2>
+      <img src={url} alt={`Marked copy of ${pupil}'s work`} className="w-full" />
+      <p className="text-sm text-ink-soft">The student’s own work with every tick, cross and score — print it or send it to the parent. On the original paper, just write the total.</p>
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" className="btn-pen" onClick={() => void handleShare()}>Share</button>
+        <button type="button" className="btn-ghost" onClick={handlePrint}>Print</button>
       </div>
+      {shareError && <p className="text-sm text-pen" role="alert">{shareError}</p>}
     </section>
   );
 }

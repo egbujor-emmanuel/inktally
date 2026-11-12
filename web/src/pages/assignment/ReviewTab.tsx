@@ -7,6 +7,7 @@ import { parseNumericAnswer } from '../../marking/normalize';
 import { MarkRow } from '../../components/MarkRow';
 import { useOnline } from '../../hooks/useStatus';
 import { friendlyCloudError } from '../../ai/errors';
+import { ErrorText, GhostButton, PenButton } from '../../ui/Kit';
 
 type Props = { assignment: Assignment; submissions: Submission[] };
 
@@ -106,33 +107,33 @@ export function ReviewTab({ assignment, submissions }: Props) {
     await setScore(s, m, m.max);
   }
 
+  // Same layout as the Android Review tab.
   return (
-    <div className="grid gap-6">
-      <section className="paper-card flex flex-wrap items-center justify-between gap-4 p-5">
-        <p>
-          <span className="font-display text-2xl font-bold">{pending.length}</span> answer{pending.length === 1 ? '' : 's'} to check
-          {provisionalCount > 0 && <span className="text-ink-soft"> · {provisionalCount} marked on-device, awaiting the cloud check</span>}
-        </p>
-        <button type="button" className="btn-pen" disabled={!isOnline || !!checking || pending.length === 0} onClick={() => void runCloudCheck()}>
-          {checking ? `Checking ${checking.done}/${checking.total}…` : isOnline ? 'Check all with the cloud' : 'Cloud check runs when online'}
-        </button>
-      </section>
-      {error && <p className="text-pen" role="alert">{error}</p>}
-      {pending.length === 0 && <p className="font-hand text-3xl text-ink-soft">All marks are verified or reviewed. ✓</p>}
-      <ol className="grid gap-3">
+    <div className="grid gap-3 pb-10">
+      <div className="flex items-center gap-3 px-4">
+        <p className="flex-1 font-display text-xl font-bold">{pending.length} answer{pending.length === 1 ? '' : 's'} to check</p>
+        <PenButton disabled={!isOnline || !!checking || pending.length === 0} onClick={() => void runCloudCheck()}>
+          {checking ? `Checking ${checking.done}/${checking.total}…` : isOnline ? 'Check with the cloud' : 'Runs when online'}
+        </PenButton>
+      </div>
+      {provisionalCount > 0 && <p className="px-4 text-sm text-ink-soft">{provisionalCount} marked on-device, waiting for the cloud check.</p>}
+      <ErrorText message={error} />
+      {pending.length === 0 && <p className="px-4 font-hand text-[26px] text-ink-soft">All marks are verified or reviewed. ✓</p>}
+      <ol className="grid gap-3 px-4">
         {pending.map(({ s, m }, i) => {
           const question = assignment.scheme.questions.find((q) => q.q === m.q);
-          const canAccept = question?.type === 'short' || question?.type === 'numeric';
+          const canAccept = (question?.type === 'short' || question?.type === 'numeric') && Boolean(m.read) && m.awarded < m.max;
           return (
             <MarkRow key={`${s.id}:${m.q}`} mark={m} cropUrl={cropUrls[`${s.id}:${m.q}`]} index={i} actions={
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                <span className="font-semibold">{s.pupil}</span>
-                <span className="text-ink-soft">Set score:</span>
-                {Array.from({ length: m.max + 1 }, (_, n) => (
-                  <button key={n} type="button" className="btn-ghost px-3 py-1 text-xs" onClick={() => void setScore(s, m, n)}>{n}</button>
-                ))}
-                {canAccept && m.read && m.awarded < m.max && (
-                  <button type="button" className="text-pen underline" onClick={() => void acceptAnswer(s, m)}>Accept “{m.read}” for everyone</button>
+              <div className="grid gap-1.5">
+                <p className="font-semibold">{s.pupil}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {Array.from({ length: m.max + 1 }, (_, n) => (
+                    <GhostButton key={n} className="!min-h-10 !px-4 !py-2" onClick={() => void setScore(s, m, n)}>{n}/{m.max}</GhostButton>
+                  ))}
+                </div>
+                {canAccept && (
+                  <button type="button" className="btn-text justify-self-start" onClick={() => void acceptAnswer(s, m)}>Accept “{m.read.slice(0, 30)}” for everyone</button>
                 )}
               </div>
             } />

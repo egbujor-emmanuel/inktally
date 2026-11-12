@@ -62,32 +62,31 @@ export function App() {
 
   const content = (
     <div className="min-h-dvh">
-      <header className="z-20 border-b sm:sticky sm:top-0 border-[oklch(88%_0.02_85)] bg-paper/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <Link to="/" className="flex shrink-0 items-center gap-2.5 font-display text-2xl font-bold tracking-tight" aria-label="REDPEN home">
+      {/* Same header as the Android app: logo + account, two big buttons, one swipeable status line. */}
+      <header className="z-20 border-b border-border bg-paper sm:sticky sm:top-0">
+        <div className="mx-auto max-w-3xl">
+          <div className="flex items-center px-4 pt-2.5">
+            <Link to="/" className="flex items-center gap-2 font-display text-2xl font-bold" aria-label="REDPEN home">
               <img src="/logo-mark.svg" alt="" width={36} height={36} className="size-9" />
               <span>RED<span className="text-pen">PEN</span></span>
             </Link>
-            <nav className="flex w-full items-center gap-2 sm:w-auto" aria-label="Main">
-              <Link to="/quick" className="btn-ghost flex-1 whitespace-nowrap text-center text-sm sm:flex-none">Quick mark</Link>
-              <Link to="/new" className="btn-pen flex-1 whitespace-nowrap text-center text-sm sm:flex-none">New assignment</Link>
+            <span className="flex-1" />
+            {boot.state === 'ready' && <AccountMenu />}
+          </div>
+          {boot.state === 'ready' && (
+            <nav className="grid grid-cols-2 gap-2 px-4 py-1.5" aria-label="Main">
+              <Link to="/quick" className="btn-ghost">Quick mark</Link>
+              <Link to="/new" className="btn-pen">New assignment</Link>
             </nav>
-          </div>
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <StatusBar />
-            {boot.state === 'ready' && (
-              <div className="flex items-start gap-3">
-                <Link to="/school" className="pt-1 text-xs font-medium underline decoration-pen/40 underline-offset-4 hover:decoration-pen">School details</Link>
-                <AccountMenu />
-              </div>
-            )}
-          </div>
+          )}
+          <StatusBar trailing={boot.state === 'ready' && (
+            <Link to="/school" className="px-1.5 text-[13px] font-medium whitespace-nowrap text-ink underline">School details</Link>
+          )} />
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+      <main className="mx-auto max-w-3xl pb-24">
         {writeError && (
-          <p className="mt-4 rounded-lg border border-pen bg-white p-3 text-pen" role="alert">
+          <p className="m-3 bg-white p-3 text-[13px] text-pen" role="alert">
             A change could not be saved: {writeError}{' '}
             <button type="button" className="underline" onClick={() => setWriteError(null)}>Dismiss</button>
           </p>

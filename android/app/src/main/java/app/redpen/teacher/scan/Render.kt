@@ -258,6 +258,94 @@ object Render {
         return out
     }
 
+    /** Printable mark register (A4 landscape): letterhead, then students x questions with totals, status and comments. */
+    fun registerPdf(ctx: Context, a: app.redpen.teacher.data.Assignment, rows: List<app.redpen.teacher.data.Register.Row>): File {
+        val profile = registerProfile
+        val f = fonts(ctx)
+        val doc = PdfDocument()
+        val w = (297 * MM_TO_PT).roundToInt(); val h = (210 * MM_TO_PT).roundToInt()
+        val pad = 36f
+        val qs = a.scheme.questions
+        val nameW = 140f; val qW = 38f; val totW = 52f; val statW = 72f
+        val commentW = (w - 2 * pad - nameW - qs.size * qW - totW - statW).coerceAtLeast(120f)
+        val rowH = 30f
+        var page: PdfDocument.Page? = null
+        var y = 0f
+        var pageNo = 0
+        fun newPage() {
+            page?.let { doc.finishPage(it) }
+            pageNo += 1
+            page = doc.startPage(PdfDocument.PageInfo.Builder(w, h, pageNo).create())
+            val c = page!!.canvas
+            y = pad
+            if (profile.institution.isNotBlank()) { y += 18f; c.drawText(profile.institution, pad, y, paint(INK, 18f, f.display)) }
+            if (profile.details.isNotBlank()) { y += 14f; c.drawText(profile.details, pad, y, paint(SOFT, 10f, f.body)) }
+            y += 18f; c.drawText("${a.title} — ${a.className}", pad, y, paint(INK, 13f, f.body, bold = true))
+            if (profile.teacher.isNotBlank()) { y += 13f; c.drawText("Teacher: ${profile.teacher}", pad, y, paint(SOFT, 10f, f.body)) }
+            y += 14f
+            val head = Paint().apply { color = INK }
+            c.drawRect(pad, y, w - pad, y + 22f, head)
+            val white = paint(Color.WHITE, 9f, f.body, bold = true)
+            var x = pad + 4
+            c.drawText("Student", x, y + 15f, white); x = pad + nameW
+            qs.forEach { q -> c.drawText("Q${q.q} /${q.max}", x + 2, y + 15f, white); x += qW }
+            c.drawText("Total /${a.maxTotal}", x + 2, y + 15f, white); x += totW
+            c.drawText("Status", x + 2, y + 15f, white); x += statW
+            c.drawText("Teacher’s comment", x + 2, y + 15f, white)
+            y += 22f
+        }
+        newPage()
+        val body = paint(INK, 10f, f.body); val bold = paint(INK, 10f, f.body, bold = true)
+        val hand = paint(PEN, 13f, f.hand); val soft = paint(SOFT, 9f, f.body)
+        val rule = Paint().apply { color = 0xFFE5DECF.toInt(); strokeWidth = 0.8f }
+        for (r in rows) {
+            if (y + rowH > h - pad) newPage()
+            val c = page!!.canvas
+            var x = pad + 4
+            c.drawText(r.submission.pupil.take(28), x, y + 19f, bold); x = pad + nameW
+            r.scores.forEachIndexed { i, v -> c.drawText(v?.toString() ?: "–", x + 8, y + 20f, if (v != null && v < qs[i].max) hand else paint(INK, 13f, f.hand)); x += qW }
+            c.drawText("${r.total}", x + 8, y + 20f, hand); x += totW
+            c.drawText(if (r.submission.queued != null) "Waiting" else if (r.unchecked > 0) "${r.unchecked} to check" else "Final", x + 2, y + 19f, soft); x += statW
+            val comment = wrap(body::measureText, r.submission.comment, commentW - 6).take(2)
+            comment.forEachIndexed { i, line -> c.drawText(line, x + 2, y + 13f + i * 12f, body) }
+            y += rowH
+            c.drawLine(pad, y, w - pad, y, rule)
+        }
+        page?.let { doc.finishPage(it) }
+        val out = File(File(ctx.cacheDir, "share").apply { mkdirs() }, "${safeName(a.title)}-register.pdf")
+        try { out.outputStream().use { doc.writeTo(it) } } finally { doc.close() }
+        return out
+    }
+
+    /** School details used by registerPdf (set by the register screen before printing). */
+    var registerProfile: Profile = Profile()
+
+    /** Printable catch-up sheet: heading, explanation, numbered practice questions with answers. */
+    fun catchUpPdf(ctx: Context, title: String, q: Int, explanation: String, practice: List<Pair<String, String>>): File {
+        val f = fonts(ctx)
+        val doc = PdfDocument()
+        val w = (210 * MM_TO_PT).roundToInt(); val h = (297 * MM_TO_PT).roundToInt()
+        val pg = doc.startPage(PdfDocument.PageInfo.Builder(w, h, 1).create())
+        val c = pg.canvas
+        val pad = 48f
+        var y = pad + 20f
+        c.drawText("catch-up · question $q", pad, y, paint(PEN, 18f, f.hand)); y += 30f
+        c.drawText("Let’s fix this together", pad, y, paint(INK, 22f, f.display)); y += 26f
+        val body = paint(INK, 12f, f.body); val soft = paint(SOFT, 11f, f.body)
+        wrap(body::measureText, explanation, w - 2 * pad).forEach { c.drawText(it, pad, y, body); y += 17f }
+        y += 10f
+        practice.forEachIndexed { i, (question, answer) ->
+            wrap(body::measureText, "${i + 1}. $question", w - 2 * pad).forEach { c.drawText(it, pad, y, body); y += 17f }
+            wrap(soft::measureText, "Answer: $answer", w - 2 * pad - 14).forEach { c.drawText(it, pad + 14, y, soft); y += 15f }
+            y += 8f
+        }
+        c.drawText(title, pad, h - pad / 2, paint(SOFT, 9f, f.body))
+        doc.finishPage(pg)
+        val out = File(File(ctx.cacheDir, "share").apply { mkdirs() }, "${safeName(title)}-catch-up-q$q.pdf")
+        try { out.outputStream().use { doc.writeTo(it) } } finally { doc.close() }
+        return out
+    }
+
     fun savePng(ctx: Context, bmp: Bitmap, name: String): File {
         val out = File(File(ctx.cacheDir, "share").apply { mkdirs() }, "${safeName(name)}.png")
         out.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }

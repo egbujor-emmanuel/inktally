@@ -4,6 +4,7 @@ import { makeCatchUp, type CatchUpSheet } from '../../ai/remediation';
 import type { Assignment, Submission } from '../../data/store';
 import { useOnline } from '../../hooks/useStatus';
 import { friendlyCloudError } from '../../ai/errors';
+import { ErrorText, GhostButton, PenButton } from '../../ui/Kit';
 
 type Props = { assignment: Assignment; submissions: Submission[] };
 
@@ -45,47 +46,59 @@ export function InsightsTab({ assignment, submissions }: Props) {
     }
   }
 
-  if (!submissions.length) return <p className="font-hand text-3xl text-ink-soft">Mark a few students to see where the class is struggling.</p>;
+  if (!submissions.length) return <p className="p-4 font-hand text-[26px] text-ink-soft">Mark a few students to see where the class is struggling.</p>;
 
+  function catchUpText(q: number, data: CatchUpSheet): string {
+    return `Catch-up — ${assignment.title}, question ${q}\n\n${data.explanation}\n\n`
+      + data.practice.map((p, i) => `${i + 1}. ${p.question}\n   Answer: ${p.answer}`).join('\n');
+  }
+
+  async function handleShare(q: number, data: CatchUpSheet) {
+    const text = catchUpText(q, data);
+    if (typeof navigator.share === 'function') { try { await navigator.share({ title: 'Catch-up sheet', text }); return; } catch { /* cancelled */ } }
+    try { await navigator.clipboard.writeText(text); setError('Copied — paste it into a message or document.'); } catch { setError('Sharing is not available here — use Print instead.'); }
+  }
+
+  // Same layout as the Android Insights tab.
   return (
-    <div className="grid gap-8">
-      <ol className="grid gap-3">
-        {rows.map((row) => {
-          const pct = Math.round(row.average * 100);
-          return (
-            <li key={row.question.q} className="paper-card grid gap-3 p-5 md:grid-cols-[3rem_1fr_14rem_auto] md:items-center">
-              <span className="font-display text-2xl font-bold">Q{row.question.q}</span>
-              <div>
-                <p className="font-medium">{row.question.prompt}</p>
-                {row.wrong.length > 0 && (
-                  <p className="mt-1 text-sm text-ink-soft">Answers that lost marks: {topCounts(row.wrong).map(([v, n]) => `“${v}” ×${n}`).join(', ')}</p>
-                )}
-              </div>
-              <div aria-label={`${pct}% average`}>
-                <div className="h-3 overflow-hidden rounded-full bg-paper-deep">
-                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct < 50 ? 'var(--color-pen)' : 'var(--color-device)' }} />
-                </div>
-                <p className="mt-1 text-sm text-ink-soft">{pct}% average · {row.attempts} students</p>
-              </div>
-              <button type="button" className="btn-ghost text-sm" disabled={!isOnline || !row.wrong.length || busyQ !== null} onClick={() => void handleCatchUp(row)}>
-                {busyQ === row.question.q ? 'Writing…' : 'Catch-up sheet'}
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-      {error && <p className="text-pen" role="alert">{error}</p>}
+    <div className="grid gap-3 pb-10">
+      {rows.map((row) => {
+        const pct = Math.round(row.average * 100);
+        return (
+          <section key={row.question.q} className="card card-pad mx-4" aria-label={`Question ${row.question.q}`}>
+            <div className="flex items-center">
+              <span className="w-[52px] flex-none font-display text-[22px] font-bold">Q{row.question.q}</span>
+              <p className="flex-1 font-medium">{row.question.prompt}</p>
+            </div>
+            {row.wrong.length > 0 && (
+              <p className="text-[13px] text-ink-soft">Answers that lost marks: {topCounts(row.wrong).map(([v, n]) => `“${v}” ×${n}`).join(', ')}</p>
+            )}
+            <div className="h-2.5 overflow-hidden rounded-[5px] bg-paper-deep" aria-hidden>
+              <div className="h-full rounded-[5px]" style={{ width: `${pct}%`, background: pct < 50 ? 'var(--color-pen)' : 'var(--color-device)' }} />
+            </div>
+            <p className="text-[13px] text-ink-soft">{pct}% average · {row.attempts} students</p>
+            <GhostButton disabled={!isOnline || !row.wrong.length || busyQ !== null} onClick={() => void handleCatchUp(row)}>
+              {busyQ === row.question.q ? 'Writing…' : 'Catch-up sheet'}
+            </GhostButton>
+          </section>
+        );
+      })}
+      <ErrorText message={error} />
       {sheet && (
-        <section className="paper-card ruled p-8 sm:pl-20" aria-labelledby="catchup">
-          <p className="font-hand text-2xl text-pen">catch-up · question {sheet.q}</p>
-          <h2 id="catchup" className="font-display text-3xl font-bold">Let’s fix this together</h2>
-          <p className="mt-4 max-w-2xl text-lg leading-8">{sheet.data.explanation}</p>
-          <ol className="mt-6 grid list-decimal gap-4 pl-6 text-lg leading-8">
-            {sheet.data.practice.map((p) => (
-              <li key={p.question}>{p.question}<details className="text-base text-ink-soft"><summary className="cursor-pointer">Answer</summary>{p.answer}</details></li>
-            ))}
-          </ol>
-          <button type="button" className="btn-pen mt-6" onClick={() => window.print()}>Print</button>
+        <section className="ruled print-area grid gap-2.5 py-5 pr-4 pl-[52px]" aria-labelledby="catchup">
+          <p className="font-hand text-[22px] text-pen">catch-up · question {sheet.q}</p>
+          <h2 id="catchup" className="font-display text-[26px] font-bold">Let’s fix this together</h2>
+          <p className="text-[17px] leading-[26px]">{sheet.data.explanation}</p>
+          {sheet.data.practice.map((p, i) => (
+            <details key={p.question}>
+              <summary className="cursor-pointer list-none text-[17px] leading-[26px]">{i + 1}. {p.question}<span className="block text-sm text-ink-soft">Show answer</span></summary>
+              <p className="text-sm text-ink-soft">Answer: {p.answer}</p>
+            </details>
+          ))}
+          <div className="grid grid-cols-2 gap-2 print:hidden">
+            <PenButton onClick={() => void handleShare(sheet.q, sheet.data)}>Share</PenButton>
+            <GhostButton onClick={() => window.print()}>Print</GhostButton>
+          </div>
         </section>
       )}
     </div>

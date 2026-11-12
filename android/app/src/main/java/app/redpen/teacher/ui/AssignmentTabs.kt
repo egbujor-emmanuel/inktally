@@ -287,7 +287,7 @@ fun ReviewTab(a: Assignment, submissions: List<Submission>) {
                             }) { Text("$n/${m.max}") }
                         }
                     }
-                    val widened = question?.let { if (m.read.isNotBlank()) acceptForEveryone(it, m.read) else null }
+                    val widened = question?.let { if (m.read.isNotBlank() && m.awarded < m.max) acceptForEveryone(it, m.read) else null }
                     if (widened != null) TextButton(onClick = {
                         Repo.updateQuestion(a, widened)
                         Repo.saveMarks(a.id, s.id, s.marks.map { x -> if (x.q == m.q) x.copy(awarded = x.max, status = MarkStatus.REVIEWED, engine = MarkEngine.TEACHER, reasons = x.reasons + "Teacher accepted “${m.read}” for everyone.") else x })
@@ -346,8 +346,16 @@ fun RegisterTab(a: Assignment, submissions: List<Submission>, profile: Profile, 
                     PenButton("Download Excel (.xlsx)", { export("xlsx") }, Modifier.weight(1.6f))
                     GhostButton("CSV", { export("csv") }, Modifier.weight(0.7f))
                 }
+                GhostButton("Print register", {
+                    scope.launch {
+                        runCatching {
+                            Render.registerProfile = profile
+                            withContext(Dispatchers.IO) { Render.registerPdf(ctx, a, rows) }
+                        }.onSuccess { printPdf(ctx, it, "${a.title} register") }.onFailure { error = "Could not build the register: ${it.message}" }
+                    }
+                }, Modifier.fillMaxWidth())
                 Text("${rows.size} student${if (rows.size == 1) "" else "s"} · class average ${"%.1f".format(rows.sumOf { it.total }.toDouble() / rows.size)}/$max", color = RP.InkSoft)
-                if (profile.institution.isBlank()) Text("Tip: add your school details (menu → School details) to put your institution’s name on the register, the Excel file and every marked copy.",
+                if (profile.institution.isBlank()) Text("Tip: add your school details (header → School details) to put your institution’s name on the register, the Excel file and every marked copy.",
                     color = RP.InkSoft, fontSize = 13.sp)
                 Text("Tap a student’s name or comment to edit it. Changes save automatically and go into the Excel file.", color = RP.InkSoft, fontSize = 13.sp)
                 ErrorText(error)
@@ -453,10 +461,18 @@ fun InsightsTab(a: Assignment, submissions: List<Submission>) {
                             Text(if (shown) "Answer: $answer" else "Show answer", color = RP.InkSoft, fontSize = 14.sp, modifier = Modifier.clickable { shown = !shown })
                         }
                     }
-                    PenButton("Share", {
-                        shareText(ctx, "Catch-up — ${a.title}, question $qn\n\n${s.explanation}\n\n" +
-                            s.practice.mapIndexed { i, (qq, ans) -> "${i + 1}. $qq\n   Answer: $ans" }.joinToString("\n"), "Catch-up sheet")
-                    })
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        PenButton("Share", {
+                            shareText(ctx, "Catch-up — ${a.title}, question $qn\n\n${s.explanation}\n\n" +
+                                s.practice.mapIndexed { i, (qq, ans) -> "${i + 1}. $qq\n   Answer: $ans" }.joinToString("\n"), "Catch-up sheet")
+                        }, Modifier.weight(1f))
+                        GhostButton("Print", {
+                            scope.launch {
+                                runCatching { withContext(Dispatchers.IO) { Render.catchUpPdf(ctx, a.title, qn, s.explanation, s.practice) } }
+                                    .onSuccess { printPdf(ctx, it, "Catch-up Q$qn") }.onFailure { error = it.message }
+                            }
+                        }, Modifier.weight(1f))
+                    }
                 }
             }
         }

@@ -33,10 +33,12 @@ appId: app.redpen.teacher
     timeout: 30000
 - takeScreenshot: 30-offline-saved
 - setAirplaneMode: disabled
+# The header line (always on screen) shows "· 1 waiting" until the queued student is fully marked.
 - extendedWaitUntil:
-    notVisible: ".*waiting to be marked"
+    notVisible: ".*1 waiting.*"
     timeout: 300000
 - takeScreenshot: 31-marked-after-reconnect
 - tapOn: "Mark register"
 - assertVisible: "Offline Student"
+- assertNotVisible: "Waiting"
 - takeScreenshot: 32-offline-in-register

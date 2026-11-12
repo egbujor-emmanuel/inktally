@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent } from 'react';
+import { useMemo, useState } from 'react';
 import type { Mark } from '../../domain/types';
 import { MARKED_KEY, PAGE_KEY, PHOTO_KEY, createSubmission, saveCrop, type Assignment, type Submission } from '../../data/store';
 import { layoutSheet } from '../../scan/layout';
@@ -10,6 +10,7 @@ import { friendlyCloudError } from '../../ai/errors';
 import { canReadOffline } from '../../ai/models';
 import { markSubmission, type CaptureMode } from '../../marking/markSubmission';
 import type { QueueState } from '../../hooks/useMarkingQueue';
+import { Card, Field, GhostButton, PenButton, PhotoButtons, Pill } from '../../ui/Kit';
 
 type Props = { assignment: Assignment; submissions: Submission[]; queue: QueueState };
 
@@ -23,8 +24,6 @@ type Phase =
   | { kind: 'queued'; pupil: string }
   | { kind: 'error'; message: string };
 
-const field = 'mt-1 w-full rounded-lg border border-[oklch(82%_0.02_85)] bg-white px-3 py-2';
-
 export function MarkTab({ assignment, submissions, queue }: Props) {
   const profile = useProfile();
   const pages = useMemo(() => layoutSheet(assignment.scheme.questions), [assignment.scheme.questions]);
@@ -36,9 +35,7 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
   const [crops, setCrops] = useState<Record<number, string>>({});
   const [copy, setCopy] = useState<{ blob: Blob; pupil: string; submissionId: string } | null>(null);
 
-  async function handlePhoto(event: ChangeEvent<HTMLInputElement>) {
-    const photo = event.target.files?.[0];
-    event.target.value = '';
+  async function handlePhoto([photo]: File[]) {
     if (!photo) return;
     setMarks([]);
     setCrops(mode === 'page' ? { [PAGE_KEY]: URL.createObjectURL(photo) } : {});
@@ -73,48 +70,41 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
   const busy = phase.kind === 'scanning' || phase.kind === 'marking';
 
   return (
-    <div className="grid gap-8">
-      <div role="radiogroup" aria-label="What are you photographing?" className="flex flex-wrap gap-2">
-        {([['sheet', 'Printed REDPEN sheet', 'Names never leave the device · works fully offline'], ['page', 'Exercise book page', 'No printer needed · best when online']] as const).map(([value, title, note]) => (
-          <button key={value} type="button" role="radio" aria-checked={mode === value} onClick={() => setMode(value)}
-            className={`paper-card border-2 px-4 py-3 text-left transition ${mode === value ? '!border-pen bg-white' : 'opacity-70 hover:opacity-100'}`}>
-            <span className="flex items-center gap-2 font-semibold"><span aria-hidden className={`size-3 rounded-full border-2 border-pen ${mode === value ? 'bg-pen' : ''}`} />{title}</span><span className="text-xs text-ink-soft">{note}</span>
-          </button>
-        ))}
+    <div className="grid gap-3 pb-10">
+      <div className="grid gap-1.5 px-4" role="radiogroup" aria-label="What are you photographing?">
+        <ModeOption selected={mode === 'sheet'} title="Printed REDPEN sheet" subtitle="Names never leave the device · works fully offline" onSelect={() => setMode('sheet')} />
+        <ModeOption selected={mode === 'page'} title="Exercise book page" subtitle="No printer needed · best when online" onSelect={() => setMode('page')} />
       </div>
-      <section className="paper-card grid gap-4 p-6 sm:grid-cols-[1fr_auto_auto] sm:items-end" aria-label="Mark a student">
-        <label className="text-sm font-medium">Student name or number
-          <input className={field} value={pupil} onChange={(e) => setPupil(e.target.value)} placeholder="e.g. Ada O. or 14" disabled={busy} />
-        </label>
+      <Card>
+        <Field label="Student name or number" value={pupil} onChange={setPupil} placeholder="e.g. Ada O. or 14" disabled={busy} maxLength={80} />
         {mode === 'sheet' && pages.length > 1 && (
-          <label className="text-sm font-medium">Sheet page
-            <select className={field} value={pageIndex} onChange={(e) => setPageIndex(Number(e.target.value))} disabled={busy}>
-              {pages.map((p, i) => <option key={p.page} value={i}>Page {p.page}</option>)}
-            </select>
-          </label>
-        )}
-        <label className={`btn-pen cursor-pointer text-center ${busy ? 'pointer-events-none opacity-50' : ''}`}>
-          {busy ? 'Marking…' : mode === 'sheet' ? 'Photograph answer sheet' : 'Photograph exercise book page'}
-          <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => void handlePhoto(e)} disabled={busy} />
-        </label>
-      </section>
-
-      <div aria-live="polite">
-        {phase.kind === 'scanning' && <p className="font-hand text-3xl text-ink-soft">{mode === 'sheet' ? 'Finding the answer boxes…' : 'Reading the page…'}</p>}
-        {phase.kind === 'marking' && <p className="font-hand text-3xl text-ink-soft">Marking {phase.done} of {phase.total}…</p>}
-        {phase.kind === 'done' && <p className="font-display text-3xl font-bold">Total: <span className="font-hand text-5xl text-pen">{phase.total}/{phase.max}</span></p>}
-        {phase.kind === 'queued' && (
-          <div className="paper-card border-2 !border-flag p-4" role="status">
-            <p className="font-display text-xl font-bold">Saved for marking: {phase.pupil}</p>
-            <p className="text-ink-soft">
-              You’re offline and this device can’t read handwriting without a connection. The photo stays on this device and
-              REDPEN marks it automatically as soon as you’re back online. Keep photographing the rest of the class.
-            </p>
+          <div className="flex items-center gap-1.5" role="group" aria-label="Sheet page">
+            <span className="pr-1">Sheet page:</span>
+            {pages.map((p, i) => i === pageIndex
+              ? <PenButton key={p.page}>{p.page}</PenButton>
+              : <GhostButton key={p.page} onClick={() => setPageIndex(i)}>{p.page}</GhostButton>)}
           </div>
         )}
-        {phase.kind === 'error' && <p className="text-pen" role="alert">{phase.message}</p>}
-      </div>
+        <PhotoButtons takeLabel={busy ? 'Marking…' : mode === 'sheet' ? 'Photograph answer sheet' : 'Photograph the page'}
+          onPhoto={(files) => void handlePhoto(files)} disabled={busy} />
+        <p className="text-[13px] text-ink-soft">{mode === 'sheet' ? 'Keep all four black corner squares in the photo.' : 'Make sure every question number and answer is visible.'}</p>
+      </Card>
 
+      <div aria-live="polite">
+        {phase.kind === 'scanning' && <p className="px-4 font-hand text-2xl font-bold text-ink-soft">{mode === 'sheet' ? 'Finding the answer boxes…' : 'Reading the page…'}</p>}
+        {phase.kind === 'marking' && <p className="px-4 font-hand text-2xl font-bold text-ink-soft">Marking {Math.min(phase.done + 1, phase.total)} of {phase.total}…</p>}
+        {phase.kind === 'done' && <p className="px-4 font-display text-[30px] font-bold">Total: {phase.total}/{phase.max}</p>}
+        {phase.kind === 'error' && <p className="px-4 text-pen" role="alert">{phase.message}</p>}
+      </div>
+      {phase.kind === 'queued' && (
+        <Card flag>
+          <p className="font-display text-xl font-bold" role="status">Saved for marking: {phase.pupil}</p>
+          <p className="text-sm text-ink-soft">
+            You’re offline and this device can’t read handwriting without a connection. The photo stays on this device and REDPEN marks it
+            automatically as soon as you’re back online. Keep photographing the rest of the class.
+          </p>
+        </Card>
+      )}
       {queue.waiting.length > 0 && <QueuePanel queue={queue} />}
 
       {copy && (() => {
@@ -124,38 +114,38 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
           : <MarkedCopy blob={copy.blob} pupil={copy.pupil} />;
       })()}
 
-      {marks.length > 0 && (
-        <div className={crops[PAGE_KEY] ? 'grid gap-6 lg:grid-cols-[18rem_1fr] lg:items-start' : ''}>
-          {crops[PAGE_KEY] && (
-            <figure className="paper-card overflow-hidden p-2 lg:sticky lg:top-36">
-              <img src={crops[PAGE_KEY]} alt="The exercise book page that was marked" className="w-full rounded-md" />
-              <figcaption className="p-2 text-xs text-ink-soft">Kept on this device</figcaption>
-            </figure>
-          )}
-          <ol className="grid gap-3">
-            {marks.map((m, i) => <MarkRow key={m.q} mark={m} cropUrl={crops[m.q]} index={i} />)}
-          </ol>
-        </div>
+      {crops[PAGE_KEY] && marks.length > 0 && (
+        <img src={crops[PAGE_KEY]} alt="The exercise book page that was marked" className="mx-4 max-h-[260px] object-contain" />
       )}
+      {marks.length > 0 && <ol className="grid gap-3 px-4">{marks.map((m, i) => <MarkRow key={m.q} mark={m} cropUrl={crops[m.q]} index={i} />)}</ol>}
     </div>
+  );
+}
+
+/** Radio row, as on the Android Mark tab. */
+function ModeOption({ selected, title, subtitle, onSelect }: { selected: boolean; title: string; subtitle: string; onSelect: () => void }) {
+  return (
+    <button type="button" role="radio" aria-checked={selected} onClick={onSelect}
+      className={`flex items-center gap-3 rounded-xl p-2 text-left ${selected ? 'bg-paper' : 'bg-white'}`}>
+      <span aria-hidden className="grid size-5 flex-none place-items-center rounded-full border-2 border-pen">
+        {selected && <span className="size-2.5 rounded-full bg-pen" />}
+      </span>
+      <span className="grid"><span className="font-semibold">{title}</span><span className="text-xs text-ink-soft">{subtitle}</span></span>
+    </button>
   );
 }
 
 function QueuePanel({ queue }: { queue: QueueState }) {
   return (
-    <section className="paper-card grid gap-2 p-5" aria-labelledby="queue-title">
-      <h2 id="queue-title" className="font-display text-xl font-bold">
-        {queue.waiting.length} waiting to be marked
-      </h2>
-      <p className="text-ink-soft" aria-live="polite">
+    <Card labelledBy="queue-title">
+      <h2 id="queue-title" className="font-display text-xl font-bold">{queue.waiting.length} waiting to be marked</h2>
+      <p className="text-sm text-ink-soft" aria-live="polite">
         {queue.current ? `Marking ${queue.current.pupil} now…` : navigator.onLine ? 'Starting…' : 'They will be marked automatically when you’re back online.'}
       </p>
-      <ul className="flex flex-wrap gap-2">
-        {queue.waiting.map((s) => (
-          <li key={s.id} className={`rounded-full border px-3 py-1 text-sm ${queue.current?.id === s.id ? 'border-pen text-pen' : 'border-[oklch(85%_0.02_85)]'}`}>{s.pupil}</li>
-        ))}
-      </ul>
+      <div className="flex flex-wrap gap-1.5">
+        {queue.waiting.map((s) => <Pill key={s.id} color={queue.current?.id === s.id ? 'var(--color-pen)' : 'var(--color-ink-soft)'}>{s.pupil}</Pill>)}
+      </div>
       {queue.error && <p className="text-sm text-pen" role="alert">Could not mark {queue.error}. It stays in the queue.</p>}
-    </section>
+    </Card>
   );
 }

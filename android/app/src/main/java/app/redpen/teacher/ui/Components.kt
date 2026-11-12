@@ -159,7 +159,8 @@ fun StatusStrip(trailing: @Composable () -> Unit = {}) {
         // One swipeable line so the header stays short on phones.
         Row(Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState()).padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Chip(if (online) "Online" else "Offline — cloud checks later", dot = if (online) RP.Device else RP.Flag, colour = RP.Ink)
+            Chip(if (online) "Online" else if (device == DeviceModel.State.Ready) "Offline — marking on this device" else "Offline — marked when back online",
+                dot = if (online) RP.Device else RP.Flag, colour = RP.Ink)
             Chip(deviceText, dot = if (device == DeviceModel.State.Ready) RP.Device else RP.Cloud)
             val total = (counts[ReadSource.ON_DEVICE] ?: 0) + (counts[ReadSource.IN_CLOUD] ?: 0)
             if (total > 0) Chip("${counts[ReadSource.ON_DEVICE]} on-device · ${counts[ReadSource.IN_CLOUD]} cloud", colour = RP.Ink)

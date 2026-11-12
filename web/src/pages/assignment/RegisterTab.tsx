@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { COMMENT_LIMIT, PUPIL_LIMIT, updateSubmission, type Assignment, type Submission } from '../../data/store';
 import { useProfile } from '../../data/profile';
 import { buildRegisterWorkbook, downloadBlob, registerFileName, registerRows } from '../../data/excel';
 import { PupilRecord } from '../../components/PupilRecord';
 import { friendlyCloudError } from '../../ai/errors';
+import { Dialog, ErrorText, Field, GhostButton, PenButton } from '../../ui/Kit';
 
 type Props = { assignment: Assignment; submissions: Submission[] };
 
@@ -15,31 +15,14 @@ const csvCell = (v: string | number) => {
   return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 };
 
-const cellInput = 'w-full rounded border border-transparent bg-transparent px-1 py-0.5 hover:border-[oklch(85%_0.02_85)] focus:border-ink focus:bg-white';
+type Editing = { submission: Submission; field: 'pupil' | 'comment' };
 
-/** Text cell that saves when the teacher leaves it (works offline: the write is queued). */
-function EditableCell({ value, label, maxLength, multiline, onSave }: {
-  value: string; label: string; maxLength: number; multiline?: boolean; onSave: (v: string) => void;
-}) {
-  const [draft, setDraft] = useState(value);
-  const [focused, setFocused] = useState(false);
-  const shown = focused ? draft : value;
-  const commit = () => { setFocused(false); if (draft.trim() !== value.trim()) onSave(draft); };
-  const common = {
-    'aria-label': label, maxLength, value: shown, className: cellInput,
-    onFocus: () => { setDraft(value); setFocused(true); },
-    onChange: (e: { target: { value: string } }) => setDraft(e.target.value),
-    onBlur: commit,
-  };
-  return multiline
-    ? <textarea {...common} rows={1} className={`${cellInput} min-w-48 resize-y font-hand text-lg text-pen`} placeholder="Add a comment" />
-    : <input {...common} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} />;
-}
-
-/** The class mark register: replaces copying scores into the record book by hand. Everything is editable after marking. */
+/** The class mark register — same layout and controls as the Android Mark register tab. */
 export function RegisterTab({ assignment, submissions }: Props) {
   const profile = useProfile();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Editing | null>(null);
+  const [draft, setDraft] = useState('');
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const questions = assignment.scheme.questions;
@@ -48,13 +31,24 @@ export function RegisterTab({ assignment, submissions }: Props) {
   const classAverage = rows.length ? rows.reduce((a, r) => a + r.total, 0) / rows.length : 0;
   const open = submissions.find((s) => s.id === openId);
 
+  function startEdit(submission: Submission, field: Editing['field']) {
+    setDraft(field === 'pupil' ? submission.pupil : submission.comment ?? '');
+    setEditing({ submission, field });
+  }
+
+  function saveEdit() {
+    if (!editing) return;
+    updateSubmission(assignment.id, editing.submission.id, editing.field === 'pupil' ? { pupil: draft } : { comment: draft });
+    setEditing(null);
+  }
+
   async function handleExcel() {
     setError(null);
     setIsExporting(true);
     try {
       downloadBlob(await buildRegisterWorkbook(assignment, submissions, profile), registerFileName(assignment, 'xlsx'));
     } catch (e: unknown) {
-      setError(`Could not build the Excel file: ${friendlyCloudError(e).message}`);
+      setError(`Could not build the file: ${friendlyCloudError(e).message}`);
     } finally { setIsExporting(false); }
   }
 
@@ -70,72 +64,80 @@ export function RegisterTab({ assignment, submissions }: Props) {
     downloadBlob(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }), registerFileName(assignment, 'csv'));
   }
 
-  if (!rows.length) return <p className="font-hand text-3xl text-ink-soft">Mark a few students and their scores appear here, ready for your records.</p>;
+  if (!rows.length) return <p className="p-4 font-hand text-[26px] text-ink-soft">Mark a few students and their scores appear here, ready for your records.</p>;
 
+  const cell = 'px-1.5 py-1.5 align-top';
   return (
-    <div className="grid gap-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <button type="button" className="btn-pen" onClick={() => void handleExcel()} disabled={isExporting}>
-          {isExporting ? 'Building Excel file…' : 'Download Excel (.xlsx)'}
-        </button>
-        <button type="button" className="btn-ghost" onClick={handleCsv}>CSV</button>
-        <button type="button" className="btn-ghost" onClick={() => window.print()}>Print register</button>
-        <p className="text-ink-soft">{rows.length} students · class average {classAverage.toFixed(1)}/{max}</p>
-      </div>
-      {error && <p className="text-pen" role="alert">{error}</p>}
-      {!profile.institution && (
-        <p className="text-sm text-ink-soft">
-          Tip: <Link to="/school" className="underline">add your school details</Link> to put your institution’s name on the register, the Excel file and every marked copy.
-        </p>
+    <div className="grid gap-2.5 pb-10">
+      {editing && (
+        <Dialog title={editing.field === 'pupil' ? 'Student name' : `Comment for ${editing.submission.pupil}`} onClose={() => setEditing(null)} actions={<>
+          <button type="button" className="btn-text" onClick={() => setEditing(null)}>Cancel</button>
+          <button type="button" className="btn-text" onClick={saveEdit}>Save</button>
+        </>}>
+          <Field label={editing.field === 'pupil' ? 'Name or number' : 'Teacher’s comment'} value={draft} onChange={setDraft}
+            multiline={editing.field === 'comment'} rows={3} maxLength={editing.field === 'pupil' ? PUPIL_LIMIT : COMMENT_LIMIT} />
+        </Dialog>
       )}
-      <p className="text-sm text-ink-soft">Click a student’s name or comment to edit it. Changes save automatically and go into the Excel file.</p>
-      <div className="print-area overflow-x-auto">
-        <div className="mb-2 hidden print:block">
-          {profile.institution && <p className="font-display text-2xl font-bold">{profile.institution}</p>}
-          {profile.details && <p className="text-sm">{profile.details}</p>}
+      <div className="grid gap-2 px-4">
+        <div className="grid grid-cols-[1.6fr_0.7fr] gap-2">
+          <PenButton onClick={() => void handleExcel()} disabled={isExporting}>{isExporting ? 'Building Excel file…' : 'Download Excel (.xlsx)'}</PenButton>
+          <GhostButton onClick={handleCsv}>CSV</GhostButton>
         </div>
-        <table className="w-full border-collapse bg-white text-sm">
-          <caption className="p-2 text-left">
-            {profile.institution && <span className="block text-xs font-semibold uppercase tracking-widest text-pen">{profile.institution}</span>}
-            <span className="font-display text-xl font-bold">{assignment.title} — {assignment.className}</span>
-            {profile.teacher && <span className="block text-xs text-ink-soft">Teacher: {profile.teacher}</span>}
-          </caption>
-          <thead>
-            <tr className="border-b-2 border-ink">
-              <th scope="col" className="p-2 text-left">Student</th>
-              {questions.map((q) => <th key={q.q} scope="col" className="p-2 text-center">Q{q.q}<span className="block text-xs font-normal text-ink-soft">/{q.max}</span></th>)}
-              <th scope="col" className="p-2 text-center">Total<span className="block text-xs font-normal text-ink-soft">/{max}</span></th>
-              <th scope="col" className="p-2 text-left">Status</th>
-              <th scope="col" className="p-2 text-left">Teacher’s comment</th>
-              <th scope="col" className="p-2 print:hidden"><span className="sr-only">Record</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.submission.id} className="border-b border-[oklch(90%_0.02_85)] align-top">
-                <th scope="row" className="p-1 text-left font-semibold">
-                  <EditableCell value={r.submission.pupil} label={`Student name for ${r.submission.pupil}`} maxLength={PUPIL_LIMIT}
-                    onSave={(v) => updateSubmission(assignment.id, r.submission.id, { pupil: v })} />
-                </th>
-                {r.scores.map((v, i) => (
-                  <td key={questions[i].q} className={`p-2 text-center font-hand text-xl ${v !== null && v < questions[i].max ? 'text-pen' : ''}`}>{v ?? '–'}</td>
-                ))}
-                <td className="p-2 text-center font-hand text-2xl text-pen">{r.total}</td>
-                <td className="p-2 text-xs text-ink-soft">{r.submission.queued ? 'Waiting to be marked' : r.unchecked ? `${r.unchecked} to check` : 'Final'}</td>
-                <td className="p-1">
-                  <EditableCell value={r.submission.comment ?? ''} label={`Comment for ${r.submission.pupil}`} maxLength={COMMENT_LIMIT} multiline
-                    onSave={(v) => updateSubmission(assignment.id, r.submission.id, { comment: v })} />
-                </td>
-                <td className="p-2 print:hidden">
-                  <button type="button" className="whitespace-nowrap text-xs underline" aria-expanded={openId === r.submission.id}
-                    onClick={() => setOpenId(openId === r.submission.id ? null : r.submission.id)}>
-                    {openId === r.submission.id ? 'Close' : 'Marked copy'}
-                  </button>
-                </td>
+        <GhostButton onClick={() => window.print()}>Print register</GhostButton>
+        <p className="text-ink-soft">{rows.length} student{rows.length === 1 ? '' : 's'} · class average {classAverage.toFixed(1)}/{max}</p>
+        {!profile.institution && (
+          <p className="text-[13px] text-ink-soft">Tip: add your school details (header → School details) to put your institution’s name on the register, the Excel file and every marked copy.</p>
+        )}
+        <p className="text-[13px] text-ink-soft">Tap a student’s name or comment to edit it. Changes save automatically and go into the Excel file.</p>
+      </div>
+      <ErrorText message={error} />
+      <div className="print-area grid gap-2.5">
+        <div className="px-4">
+          {profile.institution && <p className="text-[11px] font-semibold text-pen">{profile.institution.toUpperCase()}</p>}
+          {profile.details && <p className="hidden text-sm print:block">{profile.details}</p>}
+          <p className="font-display text-lg font-bold">{assignment.title} — {assignment.className}</p>
+          {profile.teacher && <p className="text-xs text-ink-soft">Teacher: {profile.teacher}</p>}
+        </div>
+        <div className="mx-4 overflow-x-auto bg-white">
+          <table className="min-w-full border-collapse text-sm">
+            <thead className="bg-ink text-white">
+              <tr>
+                <th scope="col" className={`${cell} min-w-[130px] py-2 text-left text-xs font-semibold`}>Student</th>
+                {questions.map((q) => <th key={q.q} scope="col" className={`${cell} min-w-[54px] py-2 text-left text-xs font-semibold`}>Q{q.q} /{q.max}</th>)}
+                <th scope="col" className={`${cell} min-w-[70px] py-2 text-left text-xs font-semibold`}>Total /{max}</th>
+                <th scope="col" className={`${cell} min-w-[86px] py-2 text-left text-xs font-semibold`}>Status</th>
+                <th scope="col" className={`${cell} min-w-[200px] py-2 text-left text-xs font-semibold`}>Teacher’s comment</th>
+                <th scope="col" className={`${cell} min-w-[92px] print:hidden`}><span className="sr-only">Record</span></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.submission.id} className="border-b border-border">
+                  <th scope="row" className={`${cell} text-left font-semibold`}>
+                    <button type="button" className="text-left" aria-label={`Student name for ${r.submission.pupil}`} onClick={() => startEdit(r.submission, 'pupil')}>{r.submission.pupil}</button>
+                  </th>
+                  {r.scores.map((v, i) => (
+                    <td key={questions[i].q} className={`${cell} font-hand text-xl ${v !== null && v < questions[i].max ? 'text-pen' : 'text-ink'}`}>{v ?? '–'}</td>
+                  ))}
+                  <td className={`${cell} font-hand text-xl text-pen`}>{r.total}</td>
+                  <td className={`${cell} text-xs text-ink-soft`}>{r.submission.queued ? 'Waiting' : r.unchecked ? `${r.unchecked} to check` : 'Final'}</td>
+                  <td className={cell}>
+                    <button type="button" className={`text-left ${r.submission.comment ? 'font-hand text-xl text-pen' : 'text-xs text-ink-soft'}`}
+                      aria-label={`Comment for ${r.submission.pupil}`} onClick={() => startEdit(r.submission, 'comment')}>
+                      {r.submission.comment || 'Add a comment'}
+                    </button>
+                  </td>
+                  <td className={`${cell} print:hidden`}>
+                    <button type="button" className="btn-text !text-xs" aria-expanded={openId === r.submission.id}
+                      onClick={() => setOpenId(openId === r.submission.id ? null : r.submission.id)}>
+                      {openId === r.submission.id ? 'Close' : 'Marked copy'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       {open && <PupilRecord key={open.id} assignment={assignment} submission={open} profile={profile} />}
     </div>
