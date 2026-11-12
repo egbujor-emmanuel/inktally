@@ -5,7 +5,7 @@ appId: app.redpen.teacher
 - launchApp:
     clearState: true
 - extendedWaitUntil:
-    visible: "Quick mark a page"
+    visible: "Quick mark"
     timeout: 120000
 - takeScreenshot: 01-home
 - tapOn: "School details"
@@ -57,7 +57,7 @@ appId: app.redpen.teacher
     text: "Delete"
     index: 1
 - extendedWaitUntil:
-    visible: "Quick mark a page"
+    visible: "Quick mark"
     timeout: 20000
 - scrollUntilVisible:
     element: "English — Grammar Check"

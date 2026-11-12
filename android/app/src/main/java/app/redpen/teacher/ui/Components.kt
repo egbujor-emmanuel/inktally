@@ -149,7 +149,7 @@ fun StatusStrip() {
     val deviceText = when (val d = device) {
         DeviceModel.State.Checking -> "Checking on-device AI…"
         DeviceModel.State.Ready -> "Gemini Nano ready"
-        DeviceModel.State.Unavailable -> "Using the cloud (no on-device AI)"
+        DeviceModel.State.Unavailable -> "Cloud AI (no on-device model)"
         DeviceModel.State.Downloadable -> "Gemini Nano not downloaded"
         is DeviceModel.State.Downloading -> "Downloading Gemini Nano… ${d.bytes / 1_000_000} MB"
         is DeviceModel.State.Failed -> d.message

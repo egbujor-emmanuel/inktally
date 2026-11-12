@@ -4,7 +4,7 @@ appId: app.redpen.teacher
 ---
 - launchApp
 - extendedWaitUntil:
-    visible: "Quick mark a page"
+    visible: "Quick mark"
     timeout: 120000
 - scrollUntilVisible:
     element: "English — Grammar Check"
