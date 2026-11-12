@@ -9,7 +9,7 @@ val appCheckDebugToken: String = System.getenv("REDPEN_APPCHECK_DEBUG_TOKEN") ?:
 
 android {
     namespace = "app.redpen.teacher"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "app.redpen.teacher"
