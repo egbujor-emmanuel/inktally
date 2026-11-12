@@ -1,7 +1,7 @@
 <p align="center"><img src="web/public/logo-lockup.png" alt="REDPEN — Marked in minutes. Even offline." width="560"></p>
 
 **REDPEN marks a stack of handwritten classwork in minutes — on the teacher's own phone or laptop, even offline.**
-Gemini Nano reads each pupil's answer on the device, ordinary code does the marking against the teacher's own scheme,
+Gemini Nano reads each student's answer on the device, ordinary code does the marking against the teacher's own marking guide,
 and when the device is back online Gemini in the cloud double-checks every on-device mark. Built on **Firebase AI Logic hybrid inference**
 for **Web (Chrome)** and **Android**, sharing one Firestore data model.
 
@@ -17,7 +17,7 @@ for **Web (Chrome)** and **Android**, sharing one Firestore data model.
 
 **Fastest path (any browser, no printer):**
 1. Open the web app → **Quick mark a page**.
-2. Upload [`samples/maths.png`](samples/maths.png) — a real pupil's exercise page (questions + handwritten answers, two deliberately wrong).
+2. Upload [`samples/maths.png`](samples/maths.png) — a real student's exercise page (questions + handwritten answers, two deliberately wrong).
 3. REDPEN drafts the answer key from the *questions only* → click **Looks right — mark it** → **5/7**, with "23" and "25" caught.
 
 **The hybrid path (printed sheet, on-device, offline):**
@@ -32,19 +32,28 @@ for **Web (Chrome)** and **Android**, sharing one Firestore data model.
 git clone https://github.com/egbujor-emmanuel/redpen && cd redpen/web
 cp .env.example .env.local        # fill in your Firebase web config
 npm install && npm run dev        # http://localhost:5173
-npm test                          # 36 unit tests (marking engine + scanner geometry)
+npm test                          # 41 unit tests (marking engine, scanner geometry, register exports)
+REDPEN_CODE=… node e2e/live-walkthrough.mjs [url] [--mobile]   # 16-step click-through of every feature
 ```
-Android: open `android/` in Android Studio, add your `app/google-services.json`, run. CI builds and unit-tests every push ([workflow](.github/workflows/android.yml)).
+Android: open `android/` in Android Studio, add your `app/google-services.json`, run. CI unit-tests and builds every push ([workflow](.github/workflows/android.yml)), then installs the APK on an Android emulator and taps through every screen with Maestro ([e2e workflow](.github/workflows/android-e2e.yml), [flows](android/e2e/)).
 
 ---
+
+## Who it's for
+
+Anyone who marks handwritten work against a marking guide: primary and secondary teachers, college and university lecturers, exam centres, training and certification courses, private tutors. Any subject, any level. Teachers who already have a marking scheme upload it and REDPEN copies it exactly; otherwise REDPEN drafts one from the question paper.
+
+The pain is measured and large: US teachers spend **9.9 hours a week** marking, and **a third** considered leaving the profession over grading workload ([Learnosity survey](https://learnosity.com/resources/edtech-blog/a-third-of-us-teachers-considered-leaving-education-in-last-12-months-due-to-grading-workload/)); teachers work **53 hours a week**, 15 beyond contract ([RAND](https://www.rand.org/pubs/research_reports/RRA1108-9.html)). The category is proven: Gradescope (AI-assisted grading of paper exams, 600+ institutions) was [acquired by Turnitin](https://www.turnitin.com/press/turnitin-acquires-gradescope); Ed.ai (≈$5.8M seed, Sep 2026) and Pensive ($6.8M seed, Feb 2026) raised this year for AI grading.
+
+**Where REDPEN is different:** those tools are cloud-first — students' work is uploaded and marking needs a good connection. REDPEN marks **on the device, offline**, keeps students' photos **on the device**, and is built for **large classes on weak networks** (60–100+ students per teacher is common in Nigeria, India and Kenya), with a marked copy and a mark register so there is no second round of marking by hand.
 
 ## Why hybrid is structurally necessary here
 
 | Problem | What REDPEN does |
 |---|---|
 | Teachers in large, low-connectivity classes mark by hand for hours; feedback arrives days late. | Marking runs **on the device**, offline, at **zero cost per page**. |
-| Cloud graders upload children's work to a server. | On printed sheets only the **cut-out answer boxes** are read — the pupil's name line never leaves the device. Crop images stay in device storage, never in Firebase. |
-| Small on-device models "auto-correct" pupils — we measured Nano reading a pupil's **23** as **24** when it could see the question. | The model **only reads** one answer box and never sees the question; **code decides every mark**. Theory answers get one small yes/no check per marking point. |
+| Cloud graders upload students' work to a server. | On printed sheets only the **cut-out answer boxes** are read — the student's name line never leaves the device. Crop images stay in device storage, never in Firebase. |
+| Small on-device models "auto-correct" students — we measured Nano reading a student's **23** as **24** when it could see the question. | The model **only reads** one answer box and never sees the question; **code decides every mark**. Theory answers get one small yes/no check per marking point. |
 | On-device reads are sometimes wrong. | On-device marks are **Provisional** until the **cloud check** (Gemini via Firebase AI Logic) re-reads them; disagreements go to the teacher with both readings. |
 | The cloud is sometimes overloaded (we hit "high demand" errors during testing). | Retries with backoff, an authoring-model fallback, and the on-device path keep teachers working. |
 
@@ -79,24 +88,30 @@ flowchart LR
 
 Because the Firebase console does not show on-device inference, REDPEN records every inference's source and latency itself (`users/{uid}/telemetry/{day}`) and shows a live on-device / cloud counter in the app.
 
-## Features
+## Features (identical on web and Android)
 
-- **Quick mark** — one photo of a pupil's page → AI answer key from the questions → teacher confirms → marked. Key saved for the class.
-- **Assignments** — draft a marking scheme from a photo/PDF of the question paper, edit it, print answer sheets with corner markers.
-- **Two capture modes** — printed REDPEN sheet (fully offline, names private) or any exercise-book page.
-- **Marked copy** — the pupil's own page with red ticks, crosses, scores and a circled total, to print or share. The teacher writes only the total on the original — no second round of marking.
-- **Mark register** — pupils × questions with totals; export to Excel (CSV) or print.
-- **Review** — flagged answers with the pupil's handwriting beside what the AI read; set a score or "accept this answer for everyone" (updates the scheme).
+- **Quick mark** — one photo of a student's page → AI answer key from the questions → teacher confirms → marked. Key saved for the class.
+- **Assignments** — draft a marking scheme from photos, a PDF or typed questions, **or upload your own marking scheme and REDPEN copies it exactly** (alternatives, "do not accept", mark allocations); edit it; print answer sheets with corner markers.
+- **Two capture modes** — printed REDPEN sheet (fully offline, names private) or any exercise-book page; camera or gallery.
+- **Marked copy** — the student's own page with red ticks, crosses, scores and a circled total, under the **institution letterhead** and with the **teacher's comment** — print or share to parents. The teacher writes only the total on the original.
+- **Mark register** — students × questions with totals; **edit names and comments after marking**; export a real **Excel (.xlsx)** with letterhead and class averages, or CSV; print.
+- **School details** — institution name, address/term and teacher name, printed on sheets, copies, the register and Excel.
+- **Review** — flagged answers with the student's handwriting beside what the AI read; set a score or "accept this answer for everyone" (updates the scheme).
 - **Insights + catch-up** — per-question averages, answers that lost marks, and an AI catch-up worksheet built from the class's actual mistakes.
 - **Accounts** — private guest by default; Google sign-in keeps all work and syncs web ↔ Android. Active / finished assignments, full delete.
-- Any subject with a marking scheme; any level (Grades, Years, Primary, JSS/SS, Basic/SHS, Forms, Classes).
+- Any subject with a marking guide; any level (Grades, Years, Primary, JSS/SS, Basic/SHS, Forms, Classes, university years, courses).
 
 ## Evidence
 
 | Test | Result |
 |---|---|
-| Unit tests — web (Vitest) | 36 / 36 pass |
-| Unit tests — Android (JUnit, same cases) | pass in CI |
+| Unit tests — web (Vitest) | 41 / 41 pass |
+| Unit tests — Android (JUnit, same cases + register exports) | pass in CI |
+| Web click-through of every feature on the live site ([`web/e2e/live-walkthrough.mjs`](web/e2e/live-walkthrough.mjs)) — school details, typed + photo drafting, **copying a teacher's own scheme from a photo and from text**, print, Quick mark, sheet marking, exercise-book marking, comment → marked copy, rename → Excel content check, review, insights + catch-up, finish/reopen, delete | see the latest run below |
+| Android on an emulator ([Maestro flows](android/e2e/)) — every screen, gallery photo marked, comment, marked copy, register, Excel, teacher's scheme copied | passes in CI; sample sheet marked **3/5 = the true score** |
+| Android Excel file opened by an independent library (openpyxl) | letterhead, comment, escaping and formula guard verified in CI |
+| Cloud "thinking" level (Remote Config `read_thinking`) on the same handwriting set | default 14/14 at ~33 s/page → **MINIMAL 14/14 at ~12–20 s/page**, single answers ~6 s → ~2 s |
+| Quick mark repeatability (same page, 4 runs) | answer key identical and correct 4/4; page marked 5/7 (true score) 4/4, ~6 s each |
 | Real handwriting (3 photos, 14 questions), cloud reading + code marking | 14 / 14 marks correct, incl. partial 2/3 and a "do not accept" answer |
 | Same photos, on-device whole-page marking (rejected design) | auto-corrected 2 wrong answers → why REDPEN reads answer-only crops |
 | On-device crop reading + code marking | 7 / 10 exact, every miss either flagged or caught by the cloud check |
@@ -111,7 +126,8 @@ Benchmark scripts and evidence live in [`bench/`](bench/).
 web/        React + Vite PWA (TypeScript) — marking engine, scanner, AI layer, UI
 android/    Kotlin + Jetpack Compose — same engine, scanner and Firestore schema
 firestore.rules, firestore.indexes.json, firebase.json
-.github/workflows/android.yml   unit tests + APK on every push
+.github/workflows/android.yml       unit tests + openpyxl check + APK on every push
+.github/workflows/android-e2e.yml   emulator click-through (Maestro) after every build
 ```
 
 ## License
