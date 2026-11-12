@@ -3,6 +3,11 @@
 appId: app.redpen.teacher
 ---
 - launchApp
+- runFlow:
+    when:
+      visible: ".*isn't responding"
+    commands:
+      - tapOn: "Wait"
 - extendedWaitUntil:
     visible: "Quick mark"
     timeout: 120000
