@@ -130,7 +130,7 @@ export function ReviewTab({ assignment, submissions }: Props) {
                 {Array.from({ length: m.max + 1 }, (_, n) => (
                   <button key={n} type="button" className="btn-ghost px-3 py-1 text-xs" onClick={() => void setScore(s, m, n)}>{n}</button>
                 ))}
-                {canAccept && m.read && (
+                {canAccept && m.read && m.awarded < m.max && (
                   <button type="button" className="text-pen underline" onClick={() => void acceptAnswer(s, m)}>Accept “{m.read}” for everyone</button>
                 )}
               </div>
