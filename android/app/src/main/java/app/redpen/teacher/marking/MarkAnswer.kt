@@ -12,6 +12,8 @@ import com.google.firebase.ai.type.PublicPreviewAPI
 /** AI reads (hybrid) -> code marks. Mirrors web/src/marking/markAnswer.ts. */
 @OptIn(PublicPreviewAPI::class)
 object Marker {
+    private const val PAGE_ON_DEVICE_WARNING = "Read offline from the whole page — on-device page reading can auto-correct mistakes, so this waits for the cloud check."
+
     suspend fun mark(question: Question, crop: Bitmap, force: InferenceMode? = null): Mark {
         val read = Ai.readAnswer(crop, question, force)
         return markFromRead(question, read.text, read.source, force)
@@ -35,13 +37,33 @@ object Marker {
         }
     }
 
+    /** Exercise-book mode: one page read, then code marks each question. On-device page reads are never final. */
+    suspend fun markPage(questions: List<Question>, photo: Bitmap, force: InferenceMode? = InferenceMode.PREFER_IN_CLOUD): List<Mark> {
+        val page = Ai.readPage(photo, questions.map { it.q }, force)
+        return questions.map { q ->
+            val m = markFromRead(q, page.answers[q.q] ?: "", page.source, force)
+            if (page.source == ReadSource.ON_DEVICE && m.status != MarkStatus.FLAGGED) m.copy(status = MarkStatus.PROVISIONAL, reasons = m.reasons + PAGE_ON_DEVICE_WARNING) else m
+        }
+    }
+
     /** Cloud re-check of a provisional/flagged mark. Agreement verifies; disagreement goes to the teacher. */
     suspend fun verify(question: Question, crop: Bitmap, previous: Mark): Mark {
         if (previous.status == MarkStatus.REVIEWED) return previous
-        val cloud = mark(question, crop, InferenceMode.ONLY_IN_CLOUD)
+        return reconcile(previous, mark(question, crop, InferenceMode.ONLY_IN_CLOUD))
+    }
+
+    /** Re-marks a whole exercise-book page in the cloud and reconciles each previous mark. */
+    suspend fun verifyPage(questions: List<Question>, photo: Bitmap, previous: List<Mark>): List<Mark> {
+        val cloud = markPage(questions, photo, InferenceMode.ONLY_IN_CLOUD)
+        return previous.map { p -> cloud.firstOrNull { it.q == p.q }?.let { reconcile(p, it) } ?: p }
+    }
+
+    fun reconcile(previous: Mark, cloud: Mark): Mark {
+        if (previous.status == MarkStatus.REVIEWED) return previous
         val same = cloud.awarded == previous.awarded
         return when {
-            same && cloud.status != MarkStatus.FLAGGED -> cloud.copy(reasons = cloud.reasons + "Confirmed by the cloud check.")
+            same && cloud.status != MarkStatus.FLAGGED -> cloud.copy(reasons = cloud.reasons +
+                if (previous.readSource == ReadSource.ON_DEVICE) "On-device mark confirmed by the cloud check." else "Confirmed by the cloud check.")
             previous.readSource == ReadSource.ON_DEVICE && !same -> cloud.copy(status = MarkStatus.FLAGGED, reasons = listOf(
                 "Device read \"${previous.read}\" (${previous.awarded}/${previous.max}); cloud read \"${cloud.read}\" (${cloud.awarded}/${cloud.max}). Which is right?"))
             else -> cloud

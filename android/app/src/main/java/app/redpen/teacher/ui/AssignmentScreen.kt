@@ -2,192 +2,134 @@
 
 package app.redpen.teacher.ui
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
-import androidx.exifinterface.media.ExifInterface
-import app.redpen.teacher.Connectivity
 import app.redpen.teacher.data.Assignment
 import app.redpen.teacher.data.Repo
-import app.redpen.teacher.domain.Mark
-import app.redpen.teacher.domain.MarkEngine
-import app.redpen.teacher.domain.MarkStatus
-import app.redpen.teacher.domain.ReadSource
-import app.redpen.teacher.marking.Marker
-import app.redpen.teacher.scan.Scanner
+import app.redpen.teacher.data.Submission
+import app.redpen.teacher.domain.Profile
+import app.redpen.teacher.domain.needsCheck
+import app.redpen.teacher.scan.Render
 import app.redpen.teacher.scan.SheetLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
+
+val ASSIGNMENT_TABS = listOf("print" to "Print sheets", "mark" to "Mark", "review" to "Review", "register" to "Mark register", "insights" to "Insights")
 
 @Composable
-fun AssignmentScreen(id: String) {
+fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
     val assignment by remember(id) { Repo.assignment(id) }.collectAsState(initial = null)
-    var tab by remember { mutableIntStateOf(0) }
-    val a = assignment ?: return Text("Loading…", Modifier.padding(16.dp), color = RP.InkSoft)
-    androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
-        Text("${a.className} · ${a.scheme.subject}", fontFamily = RP.Hand, fontSize = 20.sp, color = RP.Pen, modifier = Modifier.padding(start = 16.dp, top = 12.dp))
-        Text(a.title, fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, modifier = Modifier.padding(horizontal = 16.dp))
-        TabRow(selectedTabIndex = tab, containerColor = RP.Paper) {
-            Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Mark") })
-            Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Review") })
+    val submissions by remember(id) { Repo.submissions(id) }.collectAsState(initial = emptyList())
+    val profile by remember { Repo.profile() }.collectAsState(initial = Profile())
+    var tab by remember { mutableIntStateOf(ASSIGNMENT_TABS.indexOfFirst { it.first == initialTab }.coerceAtLeast(0)) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val a = assignment ?: return Busy("Opening…")
+    val toCheck = submissions.sumOf { s -> s.marks.count { it.needsCheck() } }
+
+    if (confirmDelete) AlertDialog(
+        onDismissRequest = { confirmDelete = false },
+        title = { Text("Delete “${a.title}”?") },
+        text = { Text("This deletes every student's marks for it and the photos on this phone. It cannot be undone.") },
+        confirmButton = {
+            TextButton(onClick = {
+                confirmDelete = false
+                scope.launch { runCatching { Repo.deleteAssignment(ctx, a.id) }.onSuccess { onDeleted() }.onFailure { error = Repo.friendly(it) } }
+            }) { Text("Delete", color = RP.Pen) }
+        },
+        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+    )
+
+    Column(Modifier.fillMaxSize()) {
+        Column(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp)) {
+            Text("${a.className} · ${a.scheme.subject}", fontFamily = RP.Hand, fontSize = 20.sp, color = RP.Pen)
+            Text(a.title, fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp)
+            Text("${submissions.size} student${if (submissions.size == 1) "" else "s"} marked${if (toCheck > 0) " · $toCheck to check" else ""}",
+                color = RP.InkSoft, fontSize = 14.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(onClick = { Repo.setStatus(a.id, if (a.isFinished) "active" else "finished") }) { Text(if (a.isFinished) "Reopen" else "Mark as finished") }
+                TextButton(onClick = { confirmDelete = true }) { Text("Delete", color = RP.Pen) }
+            }
+            ErrorText(error)
         }
-        if (tab == 0) MarkTab(a) else ReviewTab(a)
+        ScrollableTabRow(selectedTabIndex = tab, containerColor = RP.Paper, edgePadding = 12.dp) {
+            ASSIGNMENT_TABS.forEachIndexed { i, (_, label) -> Tab(selected = tab == i, onClick = { tab = i }, text = { Text(label) }) }
+        }
+        when (ASSIGNMENT_TABS[tab].first) {
+            "print" -> PrintTab(a, profile)
+            "mark" -> MarkTab(a, submissions, profile)
+            "review" -> ReviewTab(a, submissions)
+            "register" -> RegisterTab(a, submissions, profile, onSchool = { tab = 0 })
+            else -> InsightsTab(a, submissions)
+        }
     }
 }
 
-/** Decodes the camera photo at a sensible size and applies EXIF rotation. */
-private fun loadPhoto(ctx: Context, uri: Uri): Bitmap {
-    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    ctx.contentResolver.openInputStream(uri).use { BitmapFactory.decodeStream(it, null, bounds) }
-    var sample = 1
-    while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 2600) sample *= 2
-    val bmp = ctx.contentResolver.openInputStream(uri).use { BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample }) }!!
-    val rotation = ctx.contentResolver.openInputStream(uri).use { ExifInterface(it!!).rotationDegrees }
-    return if (rotation == 0) bmp else Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, Matrix().apply { postRotate(rotation.toFloat()) }, true)
-}
-
-private fun failed(q: Int, max: Int, e: Throwable) = Mark(q, "", ReadSource.ON_DEVICE, 0, max, MarkEngine.CODE, MarkStatus.FLAGGED,
-    listOf("Could not read this answer (${e.message}). Check it by hand or retry when online."))
-
+/** Printable answer sheets: preview on screen, print through Android's print service, or share the PDF. */
 @Composable
-private fun MarkTab(a: Assignment) {
+private fun PrintTab(a: Assignment, profile: Profile) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
-    var pupil by remember { mutableStateOf("") }
-    var status by remember { mutableStateOf<String?>(null) }
-    var marks by remember { mutableStateOf<List<Mark>>(emptyList()) }
-    var crops by remember { mutableStateOf<Map<Int, Bitmap>>(emptyMap()) }
-    var busy by remember { mutableStateOf(false) }
-    val photoFile = remember { File(ctx.cacheDir, "sheet.jpg") }
-    val photoUri = remember { FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", photoFile) }
-
-    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
-        if (!ok) return@rememberLauncherForActivityResult
-        busy = true; marks = emptyList(); status = "Finding the answer boxes…"
-        scope.launch {
-            try {
-                val photo = withContext(Dispatchers.Default) { loadPhoto(ctx, photoUri) }
-                val boxes = SheetLayout.pages(a.scheme.questions).first()
-                when (val scan = withContext(Dispatchers.Default) { Scanner.scan(photo, boxes) }) {
-                    is Scanner.Result.Failed -> status = scan.reason
-                    is Scanner.Result.Ok -> {
-                        crops = scan.crops
-                        val sid = Repo.createSubmission(a.id, pupil.ifBlank { "Pupil" })
-                        val collected = mutableListOf<Mark>()
-                        for ((q, crop) in scan.crops) {
-                            val question = a.scheme.questions.first { it.q == q }
-                            withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, q, crop) }
-                            status = "Marking ${collected.size + 1} of ${scan.crops.size}…"
-                            collected += runCatching { Marker.mark(question, crop) }.getOrElse { failed(q, question.max, it) }
-                            marks = collected.toList()
-                            Repo.saveMarks(a.id, sid, collected)
-                        }
-                        status = "Total: ${collected.sumOf { it.awarded }}/${collected.sumOf { it.max }}"
-                        pupil = ""
-                    }
-                }
-            } catch (e: Exception) {
-                status = "Something went wrong: ${e.message}"
-            } finally { busy = false }
-        }
+    val pages = remember(a.scheme.questions) { SheetLayout.pages(a.scheme.questions).size }
+    var page by remember { mutableIntStateOf(0) }
+    val preview by produceState<android.graphics.Bitmap?>(null, a.scheme.questions, profile, page) {
+        value = withContext(Dispatchers.Default) { Render.sheetPreview(ctx, a.title, a.className, a.scheme.questions, profile, page.coerceIn(0, pages - 1), 3f) }
     }
-
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    suspend fun pdf() = withContext(Dispatchers.IO) { Render.sheetPdf(ctx, a.title, a.className, a.scheme.questions, profile) }
+    LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            OutlinedTextField(pupil, { pupil = it }, label = { Text("Pupil name or number") }, enabled = !busy, modifier = Modifier.fillMaxWidth().padding(top = 12.dp))
-            Button(onClick = { camera.launch(photoUri) }, enabled = !busy, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                Text(if (busy) "Marking…" else "Photograph answer sheet")
+            Column(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Print one per student. The black corner squares let REDPEN find every answer box, even offline.", color = RP.InkSoft, fontSize = 14.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    PenButton("Print", { scope.launch { printPdf(ctx, pdf(), "${a.title} answer sheets") } }, Modifier.weight(1f))
+                    GhostButton("Share PDF", { scope.launch { shareFile(ctx, pdf(), "application/pdf", "${a.title} — answer sheets") } }, Modifier.weight(1f))
+                }
+                Text("No printer? Use “Exercise book page” in the Mark tab — students write in their own books.", color = RP.InkSoft, fontSize = 13.sp)
+                if (pages > 1) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    (0 until pages).forEach { i -> if (i == page) PenButton("Page ${i + 1}", {}) else GhostButton("Page ${i + 1}", { page = i }) }
+                }
             }
-            Text("Print the sheets from the REDPEN website. The black corner squares let the phone find every answer box — even offline.", color = RP.InkSoft, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
         }
-        status?.let { item { Text(it, fontFamily = RP.Hand, fontSize = 28.sp, color = if (it.startsWith("Total")) RP.Pen else RP.InkSoft) } }
-        items(marks, key = { it.q }) { MarkCard(it, crops[it.q]) }
+        item {
+            preview?.let { Image(it.asImageBitmap(), "Answer sheet page ${page + 1} of $pages", Modifier.fillMaxWidth().padding(horizontal = 16.dp).background(Color.White)) }
+                ?: Busy("Drawing the sheet…")
+        }
+        item { Spacer(Modifier.height(40.dp)) }
     }
 }
 
-@Composable
-private fun ReviewTab(a: Assignment) {
-    val ctx = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val submissions by remember(a.id) { Repo.submissions(a.id) }.collectAsState(initial = emptyList())
-    val online by Connectivity.online.collectAsState()
-    var checking by remember { mutableStateOf<String?>(null) }
-    val pending = submissions.flatMap { s -> s.marks.filter { it.status == MarkStatus.PROVISIONAL || it.status == MarkStatus.FLAGGED }.map { s to it } }
-
-    suspend fun cloudCheck() {
-        var done = 0
-        for (s in submissions) {
-            val next = s.marks.map { m ->
-                val question = a.scheme.questions.firstOrNull { it.q == m.q }
-                val crop = withContext(Dispatchers.IO) { Repo.loadCrop(ctx, s.id, m.q) }
-                if (question == null || crop == null || (m.status != MarkStatus.PROVISIONAL && m.status != MarkStatus.FLAGGED)) m
-                else runCatching { Marker.verify(question, crop, m) }.getOrDefault(m).also { done++; checking = "Checking $done/${pending.size}…" }
-            }
-            if (next != s.marks) Repo.saveMarks(a.id, s.id, next)
-        }
-        checking = null
-    }
-
-    // Back online with provisional on-device marks? Verify them automatically.
-    LaunchedEffect(online, pending.count { it.second.status == MarkStatus.PROVISIONAL }) {
-        if (online && checking == null && pending.any { it.second.status == MarkStatus.PROVISIONAL }) cloudCheck()
-    }
-
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("${pending.size} to check", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                Button(onClick = { scope.launch { cloudCheck() } }, enabled = online && checking == null && pending.isNotEmpty()) {
-                    Text(checking ?: if (online) "Check with the cloud" else "Runs when online")
-                }
-            }
-        }
-        if (pending.isEmpty()) item { Text("All marks are verified or reviewed. ✓", fontFamily = RP.Hand, fontSize = 26.sp, color = RP.InkSoft) }
-        items(pending, key = { "${it.first.id}:${it.second.q}" }) { (s, m) ->
-            MarkCard(m, Repo.loadCrop(ctx, s.id, m.q)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(s.pupil, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 10.dp))
-                    (0..m.max).forEach { n ->
-                        OutlinedButton(onClick = {
-                            Repo.saveMarks(a.id, s.id, s.marks.map { x -> if (x.q == m.q) x.copy(awarded = n, status = MarkStatus.REVIEWED, engine = MarkEngine.TEACHER, reasons = x.reasons + "Teacher set $n/${x.max}.") else x })
-                        }) { Text("$n") }
-                    }
-                }
-            }
-        }
-    }
-}
+/** Submissions helper shared by tabs. */
+fun List<Submission>.find(id: String?) = firstOrNull { it.id == id }

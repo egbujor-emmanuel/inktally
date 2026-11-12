@@ -16,11 +16,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -35,7 +39,7 @@ import app.redpen.teacher.data.Repo
 import app.redpen.teacher.data.Samples
 
 private val STEPS = listOf(
-    Triple("1", "Questions in", "Snap the question paper. The cloud drafts the marking scheme — it never sees a pupil."),
+    Triple("1", "Questions in", "Snap the question paper. The cloud drafts the marking scheme — it never sees a student."),
     Triple("2", "Marks out, offline", "Photograph each answer sheet. Gemini Nano reads the handwriting on this phone; code does the marking."),
     Triple("3", "Checked when online", "Back on data, every on-device mark is double-checked in the cloud. Disagreements come to you."),
 )
@@ -53,14 +57,18 @@ fun Modifier.ruledPaper(): Modifier = drawBehind {
 }
 
 @Composable
-fun HomeScreen(onOpen: (String) -> Unit) {
+fun HomeScreen(onOpen: (String) -> Unit, onQuick: () -> Unit, onNew: () -> Unit) {
     // Re-subscribe when the account changes (guest -> Google, or sign-out).
     val account by app.redpen.teacher.Account.state.collectAsState()
     val assignments by remember(account.uid) { Repo.assignments() }.collectAsState(initial = null)
+    var shelf by remember { mutableIntStateOf(0) }
+    val list = assignments
+    val active = list?.filter { !it.isFinished } ?: emptyList()
+    val finished = list?.filter { it.isFinished } ?: emptyList()
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
-            Column(Modifier.fillMaxWidth().ruledPaper().padding(start = 52.dp, end = 16.dp, top = 28.dp, bottom = 32.dp)) {
-                Text("for teachers with 50 exercise books tonight", fontFamily = RP.Hand, fontSize = 22.sp, color = RP.Pen)
+            Column(Modifier.fillMaxWidth().ruledPaper().padding(start = 52.dp, end = 16.dp, top = 28.dp, bottom = 28.dp)) {
+                Text("for anyone with a stack of scripts to mark tonight", fontFamily = RP.Hand, fontSize = 22.sp, color = RP.Pen)
                 Text(
                     buildAnnotatedString {
                         append("A stack of classwork, marked in minutes. ")
@@ -70,10 +78,16 @@ fun HomeScreen(onOpen: (String) -> Unit) {
                     modifier = Modifier.padding(top = 4.dp),
                 )
                 Text(
-                    "REDPEN reads pupils’ handwriting with the AI on your phone and marks it against your marking scheme. " +
-                        "Children’s work stays in the classroom; the cloud double-checks when you’re back online.",
+                    "REDPEN reads students’ handwriting with the AI on your phone and marks it against your marking scheme. " +
+                        "Students’ work stays with you; the cloud double-checks every mark when you’re back online.",
                     color = RP.InkSoft, fontSize = 16.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 14.dp),
                 )
+                Text("Any subject, any level — schools, colleges and universities, exam centres, training courses and tutors.",
+                    color = RP.InkSoft, fontSize = 13.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 8.dp))
+                Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PenButton("Quick mark a page", onQuick, Modifier.fillMaxWidth())
+                    GhostButton("Set up an assignment", onNew, Modifier.fillMaxWidth())
+                }
             }
         }
         item {
@@ -91,10 +105,20 @@ fun HomeScreen(onOpen: (String) -> Unit) {
             }
         }
         item { SectionTitle("Your assignments") }
+        item {
+            TabRow(selectedTabIndex = shelf, containerColor = RP.Paper, modifier = Modifier.padding(horizontal = 16.dp)) {
+                Tab(selected = shelf == 0, onClick = { shelf = 0 }, text = { Text("Active (${active.size})") })
+                Tab(selected = shelf == 1, onClick = { shelf = 1 }, text = { Text("Finished (${finished.size})") })
+            }
+        }
+        val shown = if (shelf == 0) active else finished
         when {
-            assignments == null -> item { Text("Loading…", color = RP.InkSoft, modifier = Modifier.padding(horizontal = 16.dp)) }
-            assignments!!.isEmpty() -> item { Text("Nothing yet — try a sample below.", color = RP.InkSoft, modifier = Modifier.padding(horizontal = 16.dp)) }
-            else -> items(assignments!!, key = { it.id }) { a ->
+            list == null -> item { Text("Loading…", color = RP.InkSoft, modifier = Modifier.padding(horizontal = 16.dp)) }
+            shown.isEmpty() -> item {
+                Text(if (shelf == 0) "Nothing yet — quick mark a page, set up an assignment, or try a sample below." else "Finished assignments stay saved here.",
+                    color = RP.InkSoft, modifier = Modifier.padding(horizontal = 16.dp))
+            }
+            else -> items(shown, key = { it.id }) { a ->
                 PaperCard(onClick = { onOpen(a.id) }, trailingTick = true) {
                     Text(a.title, fontFamily = RP.Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
                     Text("${a.className} · ${a.scheme.subject} · ${a.scheme.questions.size} questions", color = RP.InkSoft, fontSize = 14.sp)

@@ -3,43 +3,99 @@ package app.redpen.teacher.data
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.util.Log
 import app.redpen.teacher.domain.Mark
 import app.redpen.teacher.domain.MarkEngine
 import app.redpen.teacher.domain.MarkStatus
 import app.redpen.teacher.domain.MarkingScheme
+import app.redpen.teacher.domain.Profile
 import app.redpen.teacher.domain.Question
 import app.redpen.teacher.domain.ReadSource
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.io.File
 
-data class Assignment(val id: String, val title: String, val className: String, val scheme: MarkingScheme)
-data class Submission(val id: String, val pupil: String, val marks: List<Mark>)
+data class Assignment(
+    val id: String, val title: String, val className: String, val scheme: MarkingScheme,
+    /** Finished assignments stay saved and viewable, just out of the way. */
+    val status: String = "active",
+) {
+    val isFinished get() = status == "finished"
+    val maxTotal get() = scheme.questions.sumOf { it.max }
+}
+
+data class Submission(val id: String, val pupil: String, val marks: List<Mark>, val comment: String = "")
 
 /**
- * Same Firestore layout as the web app (assignments/{id}/submissions/{sid}).
+ * Same Firestore layout and rules as the web app (assignments/{id}/submissions/{sid}, users/{uid}/settings/profile).
  * Writes are fire-and-forget: Firestore applies them to the offline cache instantly and syncs later.
- * Answer-box images are stored ONLY in this app's private storage.
+ * Answer-box images and photos are stored ONLY in this app's private storage.
  */
 object Repo {
+    private const val TAG = "Repo"
+    const val COMMENT_LIMIT = 1000
+    const val PUPIL_LIMIT = 80
+
+    /** Device-only key for a whole exercise-book page photo. */
+    const val PAGE_KEY = 0
+    /** Device-only key for the generated marked copy of the student's work. */
+    const val MARKED_KEY = -1
+
     private val db get() = Firebase.firestore
     private fun uid() = Firebase.auth.currentUser?.uid ?: error("Not signed in yet")
+
+    /** Last write failure, shown as a banner (writes are queued, so failures arrive later). */
+    private val _writeError = MutableStateFlow<String?>(null)
+    val writeError: StateFlow<String?> = _writeError
+    fun clearWriteError() { _writeError.value = null }
+
+    private fun queue(what: String, task: com.google.android.gms.tasks.Task<*>) {
+        task.addOnFailureListener { e ->
+            Log.w(TAG, "write failed: $what", e)
+            _writeError.value = "Could not save $what: ${friendly(e)}"
+        }
+    }
+
+    fun friendly(e: Throwable): String {
+        val raw = "${e::class.simpleName} ${e.message}"
+        return when {
+            Regex("app.?check|attestation", RegexOption.IGNORE_CASE).containsMatchIn(raw) -> "this device could not be verified by App Check. Reopen the app and try again. ($raw)"
+            Regex("PERMISSION_DENIED|permission", RegexOption.IGNORE_CASE).containsMatchIn(raw) -> "the server refused it (permission denied). ($raw)"
+            Regex("quota|RESOURCE_EXHAUSTED|429", RegexOption.IGNORE_CASE).containsMatchIn(raw) -> "the free cloud quota is used up for the moment. Try again in a minute."
+            Regex("high demand|overloaded|unavailable|\\b50[0-4]\\b", RegexOption.IGNORE_CASE).containsMatchIn(raw) -> "the cloud model is overloaded right now. Try again in a minute."
+            Regex("timeout|deadline", RegexOption.IGNORE_CASE).containsMatchIn(raw) -> "the cloud took too long to answer. Try again; a clearer photo is faster."
+            Regex("network|UnknownHost|offline|unreachable", RegexOption.IGNORE_CASE).containsMatchIn(raw) -> "no connection to the cloud. Check your internet and try again."
+            else -> e.message ?: raw
+        }
+    }
 
     // ---- encoding (wire format identical to web/src/domain/types.ts) ----
     private fun Question.toMap(): Map<String, Any?> = when (this) {
         is Question.Objective -> mapOf("q" to q, "type" to "objective", "prompt" to prompt, "max" to max, "correct" to correct)
-        is Question.Numeric -> mapOf("q" to q, "type" to "numeric", "prompt" to prompt, "max" to max, "accept" to accept, "methodPoints" to methodPoints)
+        is Question.Numeric -> buildMap {
+            put("q", q); put("type", "numeric"); put("prompt", prompt); put("max", max); put("accept", accept); put("methodPoints", methodPoints)
+            tolerance?.let { put("tolerance", it) }
+        }
         is Question.Short -> mapOf("q" to q, "type" to "short", "prompt" to prompt, "max" to max, "accept" to accept, "reject" to reject, "spellingTolerant" to spellingTolerant)
         is Question.Points -> mapOf("q" to q, "type" to "points", "prompt" to prompt, "max" to max, "points" to points, "reject" to reject)
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun questionOf(m: Map<String, Any?>): Question? {
         val q = (m["q"] as? Number)?.toInt() ?: return null
         val prompt = m["prompt"] as? String ?: ""
@@ -74,54 +130,132 @@ object Repo {
         ((m?.get("questions") as? List<*>) ?: emptyList<Any>()).mapNotNull { (it as? Map<String, Any?>)?.let(::questionOf) },
     )
 
+    fun schemeToMap(scheme: MarkingScheme) = mapOf("subject" to scheme.subject, "level" to scheme.level, "questions" to scheme.questions.map { it.toMap() })
+
+    @Suppress("UNCHECKED_CAST")
+    private fun assignmentOf(d: DocumentSnapshot) = Assignment(d.id, d.getString("title") ?: "", d.getString("className") ?: "",
+        schemeOf(d.get("scheme") as? Map<String, Any?>), d.getString("status") ?: "active")
+
+    @Suppress("UNCHECKED_CAST")
+    private fun submissionOf(d: DocumentSnapshot) = Submission(d.id, d.getString("pupil") ?: "",
+        ((d.get("marks") as? List<*>) ?: emptyList<Any>()).mapNotNull { (it as? Map<String, Any?>)?.let(::markOf) }, d.getString("comment") ?: "")
+
+    /**
+     * Snapshot listener that survives transient denials: a listener can reach the server before a doc we just
+     * created (writes are queued for offline use) and Firestore then ends it. Re-attach with backoff.
+     */
+    private suspend fun <T> ProducerScope<T>.resilient(attach: ((FirebaseFirestoreException) -> Unit) -> ListenerRegistration) {
+        val delays = listOf(1_000L, 2_000L, 4_000L, 8_000L)
+        var reg: ListenerRegistration? = null
+        var attempt = 0
+        fun start() {
+            reg = attach { e ->
+                Log.w(TAG, "listener error", e)
+                val wait = delays.getOrNull(attempt++) ?: return@attach
+                launch { delay(wait); reg?.remove(); start() }
+            }
+        }
+        start()
+        awaitClose { reg?.remove() }
+    }
+
     // ---- assignments ----
     fun createAssignment(title: String, className: String, scheme: MarkingScheme): String {
         val ref = db.collection("assignments").document()
-        ref.set(mapOf("title" to title, "className" to className, "ownerUid" to uid(), "createdAt" to FieldValue.serverTimestamp(),
-            "scheme" to mapOf("subject" to scheme.subject, "level" to scheme.level, "questions" to scheme.questions.map { it.toMap() })))
+        queue("the assignment", ref.set(mapOf("title" to title, "className" to className, "ownerUid" to uid(), "createdAt" to FieldValue.serverTimestamp(),
+            "status" to "active", "scheme" to schemeToMap(scheme))))
         return ref.id
     }
 
-    @Suppress("UNCHECKED_CAST")
     fun assignments(): Flow<List<Assignment>> = callbackFlow {
-        val reg = db.collection("assignments").whereEqualTo("ownerUid", uid()).orderBy("createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snap, _ ->
-                trySend(snap?.documents?.map { d -> Assignment(d.id, d.getString("title") ?: "", d.getString("className") ?: "", schemeOf(d.get("scheme") as? Map<String, Any?>)) } ?: emptyList())
-            }
-        awaitClose { reg.remove() }
+        resilient { fail ->
+            db.collection("assignments").whereEqualTo("ownerUid", uid()).orderBy("createdAt", Query.Direction.DESCENDING)
+                .addSnapshotListener { snap, e -> if (e != null) fail(e) else trySend(snap?.documents?.map(::assignmentOf) ?: emptyList()) }
+        }
     }
 
-    @Suppress("UNCHECKED_CAST")
     fun assignment(id: String): Flow<Assignment?> = callbackFlow {
-        val reg = db.collection("assignments").document(id).addSnapshotListener { d, _ ->
-            trySend(d?.takeIf { it.exists() }?.let { Assignment(it.id, it.getString("title") ?: "", it.getString("className") ?: "", schemeOf(it.get("scheme") as? Map<String, Any?>)) })
+        resilient { fail ->
+            db.collection("assignments").document(id).addSnapshotListener { d, e ->
+                when {
+                    e != null -> fail(e)
+                    d != null && d.exists() -> trySend(assignmentOf(d))
+                    d != null && !d.metadata.isFromCache -> trySend(null)
+                }
+            }
         }
-        awaitClose { reg.remove() }
+    }
+
+    fun setStatus(id: String, status: String) = queue("the assignment status", db.collection("assignments").document(id).update("status", status))
+
+    fun updateQuestion(a: Assignment, updated: Question) {
+        val questions = a.scheme.questions.map { if (it.q == updated.q) updated else it }
+        queue("the edited question", db.collection("assignments").document(a.id).update("scheme.questions", questions.map { it.toMap() }))
+    }
+
+    /** Permanently deletes an assignment, every student's marks for it, and this device's photos for it. */
+    suspend fun deleteAssignment(ctx: Context, id: String) {
+        val subs = db.collection("assignments").document(id).collection("submissions").whereEqualTo("ownerUid", uid()).get().await()
+        for (s in subs.documents) {
+            File(ctx.filesDir, "crops").listFiles { f -> f.name.startsWith("${s.id}_") }?.forEach { it.delete() }
+            s.reference.delete()
+        }
+        db.collection("assignments").document(id).delete()
     }
 
     // ---- submissions ----
     fun createSubmission(assignmentId: String, pupil: String): String {
         val ref = db.collection("assignments").document(assignmentId).collection("submissions").document()
-        ref.set(mapOf("assignmentId" to assignmentId, "ownerUid" to uid(), "pupil" to pupil, "marks" to emptyList<Any>(), "createdAt" to FieldValue.serverTimestamp()))
+        queue("the student", ref.set(mapOf("assignmentId" to assignmentId, "ownerUid" to uid(), "pupil" to pupil.take(PUPIL_LIMIT),
+            "marks" to emptyList<Any>(), "createdAt" to FieldValue.serverTimestamp())))
         return ref.id
     }
 
-    fun saveMarks(assignmentId: String, submissionId: String, marks: List<Mark>) {
-        db.collection("assignments").document(assignmentId).collection("submissions").document(submissionId).update("marks", marks.map { it.toMap() })
+    fun saveMarks(assignmentId: String, submissionId: String, marks: List<Mark>) =
+        queue("the marks", db.collection("assignments").document(assignmentId).collection("submissions").document(submissionId).update("marks", marks.map { it.toMap() }))
+
+    /** Edit a student's record after marking: rename, or add the teacher's comment. */
+    fun updateSubmission(assignmentId: String, submissionId: String, pupil: String? = null, comment: String? = null) {
+        val patch = buildMap<String, Any> {
+            pupil?.let { put("pupil", it.trim().take(PUPIL_LIMIT).ifBlank { "Student" }) }
+            comment?.let { put("comment", it.trim().take(COMMENT_LIMIT)) }
+        }
+        if (patch.isEmpty()) return
+        queue(if (comment != null) "the comment" else "the student name",
+            db.collection("assignments").document(assignmentId).collection("submissions").document(submissionId).update(patch))
     }
 
-    @Suppress("UNCHECKED_CAST")
     fun submissions(assignmentId: String): Flow<List<Submission>> = callbackFlow {
-        val reg = db.collection("assignments").document(assignmentId).collection("submissions")
-            .whereEqualTo("ownerUid", uid()).orderBy("createdAt", Query.Direction.ASCENDING)
-            .addSnapshotListener { snap, _ ->
-                trySend(snap?.documents?.map { d -> Submission(d.id, d.getString("pupil") ?: "", ((d.get("marks") as? List<*>) ?: emptyList<Any>()).mapNotNull { (it as? Map<String, Any?>)?.let(::markOf) }) } ?: emptyList())
-            }
-        awaitClose { reg.remove() }
+        resilient { fail ->
+            db.collection("assignments").document(assignmentId).collection("submissions")
+                .whereEqualTo("ownerUid", uid()).orderBy("createdAt", Query.Direction.ASCENDING)
+                .addSnapshotListener { snap, e -> if (e != null) fail(e) else trySend(snap?.documents?.map(::submissionOf) ?: emptyList()) }
+        }
     }
 
-    // ---- device-only crops ----
-    private fun cropFile(ctx: Context, submissionId: String, q: Int) = File(File(ctx.filesDir, "crops").apply { mkdirs() }, "$submissionId-$q.png")
-    fun saveCrop(ctx: Context, submissionId: String, q: Int, bmp: Bitmap) = cropFile(ctx, submissionId, q).outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
-    fun loadCrop(ctx: Context, submissionId: String, q: Int): Bitmap? = cropFile(ctx, submissionId, q).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.path) }
+    // ---- school details ----
+    private fun profileRef() = db.collection("users").document(uid()).collection("settings").document("profile")
+
+    fun profile(): Flow<Profile> = callbackFlow {
+        trySend(Profile())
+        resilient { fail ->
+            profileRef().addSnapshotListener { d, e ->
+                if (e != null) fail(e)
+                else trySend(Profile.clean(d?.getString("institution") ?: "", d?.getString("details") ?: "", d?.getString("teacher") ?: ""))
+            }
+        }
+    }
+
+    fun saveProfile(p: Profile) = queue("your school details", profileRef().set(mapOf(
+        "institution" to p.institution, "details" to p.details, "teacher" to p.teacher, "updatedAt" to FieldValue.serverTimestamp()), SetOptions.merge()))
+
+    // ---- device-only images ----
+    private fun cropFile(ctx: Context, submissionId: String, q: Int) = File(File(ctx.filesDir, "crops").apply { mkdirs() }, "${submissionId}_$q.img")
+
+    fun saveCrop(ctx: Context, submissionId: String, q: Int, bmp: Bitmap) = cropFile(ctx, submissionId, q).outputStream().use {
+        if (q == PAGE_KEY) bmp.compress(Bitmap.CompressFormat.JPEG, 90, it) else bmp.compress(Bitmap.CompressFormat.PNG, 100, it)
+    }
+
+    fun loadCrop(ctx: Context, submissionId: String, q: Int): Bitmap? =
+        cropFile(ctx, submissionId, q).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.path) }
 }

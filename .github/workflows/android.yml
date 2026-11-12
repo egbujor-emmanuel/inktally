@@ -39,8 +39,21 @@ jobs:
         run: |
           if [ -n "$REDPEN_KEYSTORE_B64" ]; then echo "$REDPEN_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/redpen.p12"; echo "REDPEN_KEYSTORE_FILE=$RUNNER_TEMP/redpen.p12" >> "$GITHUB_ENV"; fi
 
-      - name: Unit tests (marking engine + scanner geometry)
+      - name: Unit tests (marking engine, scanner geometry, register exports)
         run: gradle --no-daemon testDebugUnitTest
+
+      - name: Independent check — the Android .xlsx opens in openpyxl with the right content
+        run: |
+          python3 -m pip install --quiet openpyxl==3.1.5
+          python3 - <<'PY'
+          from openpyxl import load_workbook
+          ws = load_workbook('app/build/test-xlsx/register.xlsx').active
+          text = ' | '.join(str(c.value) for row in ws.iter_rows() for c in row if c.value is not None)
+          for want in ['Greenfield College', 'Mrs A. Okafor', 'English & <Grammar>', 'Revise past tenses', "'=HYPERLINK"]:
+              assert want in text, f'missing {want!r} in {text[:400]}'
+          assert ws.freeze_panes, 'header row should be frozen'
+          print('openpyxl OK:', ws.title, ws.max_row, 'rows x', ws.max_column, 'cols')
+          PY
 
       - name: Build debug APK
         env:

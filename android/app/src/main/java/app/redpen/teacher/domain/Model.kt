@@ -39,3 +39,21 @@ data class Mark(
     val reasons: List<String>,
     val pointsFound: List<String> = emptyList(),
 )
+
+/** Institution details printed on sheets, marked copies, the register and the Excel file. Same doc as web/src/data/profile.ts. */
+data class Profile(val institution: String = "", val details: String = "", val teacher: String = "") {
+    val isEmpty get() = institution.isBlank() && details.isBlank() && teacher.isBlank()
+
+    companion object {
+        const val INSTITUTION_LIMIT = 120
+        const val DETAILS_LIMIT = 240
+        const val TEACHER_LIMIT = 80
+        private fun clip(s: String, n: Int) = s.replace(Regex("\s+"), " ").trim().take(n)
+        fun clean(institution: String, details: String, teacher: String) =
+            Profile(clip(institution, INSTITUTION_LIMIT), clip(details, DETAILS_LIMIT), clip(teacher, TEACHER_LIMIT))
+    }
+}
+
+fun List<Mark>.total() = sumOf { it.awarded }
+fun List<Mark>.maxTotal() = sumOf { it.max }
+fun Mark.needsCheck() = status == MarkStatus.PROVISIONAL || status == MarkStatus.FLAGGED

@@ -12,7 +12,7 @@ object Scanner {
     private const val INNER_MARGIN_MM = 1.2
 
     sealed interface Result {
-        data class Ok(val crops: Map<Int, Bitmap>) : Result
+        data class Ok(val crops: Map<Int, Bitmap>, val sheetToPhoto: Homography) : Result
         data class Failed(val reason: String) : Result
     }
 
@@ -37,7 +37,7 @@ object Scanner {
         val h = Homography.compute(SheetLayout.FIDUCIALS, photoCorners)
         val src = IntArray(photo.width * photo.height)
         photo.getPixels(src, 0, photo.width, 0, 0, photo.width, photo.height)
-        return Result.Ok(boxes.associate { it.q to warp(src, photo.width, photo.height, h, it) })
+        return Result.Ok(boxes.associate { it.q to warp(src, photo.width, photo.height, h, it) }, h)
     }
 
     private fun warp(src: IntArray, pw: Int, ph: Int, h: Homography, box: SheetLayout.Box): Bitmap {
