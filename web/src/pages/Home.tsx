@@ -53,7 +53,8 @@ export function Home() {
           Children’s work stays in the classroom. When you’re back online, the cloud double-checks every mark.
         </p>
         <div data-rise className="mt-8 flex flex-wrap gap-3">
-          <Link to="/new" className="btn-pen">Mark a new assignment</Link>
+          <Link to="/quick" className="btn-pen">Quick mark a page</Link>
+          <Link to="/new" className="btn-ghost">Set up an assignment</Link>
           <a href="#samples" className="btn-ghost">Try a sample</a>
         </div>
       </section>

@@ -58,14 +58,24 @@ export function toQuestion(d: z.infer<typeof DraftQuestion>): Question | null {
   }
 }
 
-export interface SchemeSource { images?: Blob[]; pdf?: Blob; text?: string }
+export interface SchemeSource {
+  images?: Blob[];
+  pdf?: Blob;
+  text?: string;
+  /** The photo is a pupil's page (questions + the pupil's own answers), not a clean question paper. */
+  isPupilPage?: boolean;
+}
+
+const PUPIL_PAGE_NOTE = "IMPORTANT: this photo shows a pupil's exercise page — the questions AND the pupil's own handwritten answers. "
+  + "Work out the correct answers yourself from the QUESTIONS only. The pupil's answers may be wrong: never copy them into the marking scheme.";
 
 export async function draftScheme(source: SchemeSource, subject: string, level: string): Promise<MarkingScheme> {
   const parts: (string | Part)[] = [fillTemplate(config('prompt_scheme_draft'), { subject, level })];
+  if (source.isPupilPage) parts.push(PUPIL_PAGE_NOTE);
   if (source.text) parts.push(`QUESTION PAPER:\n${source.text}`);
   for (const image of source.images ?? []) parts.push(await blobToPart(image));
   if (source.pdf) parts.push(await blobToPart(source.pdf));
-  if (parts.length === 1) throw new Error('Add the question paper (photo, PDF or typed questions) first.');
+  if (parts.length === (source.isPupilPage ? 2 : 1)) throw new Error('Add the question paper (photo, PDF or typed questions) first.');
 
   const started = performance.now();
   const { text } = await authorGenerate(DRAFT_SCHEMA, parts);

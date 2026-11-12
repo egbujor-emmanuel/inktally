@@ -10,6 +10,7 @@ import { StatusBar } from './components/StatusBar';
 import { useReducedMotion } from './hooks/useStatus';
 import { Home } from './pages/Home';
 const NewAssignment = lazy(() => import('./pages/NewAssignment').then((m) => ({ default: m.NewAssignment })));
+const QuickMark = lazy(() => import('./pages/QuickMark').then((m) => ({ default: m.QuickMark })));
 const AssignmentPage = lazy(() => import('./pages/AssignmentPage').then((m) => ({ default: m.AssignmentPage })));
 
 gsap.registerPlugin(ScrollTrigger);
@@ -66,7 +67,10 @@ export function App() {
               <img src="/logo-mark.svg" alt="" width={36} height={36} className="size-9" />
               <span>RED<span className="text-pen">PEN</span></span>
             </Link>
-            <Link to="/new" className="btn-pen text-sm">New assignment</Link>
+            <nav className="flex items-center gap-2" aria-label="Main">
+              <Link to="/quick" className="btn-ghost text-sm">Quick mark</Link>
+              <Link to="/new" className="btn-pen text-sm">New assignment</Link>
+            </nav>
           </div>
           <StatusBar />
         </div>
@@ -87,6 +91,7 @@ export function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/new" element={<NewAssignment />} />
+              <Route path="/quick" element={<QuickMark />} />
               <Route path="/a/:id/*" element={<AssignmentPage />} />
             </Routes>
           </Suspense>
