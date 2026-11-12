@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.Redpen" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/paper</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+    <color name="paper">#FBF8F1</color>
+    <color name="ink">#1F2A44</color>
+</resources>
