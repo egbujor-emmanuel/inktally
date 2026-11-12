@@ -17,6 +17,7 @@ export function Home() {
   const [items, setItems] = useState<Assignment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState<string | null>(null);
+  const [show, setShow] = useState<'active' | 'finished'>('active');
   const navigate = useNavigate();
   const hero = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
@@ -70,12 +71,23 @@ export function Home() {
       </section>
 
       <section className="mt-16" aria-labelledby="mine">
-        <h2 id="mine" className="font-display text-3xl font-bold">Your assignments</h2>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 id="mine" className="font-display text-3xl font-bold">Your assignments</h2>
+          <div role="tablist" aria-label="Filter assignments" className="flex gap-1 rounded-full border border-[oklch(85%_0.02_85)] p-1 text-sm">
+            {(['active', 'finished'] as const).map((k) => (
+              <button key={k} type="button" role="tab" aria-selected={show === k} onClick={() => setShow(k)}
+                className={`rounded-full px-4 py-1.5 font-semibold ${show === k ? 'bg-ink text-paper' : 'text-ink-soft'}`}>
+                {k === 'active' ? 'Active' : 'Finished'} ({items?.filter((a) => (a.status ?? 'active') === k).length ?? 0})
+              </button>
+            ))}
+          </div>
+        </div>
         {error && <p className="mt-3 text-pen" role="alert">{error}</p>}
         {items === null && !error && <p className="mt-4 text-ink-soft">Loading…</p>}
         {items?.length === 0 && <p className="mt-4 text-ink-soft">Nothing yet — start one, or try a sample below.</p>}
+        {items && items.length > 0 && !items.some((a) => (a.status ?? 'active') === show) && <p className="mt-4 text-ink-soft">{show === 'finished' ? 'No finished assignments yet.' : 'No active assignments — everything is finished.'}</p>}
         <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-          {items?.map((a) => (
+          {items?.filter((a) => (a.status ?? 'active') === show).map((a) => (
             <li key={a.id}>
               <Link to={`/a/${a.id}/mark`} className="paper-card flex items-center justify-between gap-4 p-5 transition-transform hover:-translate-y-0.5">
                 <span>

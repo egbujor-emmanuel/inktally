@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Navigate, Route, Routes, useParams } from 'react-router-dom';
-import { watchAssignment, watchSubmissions, type Assignment, type Submission } from '../data/store';
+import { NavLink, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { deleteAssignment, setAssignmentStatus, watchAssignment, watchSubmissions, type Assignment, type Submission } from '../data/store';
 import { AnswerSheet } from '../components/AnswerSheet';
 import { MarkTab } from './assignment/MarkTab';
 import { ReviewTab } from './assignment/ReviewTab';
@@ -20,6 +20,7 @@ export function AssignmentPage() {
   const [assignment, setAssignment] = useState<Assignment | null | undefined>(undefined);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => watchAssignment(id, setAssignment, (e) => setError(e.message)), [id]);
   useEffect(() => watchSubmissions(id, setSubmissions, (e) => setError(e.message)), [id]);
@@ -27,6 +28,12 @@ export function AssignmentPage() {
   if (error) return <p className="mt-10 text-pen" role="alert">{error}</p>;
   if (assignment === undefined) return <p className="mt-10 text-ink-soft">Loading…</p>;
   if (assignment === null) return <p className="mt-10">This assignment does not exist.</p>;
+
+  async function handleDelete() {
+    if (!assignment) return;
+    if (!window.confirm(`Delete "${assignment.title}" and every pupil's marks for it? This cannot be undone.`)) return;
+    try { await deleteAssignment(assignment.id); navigate('/'); } catch (e: unknown) { setError(e instanceof Error ? e.message : 'Could not delete'); }
+  }
 
   const toCheck = submissions.reduce((n, s) => n + s.marks.filter((m) => m.status === 'flagged' || m.status === 'provisional').length, 0);
 
@@ -37,7 +44,16 @@ export function AssignmentPage() {
           <p className="font-hand text-2xl text-pen">{assignment.className} · {assignment.scheme.subject}</p>
           <h1 className="font-display text-4xl font-bold">{assignment.title}</h1>
         </div>
-        <p className="text-ink-soft">{submissions.length} pupil{submissions.length === 1 ? '' : 's'} marked{toCheck > 0 && ` · ${toCheck} to check`}</p>
+        <div className="grid justify-items-end gap-2">
+          <p className="text-ink-soft">{submissions.length} pupil{submissions.length === 1 ? '' : 's'} marked{toCheck > 0 && ` · ${toCheck} to check`}</p>
+          <div className="flex gap-2 text-sm">
+            <button type="button" className="btn-ghost px-3 py-1 text-xs"
+              onClick={() => setAssignmentStatus(assignment.id, (assignment.status ?? 'active') === 'active' ? 'finished' : 'active')}>
+              {(assignment.status ?? 'active') === 'active' ? 'Mark as finished' : 'Reopen'}
+            </button>
+            <button type="button" className="px-3 py-1 text-xs text-pen underline" onClick={() => void handleDelete()}>Delete</button>
+          </div>
+        </div>
       </header>
       <nav className="mt-6 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-[oklch(85%_0.02_85)]" aria-label="Assignment sections">
         {TABS.map((t) => (

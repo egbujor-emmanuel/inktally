@@ -7,6 +7,7 @@ import { ensureUser, refreshRemoteConfig } from './firebase/app';
 import { refreshDeviceCapability } from './ai/models';
 import { WRITE_ERROR_EVENT } from './data/store';
 import { StatusBar } from './components/StatusBar';
+import { AccountMenu } from './components/AccountMenu';
 import { useReducedMotion } from './hooks/useStatus';
 import { Home } from './pages/Home';
 const NewAssignment = lazy(() => import('./pages/NewAssignment').then((m) => ({ default: m.NewAssignment })));
@@ -72,7 +73,10 @@ export function App() {
               <Link to="/new" className="btn-pen flex-1 whitespace-nowrap text-center text-sm sm:flex-none">New assignment</Link>
             </nav>
           </div>
-          <StatusBar />
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <StatusBar />
+            {boot.state === 'ready' && <AccountMenu />}
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">

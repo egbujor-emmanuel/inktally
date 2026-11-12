@@ -1,7 +1,7 @@
 // Persistence. Assignments + marks live in Firestore (offline-first cache, per-teacher security rules).
 // Answer-box images stay ONLY on this device in IndexedDB — they are never uploaded to Firebase.
 import {
-  collection, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where,
+  collection, deleteDoc, getDocs, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { openDB, type IDBPDatabase } from 'idb';
@@ -14,6 +14,8 @@ export interface Assignment {
   title: string;
   className: string;
   scheme: MarkingScheme;
+  /** Finished assignments stay saved and viewable, just out of the way. */
+  status?: 'active' | 'finished';
   createdAt?: unknown;
 }
 
@@ -72,6 +74,22 @@ export function watchAssignment(id: string, onChange: (a: Assignment | null) => 
 export async function updateQuestion(assignment: Assignment, updated: Question): Promise<void> {
   const questions = assignment.scheme.questions.map((q) => (q.q === updated.q ? updated : q));
   queueWrite(updateDoc(doc(db, 'assignments', assignment.id), { 'scheme.questions': questions }));
+}
+
+export function setAssignmentStatus(id: string, status: 'active' | 'finished'): void {
+  queueWrite(updateDoc(doc(db, 'assignments', id), { status }));
+}
+
+/** Permanently deletes an assignment, all its pupils' marks, and this device's crop images for it. */
+export async function deleteAssignment(id: string): Promise<void> {
+  const subs = await getDocs(query(submissions(id), where('ownerUid', '==', uid())));
+  const db2 = await crops();
+  for (const s of subs.docs) {
+    const keys = (await db2.getAllKeys('crops')).filter((k) => String(k).startsWith(`${s.id}:`));
+    await Promise.all(keys.map((k) => db2.delete('crops', k)));
+    await deleteDoc(s.ref);
+  }
+  await deleteDoc(doc(db, 'assignments', id));
 }
 
 export async function saveScheme(assignmentId: string, scheme: MarkingScheme): Promise<void> {
