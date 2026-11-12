@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Read-only crop benchmark</title>
+<style>
+  body { font: 15px system-ui, sans-serif; margin: 20px; color: #111; background: #fff; }
+  button { font-size: 18px; padding: 10px 18px; }
+  img { max-width: 600px; border: 1px solid #ccc; display: block; margin: 8px 0; }
+  pre { background: #f4f4f4; padding: 10px; white-space: pre-wrap; font-size: 13px; max-height: 560px; overflow: auto; }
+</style>
+</head>
+<body>
+<h1>Design B: AI reads the answer only — code and point-checks do the marking</h1>
+<button id="go">Run</button>
+<img id="current" alt="current crop">
+<pre id="log"></pre>
+<script>
+  const bench = { done: false, results: [], log: [], error: null, summary: null };
+  window.__bench = bench;
+  const logEl = document.getElementById('log');
+  const log = (m) => { bench.log.push(m); logEl.textContent = bench.log.join('\n'); logEl.scrollTop = 1e9; };
+  const IO = { expectedInputs: [{ type: 'text' }, { type: 'image' }] };
+  const TEXT_SCHEMA = { type: 'object', properties: { text: { type: 'string' } }, required: ['text'] };
+  const YESNO_SCHEMA = { type: 'object', properties: { present: { type: 'boolean' } }, required: ['present'] };
+
+  // Maths: deterministic marking by code. Biology: one tiny yes/no check per marking-scheme point.
+  const MATHS = [
+    { id: 'm1', crop: 'crops/m1.png', expected: 56, max: 1, truthRead: '56', truthMark: 1 },
+    { id: 'm2', crop: 'crops/m2.png', expected: 24, max: 1, truthRead: '23', truthMark: 0 },
+    { id: 'm3', crop: 'crops/m3.png', expected: 12, max: 1, truthRead: '12', truthMark: 1 },
+    { id: 'm4', crop: 'crops/m4.png', expected: 1, max: 1, truthRead: '1', truthMark: 1 },
+    { id: 'm5', crop: 'crops/m5.png', expected: 20, max: 1, truthRead: '25', truthMark: 0 },
+    { id: 'm6b', crop: 'crops/m6b.png', expected: 27000, max: 1, truthRead: '27,000', truthMark: 1 },
+  ];
+  const BIO = [
+    { id: 'b1', crop: 'crops/b1.png', max: 2, truthMark: 2, points: ['transports or carries oxygen', 'fights germs, infection or disease', 'transports food or nutrients', 'transports waste or carbon dioxide', 'clotting of blood'] },
+    { id: 'b2', crop: 'crops/b2.png', max: 3, truthMark: 2, points: ['produces or makes bile', 'stores glycogen, sugar or glucose', 'removes toxins or detoxifies', 'deamination of amino acids', 'produces heat'] },
+    { id: 'b3', crop: 'crops/b3.png', max: 1, truthMark: 1, points: ['photosynthesis (any spelling)'] },
+    { id: 'b4', crop: 'crops/b4.png', max: 1, truthMark: 0, points: ['transports or carries oxygen'] },
+  ];
+
+  async function timed(fn) { const t = performance.now(); const v = await fn(); return { v, ms: Math.round(performance.now() - t) }; }
+  const parse = (raw) => { try { return JSON.parse(String(raw).replace(/^```(json)?/m, '').replace(/```\s*$/m, '').trim()); } catch { return null; } };
+
+  async function readCrop(src, hint) {
+    document.getElementById('current').src = src;
+    const blob = await (await fetch(src)).blob();
+    const s = await LanguageModel.create(IO);
+    const r = await timed(() => s.prompt([{ role: 'user', content: [
+      { type: 'text', value: `Transcribe exactly what is handwritten in this image, character by character. ${hint} Do NOT calculate, solve or correct anything; if the writing is wrong, copy it wrong.` },
+      { type: 'image', value: blob },
+    ] }], { responseConstraint: TEXT_SCHEMA }));
+    s.destroy();
+    return { text: parse(r.v)?.text ?? String(r.v), ms: r.ms };
+  }
+
+  async function pointPresent(answer, point) {
+    const s = await LanguageModel.create();
+    const r = await timed(() => s.prompt(`A pupil wrote this answer (spelling may be poor; judge meaning): "${answer}"\nDoes the answer state this specific point: "${point}"? Answer only for that exact point.`, { responseConstraint: YESNO_SCHEMA }));
+    s.destroy();
+    return { present: parse(r.v)?.present === true, ms: r.ms };
+  }
+
+  const lastNumber = (t) => { const m = String(t).replace(/[,\s₦N]/g, '').match(/-?\d+(\.\d+)?(?!.*\d)/); return m ? Number(m[0]) : null; };
+
+  async function run() {
+    try {
+      log(`availability = ${await LanguageModel.availability(IO)}`);
+      const warm = await timed(() => LanguageModel.create({ ...IO, monitor(m) { m.addEventListener('downloadprogress', (e) => { bench.progress = e.loaded; }); } }));
+      warm.v.destroy(); log(`model ready in ${warm.ms} ms`);
+
+      let readOk = 0, markOk = 0, n = 0, got = 0, exp = 0;
+      for (const c of MATHS) {
+        const r = await readCrop(c.crop, 'It is the answer part of a sum, e.g. "= 42".');
+        const value = lastNumber(r.text);
+        const mark = value === c.expected ? c.max : 0;
+        const readCorrect = lastNumber(c.truthRead) === value;
+        n++; readOk += readCorrect; markOk += mark === c.truthMark; got += mark; exp += c.truthMark;
+        bench.results.push({ ...c, read: r.text, value, mark, readCorrect, ms: r.ms });
+        log(`[${c.id}] read "${r.text}" (${r.ms} ms) → value ${value} → mark ${mark}/${c.max} | truth "${c.truthRead}" ${c.truthMark} ${mark === c.truthMark ? '✓' : '✗'}`);
+      }
+      for (const c of BIO) {
+        const r = await readCrop(c.crop, 'It is a pupil\'s short written answer in English.');
+        let found = [];
+        for (const p of c.points) { const pp = await pointPresent(r.text, p); if (pp.present) found.push(p); }
+        const mark = Math.min(found.length, c.max);
+        n++; markOk += mark === c.truthMark; got += mark; exp += c.truthMark;
+        bench.results.push({ ...c, read: r.text, found, mark, ms: r.ms });
+        log(`[${c.id}] read "${r.text}" (${r.ms} ms) → points ${JSON.stringify(found)} → mark ${mark}/${c.max} | truth ${c.truthMark} ${mark === c.truthMark ? '✓' : '✗'}`);
+      }
+      bench.summary = { mathsReadCorrect: `${readOk}/${MATHS.length}`, questionsMarkedExactly: `${markOk}/${n}`, totalAwarded: got, totalTruth: exp };
+      log(`SUMMARY ${JSON.stringify(bench.summary)}`);
+    } catch (err) { bench.error = `${err.name}: ${err.message}`; log(`ERROR ${bench.error}`); }
+    bench.done = true; log('DONE');
+  }
+  document.getElementById('go').addEventListener('click', run);
+</script>
+</body>
+</html>

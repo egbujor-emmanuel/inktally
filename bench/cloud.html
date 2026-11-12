@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cloud marking benchmark (Firebase AI Logic)</title>
+<style>
+  body { font: 15px system-ui, sans-serif; margin: 20px; color: #111; background: #fff; }
+  button { font-size: 18px; padding: 10px 18px; }
+  pre { background: #f4f4f4; padding: 10px; white-space: pre-wrap; font-size: 13px; max-height: 640px; overflow: auto; }
+</style>
+</head>
+<body>
+<h1>Cloud model via Firebase AI Logic (ONLY_IN_CLOUD)</h1>
+<button id="go">Run</button>
+<pre id="log"></pre>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js';
+  import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'https://www.gstatic.com/firebasejs/13.2.0/firebase-app-check.js';
+  import { getAI, getGenerativeModel, GoogleAIBackend, InferenceMode, Schema } from 'https://www.gstatic.com/firebasejs/13.2.0/firebase-ai.js';
+
+  const bench = { done: false, log: [], results: [], error: null, summary: null };
+  window.__bench = bench;
+  const logEl = document.getElementById('log');
+  const log = (m) => { bench.log.push(m); logEl.textContent = bench.log.join('\n'); };
+
+  const { firebaseConfig, debugToken, model: MODEL } = await (await fetch('/config.json')).json();
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken; // dev-only debug token, served locally, never committed
+  const app = initializeApp(firebaseConfig);
+  initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider('dev-debug-only'), isTokenAutoRefreshEnabled: true });
+  const ai = getAI(app, { backend: new GoogleAIBackend() });
+
+  const markSchema = Schema.object({ properties: { marks: Schema.array({ items: Schema.object({ properties: {
+    q: Schema.integer(), read: Schema.string(), awarded: Schema.number(), max: Schema.number(), reason: Schema.string(),
+  } }) }) } });
+  const textSchema = Schema.object({ properties: { text: Schema.string() } });
+  const REQUEST_TIMEOUT_MS = 180_000;
+  const cloud = (schema) => getGenerativeModel(ai, {
+    mode: InferenceMode.ONLY_IN_CLOUD,
+    inCloudParams: { model: MODEL, generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0 } },
+  }, { timeout: REQUEST_TIMEOUT_MS });
+  const ONLY = new URLSearchParams(location.search).get('only'); // e.g. ?only=bio-dim,crops
+
+  async function imagePart(src) {
+    const buf = new Uint8Array(await (await fetch(src)).arrayBuffer());
+    let bin = ''; for (const b of buf) bin += String.fromCharCode(b);
+    return { inlineData: { data: btoa(bin), mimeType: 'image/png' } };
+  }
+  const MAX_ATTEMPTS = 4;
+  const BACKOFF_MS = 5_000;
+  async function withRetry(fn) {
+    for (let attempt = 1; ; attempt++) {
+      try { return await fn(); } catch (err) {
+        const transient = /high demand|\b50[0-3]\b|Timeout|overloaded|UNAVAILABLE/i.test(`${err.message}`);
+        if (!transient || attempt >= MAX_ATTEMPTS) throw err;
+        log(`   retry ${attempt}/${MAX_ATTEMPTS - 1} after: ${String(err.message).slice(0, 90)}`);
+        await new Promise((r) => setTimeout(r, BACKOFF_MS * 2 ** (attempt - 1)));
+      }
+    }
+  }
+  async function timed(fn) { const t = performance.now(); const v = await withRetry(fn); return { v, ms: Math.round(performance.now() - t) }; }
+  const schemeText = (scheme) => scheme.map((s) => `Q${s.q} (${s.max} mark${s.max > 1 ? 's' : ''}): ${s.question}\n  Marking scheme: ${s.accept.join(' | ')}`).join('\n');
+  const lastNumber = (t) => { const m = String(t).replace(/[,\s₦N]/g, '').match(/-?\d+(\.\d+)?(?!.*\d)/); return m ? Number(m[0]) : null; };
+
+  async function run() {
+    try {
+      const cases = await (await fetch('cases.json')).json();
+      const byId = Object.fromEntries(cases.map((c) => [c.id, c]));
+      // A) Whole page + marking scheme (the design that failed on-device).
+      for (const c of cases) {
+        if (ONLY && !ONLY.split(',').includes(c.id)) continue;
+        const base = c.sameAs ? byId[c.sameAs] : c;
+        const page = await imagePart(c.image);
+        const r = await timed(() => cloud(markSchema).generateContent([
+          `Mark this pupil's handwritten answer sheet strictly using the marking scheme. For each question transcribe exactly what the pupil wrote (keep their mistakes), award marks (partial allowed, never above max) and give a short reason.\n\n${schemeText(base.scheme)}`,
+          page,
+        ]));
+        const marks = JSON.parse(r.v.response.text()).marks;
+        const perQ = Object.entries(base.truthMarks).map(([q, exp]) => { const m = marks.find((x) => String(x.q) === q); return { q: +q, exp, got: m?.awarded ?? null, read: m?.read }; });
+        const exact = perQ.filter((p) => p.got === p.exp).length;
+        bench.results.push({ design: 'A-page', id: c.id, ms: r.ms, source: r.v.response.inferenceSource, perQ });
+        log(`[A ${c.id}] ${r.ms} ms src=${r.v.response.inferenceSource} exact ${exact}/${perQ.length} total ${perQ.reduce((a, p) => a + (p.got ?? 0), 0)}/${perQ.reduce((a, p) => a + p.exp, 0)}\n   ${perQ.map((p) => `Q${p.q} read "${p.read}" ${p.got}/${p.exp}`).join('\n   ')}`);
+      }
+      // B) Answer-only crops, read-only (no question context).
+      const crops = [['m1', '56'], ['m2', '23'], ['m3', '12'], ['m4', '1'], ['m5', '25'], ['m6b', '27,000'], ['b1', 'Blood carries oxygen round the body and it fights germs'], ['b2', 'It makes bile and stores sugar'], ['b3', 'Photosynthesis'], ['b4', 'To fight diseases']];
+      let mathsOk = 0;
+      for (const [id, truth] of (ONLY && !ONLY.split(',').includes('crops') ? [] : crops)) {
+        const crop = await imagePart(`crops/${id}.png`);
+        const r = await timed(() => cloud(textSchema).generateContent([
+          'Transcribe exactly what is handwritten in this image, character by character. Do NOT calculate, solve or correct anything; if the writing is wrong, copy it wrong.',
+          crop,
+        ]));
+        const text = JSON.parse(r.v.response.text()).text;
+        if (id.startsWith('m') && lastNumber(text) === lastNumber(truth)) mathsOk++;
+        bench.results.push({ design: 'B-crop', id, ms: r.ms, text, truth });
+        log(`[B ${id}] ${r.ms} ms read "${text}" | truth "${truth}"`);
+      }
+      bench.summary = { mathsCropsReadCorrectly: `${mathsOk}/6` };
+      log(`SUMMARY ${JSON.stringify(bench.summary)}`);
+    } catch (err) { bench.error = `${err.name}: ${err.message}`; log(`ERROR ${bench.error}`); }
+    bench.done = true; log('DONE');
+  }
+  document.getElementById('go').addEventListener('click', run);
+</script>
+</body>
+</html>

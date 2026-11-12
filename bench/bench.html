@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Handwriting marking benchmark</title>
+<style>
+  body { font: 15px system-ui, sans-serif; margin: 20px; color: #111; background: #fff; }
+  button { font-size: 18px; padding: 10px 18px; }
+  .row { display: flex; gap: 16px; align-items: flex-start; }
+  img { width: 300px; border: 1px solid #ccc; }
+  pre { background: #f4f4f4; padding: 10px; white-space: pre-wrap; flex: 1; max-height: 640px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>On-device handwriting marking benchmark (Gemini Nano)</h1>
+<button id="go">Run benchmark</button>
+<div class="row"><img id="current" alt="current sample"><pre id="log"></pre></div>
+<script>
+  const bench = { done: false, results: [], log: [], error: null };
+  window.__bench = bench;
+  const logEl = document.getElementById('log');
+  const log = (m) => { bench.log.push(m); logEl.textContent = bench.log.join('\n'); logEl.scrollTop = 1e9; };
+
+  const IO = { expectedInputs: [{ type: 'text' }, { type: 'image' }] };
+  const SYSTEM = 'You are a careful, fair school marker in Nigeria. Pupils write by hand and spelling is often imperfect; judge meaning, not spelling, unless told otherwise.';
+
+  const READ_SCHEMA = {
+    type: 'object',
+    properties: { answers: { type: 'array', items: { type: 'object', properties: { q: { type: 'integer' }, text: { type: 'string' } }, required: ['q', 'text'] } } },
+    required: ['answers'],
+  };
+  const MARK_SCHEMA = {
+    type: 'object',
+    properties: { marks: { type: 'array', items: { type: 'object', properties: {
+      q: { type: 'integer' }, read: { type: 'string' }, awarded: { type: 'number' }, max: { type: 'number' }, reason: { type: 'string' },
+    }, required: ['q', 'read', 'awarded', 'max', 'reason'] } } },
+    required: ['marks'],
+  };
+
+  const schemeText = (scheme) => scheme.map((s) => `Q${s.q} (${s.max} mark${s.max > 1 ? 's' : ''}): ${s.question}\n  Marking scheme: ${s.accept.join(' | ')}`).join('\n');
+
+  async function newSession(withMonitor) {
+    return LanguageModel.create({
+      ...IO,
+      initialPrompts: [{ role: 'system', content: SYSTEM }],
+      ...(withMonitor ? { monitor(m) { m.addEventListener('downloadprogress', (e) => { bench.progress = e.loaded; }); } } : {}),
+    });
+  }
+
+  async function timed(fn) {
+    const t = performance.now();
+    const value = await fn();
+    return { value, ms: Math.round(performance.now() - t) };
+  }
+
+  function parse(raw) {
+    const cleaned = String(raw).replace(/^```(json)?/m, '').replace(/```\s*$/m, '').trim();
+    try { return JSON.parse(cleaned); } catch { return { parseError: true, raw }; }
+  }
+
+  async function runCase(c, scheme) {
+    document.getElementById('current').src = c.image;
+    const blob = await (await fetch(c.image)).blob();
+    const out = { id: c.id };
+
+    // Mode 1: READ only (transcription).
+    let s = await newSession(false);
+    const read = await timed(() => s.prompt([{ role: 'user', content: [
+      { type: 'text', value: 'This is a photo of a pupil\'s handwritten answer sheet. Transcribe each numbered answer exactly as written (keep the pupil\'s own mistakes, do not correct them). Ignore the name line.' },
+      { type: 'image', value: blob },
+    ] }], { responseConstraint: READ_SCHEMA }));
+    out.read = { ms: read.ms, ...parse(read.value) };
+    log(`[${c.id}] READ ${read.ms} ms → ${JSON.stringify(out.read.answers ?? out.read)}`);
+    s.destroy();
+
+    // Mode 2: MARK directly from image + marking scheme.
+    s = await newSession(false);
+    const mark = await timed(() => s.prompt([{ role: 'user', content: [
+      { type: 'text', value: `Mark this pupil's handwritten answer sheet strictly using the marking scheme below. For each question: transcribe what the pupil wrote, award marks (partial marks allowed, never above max), and give a short reason.\n\n${schemeText(scheme)}` },
+      { type: 'image', value: blob },
+    ] }], { responseConstraint: MARK_SCHEMA }));
+    out.mark = { ms: mark.ms, ...parse(mark.value) };
+    log(`[${c.id}] MARK ${mark.ms} ms → ${JSON.stringify(out.mark.marks ?? out.mark)}`);
+    s.destroy();
+
+    // Mode 3: READ-THEN-MARK (text only, from the model's own transcription).
+    if (out.read.answers) {
+      s = await newSession(false);
+      const transcript = out.read.answers.map((a) => `Q${a.q}: ${a.text}`).join('\n');
+      const two = await timed(() => s.prompt(`Mark these pupil answers strictly using the marking scheme. Partial marks allowed, never above max. Give a short reason.\n\nMARKING SCHEME:\n${schemeText(scheme)}\n\nPUPIL ANSWERS:\n${transcript}`, { responseConstraint: MARK_SCHEMA }));
+      out.twoStep = { ms: two.ms, ...parse(two.value) };
+      log(`[${c.id}] READ→MARK ${two.ms} ms → ${JSON.stringify(out.twoStep.marks ?? out.twoStep)}`);
+      s.destroy();
+    }
+    return out;
+  }
+
+  async function run() {
+    try {
+      const cases = await (await fetch('cases.json')).json();
+      const byId = Object.fromEntries(cases.map((c) => [c.id, c]));
+      log(`availability = ${await LanguageModel.availability(IO)}`);
+      const warm = await timed(() => newSession(true));
+      log(`model ready in ${warm.ms} ms`);
+      warm.value.destroy();
+      for (const c of cases) {
+        const base = c.sameAs ? byId[c.sameAs] : c;
+        bench.results.push(await runCase(c, base.scheme));
+      }
+    } catch (err) {
+      bench.error = `${err.name}: ${err.message}`;
+      log(`ERROR ${bench.error}`);
+    }
+    bench.done = true;
+    log('DONE');
+  }
+  document.getElementById('go').addEventListener('click', run);
+</script>
+</body>
+</html>

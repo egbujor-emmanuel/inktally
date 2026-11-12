@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nano probe</title>
+<style>
+  body { font: 16px system-ui, sans-serif; margin: 24px; background: #fff; color: #111; }
+  button { font-size: 18px; padding: 10px 18px; }
+  pre { background: #f4f4f4; padding: 12px; white-space: pre-wrap; max-height: 520px; overflow: auto; }
+  canvas { border: 1px solid #ccc; }
+</style>
+</head>
+<body>
+<h1>Gemini Nano probe (Chrome Prompt API)</h1>
+<button id="go">Start on-device model</button>
+<canvas id="sheet" width="420" height="140"></canvas>
+<pre id="log"></pre>
+<script>
+  const state = { phase: 'idle', progress: 0, log: [], error: null, results: {} };
+  window.__state = state;
+  const logEl = document.getElementById('log');
+  function log(msg) {
+    const line = `[${new Date().toISOString().slice(11, 19)}] ${msg}`;
+    state.log.push(line);
+    logEl.textContent = state.log.join('\n');
+  }
+
+  // Draw a fake handwritten worksheet answer containing a deliberate mistake.
+  function drawSheet() {
+    const c = document.getElementById('sheet');
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = '#1a2a6c';
+    g.font = 'italic 44px "Comic Sans MS", cursive';
+    g.fillText('Q3.  7 x 8 = 54', 18, 82);
+    return c;
+  }
+
+  async function canvasBlob(c) {
+    return new Promise((resolve) => c.toBlob(resolve, 'image/png'));
+  }
+
+  async function run() {
+    try {
+      state.phase = 'checking';
+      const opts = { expectedInputs: [{ type: 'text' }, { type: 'image' }] };
+      const availability = await LanguageModel.availability(opts);
+      state.results.availability = availability;
+      log(`availability(text+image) = ${availability}`);
+      if (availability === 'unavailable') { state.phase = 'unavailable'; return; }
+
+      state.phase = 'downloading';
+      const t0 = performance.now();
+      const session = await LanguageModel.create({
+        ...opts,
+        monitor(m) {
+          m.addEventListener('downloadprogress', (e) => {
+            state.progress = e.loaded;
+            log(`download ${(e.loaded * 100).toFixed(1)}%`);
+          });
+        },
+      });
+      state.results.createMs = Math.round(performance.now() - t0);
+      log(`session ready in ${state.results.createMs} ms`);
+
+      state.phase = 'prompting';
+      const t1 = performance.now();
+      const text = await session.prompt('In one sentence, why does offline AI matter for teachers in low-connectivity schools?');
+      state.results.textMs = Math.round(performance.now() - t1);
+      state.results.text = text;
+      log(`TEXT (${state.results.textMs} ms): ${text}`);
+
+      const blob = await canvasBlob(drawSheet());
+      const imgSession = await session.clone();
+      const t2 = performance.now();
+      const verdict = await imgSession.prompt([{
+        role: 'user',
+        content: [
+          { type: 'text', value: 'This is a photo of a pupil\'s handwritten answer. Read exactly what is written, then say whether the arithmetic is correct and give the correct answer. Reply as JSON: {"read": string, "correct": boolean, "expected": string}' },
+          { type: 'image', value: blob },
+        ],
+      }]);
+      state.results.imageMs = Math.round(performance.now() - t2);
+      state.results.image = verdict;
+      log(`IMAGE (${state.results.imageMs} ms): ${verdict}`);
+      state.phase = 'done';
+    } catch (err) {
+      state.error = `${err.name}: ${err.message}`;
+      state.phase = 'error';
+      log(`ERROR ${state.error}`);
+    }
+  }
+
+  drawSheet();
+  log(`typeof LanguageModel = ${typeof LanguageModel}`);
+  document.getElementById('go').addEventListener('click', run);
+</script>
+</body>
+</html>
