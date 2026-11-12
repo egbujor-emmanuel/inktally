@@ -14,7 +14,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Same cases as web/src/marking/*.test.ts, so both platforms mark identically. */
+/** Same cases as the web unit tests (web/src/marking), so both platforms mark identically. */
 class EngineTest {
     private val numeric = { accept: List<Double> -> Question.Numeric(2, "15 + 9", 1, accept) }
 

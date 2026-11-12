@@ -5,11 +5,13 @@ import { AnswerSheet } from '../components/AnswerSheet';
 import { MarkTab } from './assignment/MarkTab';
 import { ReviewTab } from './assignment/ReviewTab';
 import { InsightsTab } from './assignment/InsightsTab';
+import { RegisterTab } from './assignment/RegisterTab';
 
 const TABS = [
   { to: 'print', label: 'Print sheets' },
   { to: 'mark', label: 'Mark' },
   { to: 'review', label: 'Review' },
+  { to: 'register', label: 'Mark register' },
   { to: 'insights', label: 'Insights' },
 ];
 
@@ -59,6 +61,7 @@ export function AssignmentPage() {
           } />
           <Route path="mark" element={<MarkTab assignment={assignment} />} />
           <Route path="review" element={<ReviewTab assignment={assignment} submissions={submissions} />} />
+          <Route path="register" element={<RegisterTab assignment={assignment} submissions={submissions} />} />
           <Route path="insights" element={<InsightsTab assignment={assignment} submissions={submissions} />} />
         </Routes>
       </div>

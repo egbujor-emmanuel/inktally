@@ -71,7 +71,7 @@ function totalBadge(ctx: OffscreenCanvasRenderingContext2D, total: number, max: 
   ctx.restore();
 }
 
-function footer(ctx: OffscreenCanvasRenderingContext2D, pupil: string, width: number, height: number, scale: number): void {
+function footer(ctx: OffscreenCanvasRenderingContext2D, pupil: string, height: number, scale: number): void {
   ctx.save();
   ctx.fillStyle = '#5a6378';
   ctx.font = `${11 * scale}px "Inter Tight", Arial, sans-serif`;
@@ -101,8 +101,8 @@ export async function markedSheetCopy(photo: Blob, sheetToPhoto: Homography, box
   }
   const total = marks.reduce((a, m) => a + m.awarded, 0);
   const max = marks.reduce((a, m) => a + m.max, 0);
-  totalBadge(ctx, total, max, 168 * mm, 36 * mm, 11 * mm);
-  footer(ctx, pupil, c.width, c.height, mm / 2.5);
+  totalBadge(ctx, total, max, 172 * mm, 25 * mm, 9 * mm);
+  footer(ctx, pupil, c.height, mm / 2.5);
   return toPng(c);
 }
 
@@ -130,6 +130,6 @@ export async function markedPageCopy(photo: Blob, marks: Mark[], pupil: string):
     ctx.fillStyle = m.status === 'flagged' ? FLAG : PEN; ctx.font = `700 ${row * 0.7}px ${HAND_FONT}`;
     ctx.fillText(`${m.awarded}/${m.max}`, pw + 62 * u, y + row * 0.68);
   });
-  footer(ctx, pupil, c.width, c.height, u / 3);
+  footer(ctx, pupil, c.height, u / 3);
   return toPng(c);
 }

@@ -6,8 +6,13 @@ const safeName = (s: string) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g,
 
 /** Shows the marked copy with Download / Share / Print, so the teacher never re-marks the paper by hand. */
 export function MarkedCopy({ blob, pupil }: Props) {
-  const url = useMemo(() => URL.createObjectURL(blob), [blob]);
-  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  // Create and revoke the object URL in the same effect so StrictMode re-mounts never leave a dead link.
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    const next = URL.createObjectURL(blob);
+    setUrl(next);
+    return () => URL.revokeObjectURL(next);
+  }, [blob]);
   const [shareError, setShareError] = useState<string | null>(null);
   const fileName = `${safeName(pupil)}-marked.png`;
   const file = useMemo(() => new File([blob], fileName, { type: 'image/png' }), [blob, fileName]);
@@ -21,12 +26,15 @@ export function MarkedCopy({ blob, pupil }: Props) {
   }
 
   function handlePrint() {
+    if (!url) return;
     const w = window.open('', '_blank', 'noopener=no');
     if (!w) return;
-    w.document.write(`<title>${pupil}</title><style>@page{margin:0}body{margin:0}img{width:100%}</style><img src="${url}" onload="setTimeout(()=>print(),200)">`);
+    const title = pupil.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+    w.document.write(`<title>${title}</title><style>@page{margin:0}body{margin:0}img{width:100%}</style><img src="${url}" onload="setTimeout(()=>print(),200)">`);
     w.document.close();
   }
 
+  if (!url) return null;
   return (
     <section className="paper-card grid gap-4 p-5 lg:grid-cols-[minmax(0,22rem)_1fr]" aria-labelledby="marked-copy">
       <img src={url} alt={`Marked copy of ${pupil}'s work`} className="w-full rounded-md border border-[oklch(88%_0.02_85)]" />
