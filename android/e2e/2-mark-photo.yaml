@@ -30,6 +30,8 @@ appId: app.redpen.teacher
     visible: "Total: .*"
     timeout: 240000
 - takeScreenshot: 11-marked
+# The sample sheet's true score is 3/5 (B, D, B, Abuja, runned) — a wrong total fails the run.
+- assertVisible: "Total: 3/5"
 - scrollUntilVisible:
     element: "Teacher’s comment"
     timeout: 20000

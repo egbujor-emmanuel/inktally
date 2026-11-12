@@ -56,7 +56,9 @@ val REMOTE_DEFAULTS: Map<String, Any> = mapOf(
 )
 
 private fun cfg(key: String) = Firebase.remoteConfig.getString(key).ifBlank { REMOTE_DEFAULTS[key].toString() }
-private fun fill(template: String, values: Map<String, String>) = Regex("\\{(\\w+)}").replace(template) { values[it.groupValues[1]] ?: it.value }
+// Both braces escaped: Android's ICU regex rejects a bare "}" (the JVM and Chrome accept it), which broke every prompt in 0.2.0.
+private val PLACEHOLDER = Regex("\\{(\\w+)\\}")
+internal fun fill(template: String, values: Map<String, String>) = PLACEHOLDER.replace(template) { values[it.groupValues[1]] ?: it.value }
 
 /** Live session counters shown in the status bar (Firebase console cannot see on-device inference). */
 object Telemetry {

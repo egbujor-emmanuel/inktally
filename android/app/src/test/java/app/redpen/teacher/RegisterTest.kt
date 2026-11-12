@@ -84,3 +84,11 @@ class RegisterTest {
         assertTrue(csv.contains("'=HYPERLINK"))
     }
 }
+
+/** Guards the 0.2.0 bug: the prompt template regex must compile on Android's ICU engine (escaped braces). */
+class PromptTemplateTest {
+    @Test fun placeholderPatternEscapesBothBraces() {
+        val src = File("src/main/java/app/redpen/teacher/ai/Ai.kt").readText()
+        assertTrue("PLACEHOLDER must escape both braces", src.contains("""Regex("\\{(\\w+)\\}")"""))
+    }
+}
