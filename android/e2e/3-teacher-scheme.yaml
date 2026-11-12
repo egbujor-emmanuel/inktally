@@ -18,11 +18,19 @@ appId: app.redpen.teacher
 - extendedWaitUntil:
     visible: "Check the marking scheme"
     timeout: 150000
+# Prove the values come from the DRAFTED scheme editor, not from the text typed above:
+# scroll past the typing box until the editor's "Do not accept" field (only in the editor) is on screen.
 - scrollUntilVisible:
-    element: ".*Federal Capital Territory.*"
-    timeout: 30000
-- takeScreenshot: 20-scheme-copied
+    element: "Do not accept"
+    timeout: 40000
 - scrollUntilVisible:
     element: ".*goed.*"
-    timeout: 30000
-- takeScreenshot: 21-scheme-reject-copied
+    timeout: 20000
+- assertNotVisible: "…or type / paste your marking scheme"
+- takeScreenshot: 21-scheme-reject-in-editor
+- scrollUntilVisible:
+    element: ".*Federal Capital Territory.*"
+    direction: UP
+    timeout: 20000
+- assertNotVisible: "…or type / paste your marking scheme"
+- takeScreenshot: 20-scheme-alternative-in-editor

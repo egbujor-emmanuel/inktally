@@ -116,7 +116,7 @@ Because the Firebase console does not show on-device inference, REDPEN records e
 | Same photos, on-device whole-page marking (rejected design) | auto-corrected 2 wrong answers → why REDPEN reads answer-only crops |
 | On-device crop reading + code marking | 7 / 10 exact, every miss either flagged or caught by the cloud check |
 | Live end-to-end offline → online run (Chrome + Gemini Nano) | 5 answers marked 100 % on-device offline; on reconnect the cloud check verified 4 and flagged the one device misread |
-| Quick mark on a real page | answer key 6/6 correct (ignored the pupil's wrong answers); marked 5/7 correctly |
+| Quick mark on a real page | answer key 6/6 correct (ignored the student's wrong answers); marked 5/7 correctly |
 
 Benchmark scripts and evidence live in [`bench/`](bench/).
 
