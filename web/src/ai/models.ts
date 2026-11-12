@@ -3,7 +3,8 @@ import { getGenerativeModel, InferenceMode, Schema, type GenerativeModel, type O
 import { getValue } from 'firebase/remote-config';
 import { ai, remoteConfig } from '../firebase/app';
 import type { RemoteKey } from './config';
-import { withRetry } from './retry';
+import { isTransient, withRetry } from './retry';
+import { friendlyCloudError } from './errors';
 
 export type ReadMode = (typeof InferenceMode)[keyof typeof InferenceMode];
 const REQUEST_TIMEOUT_MS = 120_000;
@@ -89,10 +90,17 @@ export async function authorGenerate(schema: ObjectSchema, request: string | (st
   try {
     const r = await withRetry(() => authorModel(schema, primary).generateContent(request), AUTHOR_ATTEMPTS);
     return { text: r.response.text(), model: primary };
-  } catch {
+  } catch (primaryError: unknown) {
     const fallback = config('cloud_read_model');
-    if (fallback === primary) throw new Error('The cloud is busy right now. Please try again in a minute.');
-    const r = await withRetry(() => authorModel(schema, fallback, REQUEST_TIMEOUT_MS).generateContent(request), FALLBACK_ATTEMPTS);
+    if (fallback === primary || !isTransient(primaryError)) {
+      // Same model, or a non-transient failure (App Check, permission, bad request): retrying cannot help.
+      if (fallback === primary && isTransient(primaryError)) {
+        const r = await withRetry(() => authorModel(schema, primary, REQUEST_TIMEOUT_MS).generateContent(request), FALLBACK_ATTEMPTS).catch((e: unknown) => { throw friendlyCloudError(e); });
+        return { text: r.response.text(), model: primary };
+      }
+      throw friendlyCloudError(primaryError);
+    }
+    const r = await withRetry(() => authorModel(schema, fallback, REQUEST_TIMEOUT_MS).generateContent(request), FALLBACK_ATTEMPTS).catch((e: unknown) => { throw friendlyCloudError(e); });
     return { text: r.response.text(), model: fallback };
   }
 }

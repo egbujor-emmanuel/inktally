@@ -1,0 +1,60 @@
+{
+  "parameters": {
+    "cloud_read_model": {
+      "defaultValue": {
+        "value": "gemini-3.5-flash-lite"
+      },
+      "description": "Model name or on-device option — change without an app release",
+      "valueType": "STRING"
+    },
+    "cloud_author_model": {
+      "defaultValue": {
+        "value": "gemini-3.5-flash-lite"
+      },
+      "description": "Model name or on-device option — change without an app release",
+      "valueType": "STRING"
+    },
+    "read_mode": {
+      "defaultValue": {
+        "value": "prefer_on_device"
+      },
+      "description": "Hybrid routing mode",
+      "valueType": "STRING"
+    },
+    "prompt_read_crop": {
+      "defaultValue": {
+        "value": "Transcribe exactly what is handwritten in this image, character by character. {hint} Do NOT calculate, solve or correct anything; if the writing is wrong, copy it wrong. If nothing is written, return an empty string."
+      },
+      "description": "Prompt template (shared by web and Android)",
+      "valueType": "STRING"
+    },
+    "prompt_point_check": {
+      "defaultValue": {
+        "value": "A pupil wrote this answer (spelling may be poor; judge meaning): \"{answer}\"\nDoes the answer clearly state this specific marking point: \"{point}\"? Answer only for that exact point. Do not give credit for a statement listed as not acceptable: {reject}."
+      },
+      "description": "Prompt template (shared by web and Android)",
+      "valueType": "STRING"
+    },
+    "prompt_scheme_draft": {
+      "defaultValue": {
+        "value": "You are an experienced teacher writing a marking scheme for {level} {subject}. Follow the conventions of the curriculum the paper comes from. From the question paper provided, list every question with: its number, the question text, the maximum marks, the type (objective = A-E option, numeric = a number, short = a word or phrase, points = a theory answer marked point by point), and the answer key (correct option letters, accepted numbers, accepted words, or marking points with common acceptable wordings). Add answers that must not be accepted when pupils commonly confuse them."
+      },
+      "description": "Prompt template (shared by web and Android)",
+      "valueType": "STRING"
+    },
+    "prompt_remediation": {
+      "defaultValue": {
+        "value": "Pupils in a {level} {subject} class made these mistakes on question {q} (\"{prompt}\"): {mistakes}. Write a short catch-up activity for them: one plain-English explanation of the misunderstanding (max 60 words) and 4 practice questions of increasing difficulty with answers."
+      },
+      "description": "Prompt template (shared by web and Android)",
+      "valueType": "STRING"
+    },
+    "android_ondevice_model": {
+      "defaultValue": {
+        "value": "preview"
+      },
+      "description": "Model name or on-device option — change without an app release",
+      "valueType": "STRING"
+    }
+  }
+}

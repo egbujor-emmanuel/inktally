@@ -7,6 +7,7 @@ import { scanSheet } from '../../scan/pipeline';
 import { MarkRow } from '../../components/MarkRow';
 import { MarkedCopy } from '../../components/MarkedCopy';
 import { markedPageCopy, markedSheetCopy } from '../../scan/markedCopy';
+import { friendlyCloudError } from '../../ai/errors';
 
 type Props = { assignment: Assignment };
 
@@ -101,7 +102,7 @@ export function MarkTab({ assignment }: Props) {
       setPupil('');
       await makeCopy(submissionId, label, () => markedSheetCopy(photo, scan.sheetToPhoto, page.boxes, collected, label));
     } catch (e: unknown) {
-      setPhase({ kind: 'error', message: e instanceof Error ? e.message : 'Something went wrong while marking' });
+      setPhase({ kind: 'error', message: friendlyCloudError(e).message });
     }
   }
 

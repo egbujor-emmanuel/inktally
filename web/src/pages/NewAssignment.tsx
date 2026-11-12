@@ -6,6 +6,7 @@ import type { Question } from '../domain/types';
 import { SchemeEditor } from '../components/SchemeEditor';
 import { useOnline } from '../hooks/useStatus';
 import { ALL_LEVELS } from '../domain/levels';
+import { friendlyCloudError } from '../ai/errors';
 
 const field = 'mt-1 w-full rounded-lg border border-[oklch(82%_0.02_85)] bg-white px-3 py-2';
 
@@ -32,7 +33,7 @@ export function NewAssignment() {
       const scheme = await draftScheme({ images, pdf, text: paperText || undefined }, subject, level);
       setQuestions(scheme.questions);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not draft the marking scheme');
+      setError(friendlyCloudError(e).message);
     } finally {
       setIsDrafting(false);
     }
@@ -46,7 +47,7 @@ export function NewAssignment() {
       const id = await createAssignment({ title: title || `${subject} — ${level}`, className: className || level, scheme: { subject, level, questions } });
       navigate(`/a/${id}/print`);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not save');
+      setError(friendlyCloudError(e).message);
       setIsSaving(false);
     }
   }

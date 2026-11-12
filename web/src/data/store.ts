@@ -7,6 +7,7 @@ import {
 import { openDB, type IDBPDatabase } from 'idb';
 import { auth, db } from '../firebase/app';
 import type { Mark, MarkingScheme, Question } from '../domain/types';
+import { friendlyCloudError } from '../ai/errors';
 
 export interface Assignment {
   id: string;
@@ -43,22 +44,23 @@ const assignments = () => collection(db, 'assignments');
  * and surface failures (e.g. rules rejections) through an event instead.
  */
 export const WRITE_ERROR_EVENT = 'redpen:write-error';
-function queueWrite(write: Promise<unknown>): void {
+function queueWrite(write: Promise<unknown>, what: string): void {
   write.catch((error: unknown) => {
-    window.dispatchEvent(new CustomEvent(WRITE_ERROR_EVENT, { detail: error instanceof Error ? error.message : String(error) }));
+    console.error(`[redpen] write failed: ${what}`, error);
+    window.dispatchEvent(new CustomEvent(WRITE_ERROR_EVENT, { detail: `Could not save ${what}: ${friendlyCloudError(error).message}` }));
   });
 }
 const submissions = (assignmentId: string) => collection(db, 'assignments', assignmentId, 'submissions');
 
 export async function createAssignment(input: Omit<Assignment, 'id' | 'ownerUid' | 'createdAt'>): Promise<string> {
   const ref = doc(assignments());
-  queueWrite(setDoc(ref, { ...input, ownerUid: uid(), createdAt: serverTimestamp() }));
+  queueWrite(setDoc(ref, { ...input, ownerUid: uid(), createdAt: serverTimestamp() }), 'the assignment');
   return ref.id;
 }
 
 export function watchAssignments(onChange: (items: Assignment[]) => void, onError: (e: Error) => void): Unsubscribe {
   const q = query(assignments(), where('ownerUid', '==', uid()), orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Assignment)), onError);
+  return resilientSnapshot((fail) => onSnapshot(q, (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Assignment)), fail), onError);
 }
 
 export async function getAssignment(id: string): Promise<Assignment | null> {
@@ -66,18 +68,43 @@ export async function getAssignment(id: string): Promise<Assignment | null> {
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as Assignment) : null;
 }
 
+const RESUBSCRIBE_DELAYS_MS = [1_000, 2_000, 4_000, 8_000];
+
+/**
+ * onSnapshot that survives transient denials: a listener can reach the server before a doc we just
+ * created there (writes are queued for offline use), and Firestore then ends the listener. Retry a few
+ * times with backoff before reporting the error.
+ */
+function resilientSnapshot(subscribe: (onError: (e: Error) => void) => Unsubscribe, onError: (e: Error) => void): Unsubscribe {
+  let stop: Unsubscribe = () => {};
+  let attempt = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let closed = false;
+  const start = () => {
+    stop = subscribe((error) => {
+      if (closed) return;
+      const delay = RESUBSCRIBE_DELAYS_MS[attempt++];
+      if (delay === undefined) { onError(friendlyCloudError(error)); return; }
+      timer = setTimeout(start, delay);
+    });
+  };
+  start();
+  return () => { closed = true; clearTimeout(timer); stop(); };
+}
+
 export function watchAssignment(id: string, onChange: (a: Assignment | null) => void, onError: (e: Error) => void): Unsubscribe {
-  return onSnapshot(doc(db, 'assignments', id), (snap) => onChange(snap.exists() ? ({ id: snap.id, ...snap.data() } as Assignment) : null), onError);
+  return resilientSnapshot((fail) => onSnapshot(doc(db, 'assignments', id),
+    (snap) => { if (snap.exists()) onChange({ id: snap.id, ...snap.data() } as Assignment); else if (!snap.metadata.fromCache || !navigator.onLine) onChange(null); }, fail), onError);
 }
 
 /** Replaces one question in the scheme (used when a teacher adds an accepted answer). */
 export async function updateQuestion(assignment: Assignment, updated: Question): Promise<void> {
   const questions = assignment.scheme.questions.map((q) => (q.q === updated.q ? updated : q));
-  queueWrite(updateDoc(doc(db, 'assignments', assignment.id), { 'scheme.questions': questions }));
+  queueWrite(updateDoc(doc(db, 'assignments', assignment.id), { 'scheme.questions': questions }), 'the edited question');
 }
 
 export function setAssignmentStatus(id: string, status: 'active' | 'finished'): void {
-  queueWrite(updateDoc(doc(db, 'assignments', id), { status }));
+  queueWrite(updateDoc(doc(db, 'assignments', id), { status }), 'the assignment status');
 }
 
 /** Permanently deletes an assignment, all its pupils' marks, and this device's crop images for it. */
@@ -93,22 +120,22 @@ export async function deleteAssignment(id: string): Promise<void> {
 }
 
 export async function saveScheme(assignmentId: string, scheme: MarkingScheme): Promise<void> {
-  queueWrite(updateDoc(doc(db, 'assignments', assignmentId), { scheme }));
+  queueWrite(updateDoc(doc(db, 'assignments', assignmentId), { scheme }), 'the marking scheme');
 }
 
 export async function createSubmission(assignmentId: string, pupil: string, marks: Mark[]): Promise<string> {
   const ref = doc(submissions(assignmentId));
-  queueWrite(setDoc(ref, { assignmentId, ownerUid: uid(), pupil, marks, createdAt: serverTimestamp() }));
+  queueWrite(setDoc(ref, { assignmentId, ownerUid: uid(), pupil, marks, createdAt: serverTimestamp() }), 'the pupil');
   return ref.id;
 }
 
 export async function saveMarks(assignmentId: string, submissionId: string, marks: Mark[]): Promise<void> {
-  queueWrite(updateDoc(doc(db, 'assignments', assignmentId, 'submissions', submissionId), { marks }));
+  queueWrite(updateDoc(doc(db, 'assignments', assignmentId, 'submissions', submissionId), { marks }), 'the marks');
 }
 
 export function watchSubmissions(assignmentId: string, onChange: (items: Submission[]) => void, onError: (e: Error) => void): Unsubscribe {
   const q = query(submissions(assignmentId), where('ownerUid', '==', uid()), orderBy('createdAt', 'asc'));
-  return onSnapshot(q, (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Submission)), onError);
+  return resilientSnapshot((fail) => onSnapshot(q, (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Submission)), fail), onError);
 }
 
 // ---- Device-only crop storage ----

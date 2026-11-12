@@ -3,6 +3,7 @@ import type { Question } from '../../domain/types';
 import { makeCatchUp, type CatchUpSheet } from '../../ai/remediation';
 import type { Assignment, Submission } from '../../data/store';
 import { useOnline } from '../../hooks/useStatus';
+import { friendlyCloudError } from '../../ai/errors';
 
 type Props = { assignment: Assignment; submissions: Submission[] };
 
@@ -38,7 +39,7 @@ export function InsightsTab({ assignment, submissions }: Props) {
     try {
       setSheet({ q: row.question.q, data: await makeCatchUp(row.question, row.wrong, assignment.scheme.subject, assignment.scheme.level) });
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not make the catch-up sheet');
+      setError(friendlyCloudError(e).message);
     } finally {
       setBusyQ(null);
     }

@@ -6,6 +6,7 @@ import { MarkTab } from './assignment/MarkTab';
 import { ReviewTab } from './assignment/ReviewTab';
 import { InsightsTab } from './assignment/InsightsTab';
 import { RegisterTab } from './assignment/RegisterTab';
+import { friendlyCloudError } from '../ai/errors';
 
 const TABS = [
   { to: 'print', label: 'Print sheets' },
@@ -32,7 +33,7 @@ export function AssignmentPage() {
   async function handleDelete() {
     if (!assignment) return;
     if (!window.confirm(`Delete "${assignment.title}" and every pupil's marks for it? This cannot be undone.`)) return;
-    try { await deleteAssignment(assignment.id); navigate('/'); } catch (e: unknown) { setError(e instanceof Error ? e.message : 'Could not delete'); }
+    try { await deleteAssignment(assignment.id); navigate('/'); } catch (e: unknown) { setError(friendlyCloudError(e).message); }
   }
 
   const toCheck = submissions.reduce((n, s) => n + s.marks.filter((m) => m.status === 'flagged' || m.status === 'provisional').length, 0);

@@ -9,6 +9,7 @@ import { SchemeEditor } from '../components/SchemeEditor';
 import { MarkRow } from '../components/MarkRow';
 import { useOnline } from '../hooks/useStatus';
 import { ALL_LEVELS } from '../domain/levels';
+import { friendlyCloudError } from '../ai/errors';
 
 const field = 'mt-1 w-full rounded-lg border border-[oklch(82%_0.02_85)] bg-white px-3 py-2';
 
@@ -46,7 +47,7 @@ export function QuickMark() {
       if (!scheme.questions.length) throw new Error('No questions could be found on that page. Make sure the questions are visible.');
       setStep({ kind: 'confirm', questions: scheme.questions });
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not work out the answers');
+      setError(friendlyCloudError(e).message);
       setStep({ kind: 'snap' });
     }
   }
@@ -63,7 +64,7 @@ export function QuickMark() {
       await saveMarks(assignmentId, submissionId, marks);
       setStep({ kind: 'done', assignmentId, marks });
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not mark the page');
+      setError(friendlyCloudError(e).message);
       setStep({ kind: 'confirm', questions });
     }
   }

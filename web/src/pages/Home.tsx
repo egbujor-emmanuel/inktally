@@ -6,6 +6,7 @@ import { createAssignment, watchAssignments, type Assignment } from '../data/sto
 import { SAMPLES } from '../data/samples';
 import { MarkGlyph } from '../components/MarkGlyph';
 import { useReducedMotion } from '../hooks/useStatus';
+import { friendlyCloudError } from '../ai/errors';
 
 const STEPS = [
   { n: '1', title: 'Questions in', body: 'Snap the question paper. The cloud drafts the marking scheme — it never sees a pupil.' },
@@ -36,7 +37,7 @@ export function Home() {
       const id = await createAssignment(sample);
       navigate(`/a/${id}/print`);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not create the sample');
+      setError(friendlyCloudError(e).message);
     } finally {
       setCreating(null);
     }

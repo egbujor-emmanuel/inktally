@@ -6,6 +6,7 @@ import { PAGE_KEY } from './MarkTab';
 import { parseNumericAnswer } from '../../marking/normalize';
 import { MarkRow } from '../../components/MarkRow';
 import { useOnline } from '../../hooks/useStatus';
+import { friendlyCloudError } from '../../ai/errors';
 
 type Props = { assignment: Assignment; submissions: Submission[] };
 
@@ -62,7 +63,7 @@ export function ReviewTab({ assignment, submissions }: Props) {
       if (page && s.marks.some(needsCheck)) {
         try {
           await saveMarks(assignment.id, s.id, await verifyPage(assignment.scheme.questions, page, s.marks));
-        } catch (e: unknown) { setError(e instanceof Error ? e.message : 'Cloud check failed'); }
+        } catch (e: unknown) { setError(friendlyCloudError(e).message); }
         done += s.marks.filter(needsCheck).length;
         setChecking({ done, total: targets.length });
         continue;
@@ -75,7 +76,7 @@ export function ReviewTab({ assignment, submissions }: Props) {
         if (!question || !crop) { next.push(m); continue; }
         try { next.push(await verifyMark(question, crop, m)); changed = true; } catch (e: unknown) {
           next.push(m);
-          setError(e instanceof Error ? e.message : 'Cloud check failed');
+          setError(friendlyCloudError(e).message);
         }
         done += 1;
         setChecking({ done, total: targets.length });
