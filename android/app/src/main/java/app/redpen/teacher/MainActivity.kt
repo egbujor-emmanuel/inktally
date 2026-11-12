@@ -104,14 +104,13 @@ private fun Header(nav: NavHostController, ready: Boolean) {
             Spacer(Modifier.weight(1f))
             if (ready) AccountChip()
         }
-        if (ready) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (ready) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             GhostButton("Quick mark", { nav.navigate("quick") { launchSingleTop = true } }, Modifier.weight(1f))
             PenButton("New assignment", { nav.navigate("new") { launchSingleTop = true } }, Modifier.weight(1f))
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) { StatusStrip() }
+        StatusStrip {
             if (ready) Text("School details", fontSize = 13.sp, fontWeight = FontWeight.Medium, textDecoration = TextDecoration.Underline,
-                color = RP.Ink, modifier = Modifier.padding(end = 16.dp).clickable { nav.navigate("school") { launchSingleTop = true } })
+                color = RP.Ink, modifier = Modifier.padding(horizontal = 6.dp).clickable { nav.navigate("school") { launchSingleTop = true } })
         }
         HorizontalDivider(color = RP.Border)
     }

@@ -68,7 +68,7 @@ fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
             TextButton(onClick = {
                 confirmDelete = false
                 scope.launch { runCatching { Repo.deleteAssignment(ctx, a.id) }.onSuccess { onDeleted() }.onFailure { error = Repo.friendly(it) } }
-            }) { Text("Delete", color = RP.Pen) }
+            }) { Text("Delete for good", color = RP.Pen) }
         },
         dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
     )
@@ -76,12 +76,12 @@ fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp)) {
             Text("${a.className} · ${a.scheme.subject}", fontFamily = RP.Hand, fontSize = 20.sp, color = RP.Pen)
-            Text(a.title, fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp)
-            Text("${submissions.size} student${if (submissions.size == 1) "" else "s"} marked${if (toCheck > 0) " · $toCheck to check" else ""}",
-                color = RP.InkSoft, fontSize = 14.sp)
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = { Repo.setStatus(a.id, if (a.isFinished) "active" else "finished") }) { Text(if (a.isFinished) "Reopen" else "Mark as finished") }
-                TextButton(onClick = { confirmDelete = true }) { Text("Delete", color = RP.Pen) }
+            Text(a.title, fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 28.sp)
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text("${submissions.size} student${if (submissions.size == 1) "" else "s"} marked${if (toCheck > 0) " · $toCheck to check" else ""}",
+                    color = RP.InkSoft, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                TextButton(onClick = { Repo.setStatus(a.id, if (a.isFinished) "active" else "finished") }) { Text(if (a.isFinished) "Reopen" else "Mark as finished", fontSize = 13.sp) }
+                TextButton(onClick = { confirmDelete = true }) { Text("Delete", color = RP.Pen, fontSize = 13.sp) }
             }
             ErrorText(error)
         }

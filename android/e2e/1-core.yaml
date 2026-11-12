@@ -53,9 +53,7 @@ appId: app.redpen.teacher
 - tapOn: "Reopen"
 - assertVisible: "Mark as finished"
 - tapOn: "Delete"
-- tapOn:
-    text: "Delete"
-    index: 1
+- tapOn: "Delete for good"
 - extendedWaitUntil:
     visible: "Quick mark"
     timeout: 20000

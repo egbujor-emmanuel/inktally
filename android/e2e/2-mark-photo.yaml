@@ -32,22 +32,30 @@ appId: app.redpen.teacher
 - takeScreenshot: 11-marked
 # The sample sheet's true score is 3/5 (B, D, B, Abuja, runned) — a wrong total fails the run.
 - assertVisible: "Total: 3/5"
-- scrollUntilVisible:
-    element: "Teacher’s comment"
-    timeout: 20000
+- repeat:
+    while:
+      notVisible: "Teacher’s comment"
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 88%
+          end: 50%, 62%
+          duration: 600
 - tapOn: "Teacher’s comment"
 - inputText: "Good work. Revise past tenses."
 - hideKeyboard
 - tapOn: "Save comment"
 - assertVisible: "Saved. It is on the marked copy.*"
-- scrollUntilVisible:
-    element: "Marked copy for Ada Obi"
-    timeout: 20000
+- repeat:
+    while:
+      notVisible: "Marked copy for Ada Obi"
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 88%
+          end: 50%, 62%
+          duration: 600
 - takeScreenshot: 12-marked-copy
-- scrollUntilVisible:
-    element: "Mark register"
-    direction: UP
-    timeout: 20000
 - tapOn: "Mark register"
 - assertVisible: "Ada Obi"
 - takeScreenshot: 13-register
