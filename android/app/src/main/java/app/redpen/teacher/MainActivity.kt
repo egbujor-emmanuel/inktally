@@ -53,6 +53,8 @@ class MainActivity : ComponentActivity() {
                             Spacer(Modifier.width(10.dp))
                             Text("RED", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = RP.Ink)
                             Text("PEN", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = RP.Pen)
+                            Spacer(Modifier.weight(1f))
+                            if (boot == null) app.redpen.teacher.ui.AccountChip()
                         }
                         StatusStrip()
                         val message = boot

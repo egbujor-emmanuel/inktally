@@ -8,6 +8,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -160,5 +161,34 @@ fun StatusStrip() {
             if (total > 0) Chip("${counts[ReadSource.ON_DEVICE]} on-device · ${counts[ReadSource.IN_CLOUD]} cloud", colour = RP.Ink)
         }
         if (device == DeviceModel.State.Downloadable) Button(onClick = { scope.launch { DeviceModel.download() } }) { Text("Download on-device AI") }
+    }
+}
+
+/** Guests are nudged to save their work; signed-in teachers see who they are. */
+@Composable
+fun AccountChip() {
+    val account by app.redpen.teacher.Account.state.collectAsState()
+    val activity = androidx.compose.ui.platform.LocalContext.current as android.app.Activity
+    val scope = rememberCoroutineScope()
+    var note by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    Column(horizontalAlignment = Alignment.End) {
+        if (account.isGuest) {
+            androidx.compose.material3.OutlinedButton(onClick = {
+                scope.launch {
+                    note = runCatching { app.redpen.teacher.Account.signInWithGoogle(activity) }.fold(
+                        onSuccess = { r -> when (r) {
+                            app.redpen.teacher.Account.Result.Linked -> "Saved to your Google account"
+                            app.redpen.teacher.Account.Result.Switched -> "Signed in to your account"
+                            app.redpen.teacher.Account.Result.Cancelled -> null
+                        } },
+                        onFailure = { "Sign-in failed: ${it.message}" },
+                    )
+                }
+            }) { Text("Save my work", fontSize = 13.sp) }
+        } else {
+            Text(account.label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = RP.Ink)
+            Text("Sign out", fontSize = 12.sp, color = RP.InkSoft, modifier = Modifier.clickable { scope.launch { app.redpen.teacher.Account.signOutToGuest() } })
+        }
+        note?.let { Text(it, fontSize = 11.sp, color = RP.InkSoft) }
     }
 }

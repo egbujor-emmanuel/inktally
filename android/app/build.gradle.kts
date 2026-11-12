@@ -6,6 +6,10 @@ plugins {
 
 // App Check debug token for sideloaded test builds. Injected from a CI secret; never committed.
 val appCheckDebugToken: String = System.getenv("REDPEN_APPCHECK_DEBUG_TOKEN") ?: ""
+// Permanent signing key (PKCS12) supplied by CI so every build can update the previous install
+// and Google sign-in (SHA fingerprints registered in Firebase) keeps working.
+val keystoreFile: String? = System.getenv("REDPEN_KEYSTORE_FILE")
+val keystorePassword: String = System.getenv("REDPEN_KEYSTORE_PASSWORD") ?: ""
 
 android {
     namespace = "app.redpen.teacher"
@@ -15,16 +19,30 @@ android {
         applicationId = "app.redpen.teacher"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.1.1"
+        versionCode = 3
+        versionName = "0.2.0"
+    }
+
+    signingConfigs {
+        if (keystoreFile != null) {
+            create("redpen") {
+                storeFile = file(keystoreFile)
+                storePassword = keystorePassword
+                keyAlias = "redpen"
+                keyPassword = keystorePassword
+                storeType = "pkcs12"
+            }
+        }
     }
 
     buildTypes {
         debug {
+            if (keystoreFile != null) signingConfig = signingConfigs.getByName("redpen")
             resValue("string", "firebase_app_check_debug_token", appCheckDebugToken)
         }
         release {
             isMinifyEnabled = false
+            if (keystoreFile != null) signingConfig = signingConfigs.getByName("redpen")
         }
     }
 
@@ -52,6 +70,9 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.exifinterface)
     implementation(libs.core.ktx)
+    implementation(libs.credentials)
+    implementation(libs.credentials.play.services)
+    implementation(libs.googleid)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)

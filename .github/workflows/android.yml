@@ -9,6 +9,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      REDPEN_KEYSTORE_PASSWORD: ${{ secrets.REDPEN_KEYSTORE_PASSWORD }}
     defaults:
       run:
         working-directory: android
@@ -30,6 +32,12 @@ jobs:
         run: |
           if [ -z "$GOOGLE_SERVICES_JSON_B64" ]; then echo "::error::Add the GOOGLE_SERVICES_JSON_B64 repository secret"; exit 1; fi
           echo "$GOOGLE_SERVICES_JSON_B64" | base64 -d > app/google-services.json
+
+      - name: Signing key (from repository secret, never committed)
+        env:
+          REDPEN_KEYSTORE_B64: ${{ secrets.REDPEN_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$REDPEN_KEYSTORE_B64" ]; then echo "$REDPEN_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/redpen.p12"; echo "REDPEN_KEYSTORE_FILE=$RUNNER_TEMP/redpen.p12" >> "$GITHUB_ENV"; fi
 
       - name: Unit tests (marking engine + scanner geometry)
         run: gradle --no-daemon testDebugUnitTest

@@ -54,7 +54,9 @@ fun Modifier.ruledPaper(): Modifier = drawBehind {
 
 @Composable
 fun HomeScreen(onOpen: (String) -> Unit) {
-    val assignments by remember { Repo.assignments() }.collectAsState(initial = null)
+    // Re-subscribe when the account changes (guest -> Google, or sign-out).
+    val account by app.redpen.teacher.Account.state.collectAsState()
+    val assignments by remember(account.uid) { Repo.assignments() }.collectAsState(initial = null)
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             Column(Modifier.fillMaxWidth().ruledPaper().padding(start = 52.dp, end = 16.dp, top = 28.dp, bottom = 32.dp)) {
