@@ -91,7 +91,7 @@ object DeviceModel {
                 is DownloadStatus.DownloadStarted -> State.Downloading(0)
                 is DownloadStatus.DownloadInProgress -> State.Downloading(s.totalBytesDownloaded)
                 is DownloadStatus.DownloadCompleted -> State.Ready
-                is DownloadStatus.DownloadFailed -> State.Failed(s.exception.message ?: "Download failed")
+                is DownloadStatus.DownloadFailed -> State.Failed("Download failed — check storage and Wi-Fi, then try again")
                 else -> _state.value
             }
         }

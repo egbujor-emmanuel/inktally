@@ -5,8 +5,8 @@ import { createAssignment } from '../data/store';
 import type { Question } from '../domain/types';
 import { SchemeEditor } from '../components/SchemeEditor';
 import { useOnline } from '../hooks/useStatus';
+import { ALL_LEVELS } from '../domain/levels';
 
-const LEVELS = ['Primary 4', 'Primary 5', 'Primary 6', 'JSS 1', 'JSS 2', 'JSS 3', 'SS 1', 'SS 2', 'SS 3'];
 const field = 'mt-1 w-full rounded-lg border border-[oklch(82%_0.02_85)] bg-white px-3 py-2';
 
 export function NewAssignment() {
@@ -15,7 +15,7 @@ export function NewAssignment() {
   const [title, setTitle] = useState('');
   const [className, setClassName] = useState('');
   const [subject, setSubject] = useState('Mathematics');
-  const [level, setLevel] = useState('Primary 6');
+  const [level, setLevel] = useState('Grade 6');
   const [paperImages, setPaperImages] = useState<File[]>([]);
   const [paperText, setPaperText] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -62,9 +62,10 @@ export function NewAssignment() {
         <label className="text-sm font-medium">Title<input className={field} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Fractions quiz" /></label>
         <label className="text-sm font-medium">Class<input className={field} value={className} onChange={(e) => setClassName(e.target.value)} placeholder="Primary 6A" /></label>
         <label className="text-sm font-medium">Subject<input className={field} value={subject} onChange={(e) => setSubject(e.target.value)} /></label>
-        <label className="text-sm font-medium">Level
-          <select className={field} value={level} onChange={(e) => setLevel(e.target.value)}>{LEVELS.map((l) => <option key={l}>{l}</option>)}</select>
-        </label>
+        <label className="text-sm font-medium">Class / level
+            <input className={field} value={level} onChange={(e) => setLevel(e.target.value)} list="redpen-levels" placeholder="e.g. Grade 5, Year 7, JSS 2" />
+            <datalist id="redpen-levels">{ALL_LEVELS.map((l) => <option key={l} value={l} />)}</datalist>
+          </label>
       </section>
 
       <section className="paper-card grid gap-4 p-6" aria-labelledby="paper">

@@ -5,6 +5,8 @@ import { markAnswer, markPage } from '../../marking/markAnswer';
 import { layoutSheet } from '../../scan/layout';
 import { scanSheet } from '../../scan/pipeline';
 import { MarkRow } from '../../components/MarkRow';
+import { MarkedCopy } from '../../components/MarkedCopy';
+import { markedPageCopy, markedSheetCopy } from '../../scan/markedCopy';
 
 type Props = { assignment: Assignment };
 
@@ -12,6 +14,8 @@ type SheetMode = 'sheet' | 'page';
 
 /** Device-only key for a whole exercise-book page photo (q = 0). */
 export const PAGE_KEY = 0;
+/** Device-only key for the generated marked copy of the pupil's work (q = -1). */
+export const MARKED_KEY = -1;
 
 type Phase =
   | { kind: 'idle' }
@@ -38,6 +42,16 @@ export function MarkTab({ assignment }: Props) {
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
   const [marks, setMarks] = useState<Mark[]>([]);
   const [crops, setCrops] = useState<Record<number, string>>({});
+  const [copy, setCopy] = useState<{ blob: Blob; pupil: string } | null>(null);
+
+  /** Builds the marked copy (best effort: marking already succeeded if this fails). */
+  async function makeCopy(submissionId: string, label: string, build: () => Promise<Blob>) {
+    try {
+      const blob = await build();
+      await saveCrop(submissionId, MARKED_KEY, blob);
+      setCopy({ blob, pupil: label });
+    } catch { /* the marks are saved; the copy can be regenerated later */ }
+  }
 
   async function markExercisePage(photo: File) {
     setCrops({ [PAGE_KEY]: URL.createObjectURL(photo) });
@@ -50,6 +64,7 @@ export function MarkTab({ assignment }: Props) {
     await saveMarks(assignment.id, submissionId, collected);
     setPhase({ kind: 'done', total: collected.reduce((a, m) => a + m.awarded, 0), max: collected.reduce((a, m) => a + m.max, 0) });
     setPupil('');
+    await makeCopy(submissionId, label, () => markedPageCopy(photo, collected, label));
   }
 
   async function handlePhoto(event: ChangeEvent<HTMLInputElement>) {
@@ -58,6 +73,7 @@ export function MarkTab({ assignment }: Props) {
     if (!photo) return;
     setMarks([]);
     setCrops({});
+    setCopy(null);
     setPhase({ kind: 'scanning' });
     try {
       if (mode === 'page') { await markExercisePage(photo); return; }
@@ -83,6 +99,7 @@ export function MarkTab({ assignment }: Props) {
       }
       setPhase({ kind: 'done', total: collected.reduce((a, m) => a + m.awarded, 0), max: collected.reduce((a, m) => a + m.max, 0) });
       setPupil('');
+      await makeCopy(submissionId, label, () => markedSheetCopy(photo, scan.sheetToPhoto, page.boxes, collected, label));
     } catch (e: unknown) {
       setPhase({ kind: 'error', message: e instanceof Error ? e.message : 'Something went wrong while marking' });
     }
@@ -123,6 +140,8 @@ export function MarkTab({ assignment }: Props) {
         {phase.kind === 'done' && <p className="font-display text-3xl font-bold">Total: <span className="font-hand text-5xl text-pen">{phase.total}/{phase.max}</span></p>}
         {phase.kind === 'error' && <p className="text-pen" role="alert">{phase.message}</p>}
       </div>
+
+      {copy && <MarkedCopy blob={copy.blob} pupil={copy.pupil} />}
 
       {marks.length > 0 && (
         <div className={crops[PAGE_KEY] ? 'grid gap-6 lg:grid-cols-[18rem_1fr] lg:items-start' : ''}>

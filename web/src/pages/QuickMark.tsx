@@ -8,8 +8,8 @@ import { PAGE_KEY } from './assignment/MarkTab';
 import { SchemeEditor } from '../components/SchemeEditor';
 import { MarkRow } from '../components/MarkRow';
 import { useOnline } from '../hooks/useStatus';
+import { ALL_LEVELS } from '../domain/levels';
 
-const LEVELS = ['Primary 4', 'Primary 5', 'Primary 6', 'JSS 1', 'JSS 2', 'JSS 3', 'SS 1', 'SS 2', 'SS 3'];
 const field = 'mt-1 w-full rounded-lg border border-[oklch(82%_0.02_85)] bg-white px-3 py-2';
 
 type Step =
@@ -26,7 +26,7 @@ type Step =
 export function QuickMark() {
   const isOnline = useOnline();
   const [subject, setSubject] = useState('Mathematics');
-  const [level, setLevel] = useState('Primary 6');
+  const [level, setLevel] = useState('Grade 6');
   const [pupil, setPupil] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -83,8 +83,9 @@ export function QuickMark() {
       {step.kind === 'snap' && (
         <section className="paper-card grid gap-4 p-6 sm:grid-cols-4 sm:items-end" aria-label="Photograph a page">
           <label className="text-sm font-medium">Subject<input className={field} value={subject} onChange={(e) => setSubject(e.target.value)} /></label>
-          <label className="text-sm font-medium">Level
-            <select className={field} value={level} onChange={(e) => setLevel(e.target.value)}>{LEVELS.map((l) => <option key={l}>{l}</option>)}</select>
+          <label className="text-sm font-medium">Class / level
+            <input className={field} value={level} onChange={(e) => setLevel(e.target.value)} list="redpen-levels" placeholder="e.g. Grade 5, Year 7, JSS 2" />
+            <datalist id="redpen-levels">{ALL_LEVELS.map((l) => <option key={l} value={l} />)}</datalist>
           </label>
           <label className="text-sm font-medium">Pupil<input className={field} value={pupil} onChange={(e) => setPupil(e.target.value)} placeholder="Name or number" /></label>
           <label className={`btn-pen cursor-pointer text-center ${isOnline ? '' : 'pointer-events-none opacity-50'}`}>

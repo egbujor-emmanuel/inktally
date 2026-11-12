@@ -22,7 +22,7 @@ export const REMOTE_DEFAULTS = {
     + 'Does the answer clearly state this specific marking point: "{point}"? '
     + 'Answer only for that exact point. Do not give credit for a statement listed as not acceptable: {reject}.',
   prompt_scheme_draft:
-    'You are an experienced Nigerian teacher writing a marking scheme for {level} {subject}. '
+    'You are an experienced teacher writing a marking scheme for {level} {subject}. Follow the conventions of the curriculum the paper comes from. '
     + 'From the question paper provided, list every question with: its number, the question text, the maximum marks, '
     + 'the type (objective = A-E option, numeric = a number, short = a word or phrase, points = a theory answer marked point by point), '
     + 'and the answer key (correct option letters, accepted numbers, accepted words, or marking points with common acceptable wordings). '
