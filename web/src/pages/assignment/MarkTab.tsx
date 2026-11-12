@@ -1,12 +1,17 @@
 import { useMemo, useState, type ChangeEvent } from 'react';
 import type { Mark } from '../../domain/types';
 import { createSubmission, saveCrop, saveMarks, type Assignment } from '../../data/store';
-import { markAnswer } from '../../marking/markAnswer';
+import { markAnswer, markPage } from '../../marking/markAnswer';
 import { layoutSheet } from '../../scan/layout';
 import { scanSheet } from '../../scan/pipeline';
 import { MarkRow } from '../../components/MarkRow';
 
 type Props = { assignment: Assignment };
+
+type SheetMode = 'sheet' | 'page';
+
+/** Device-only key for a whole exercise-book page photo (q = 0). */
+export const PAGE_KEY = 0;
 
 type Phase =
   | { kind: 'idle' }
@@ -29,9 +34,23 @@ export function MarkTab({ assignment }: Props) {
   const pages = useMemo(() => layoutSheet(assignment.scheme.questions), [assignment.scheme.questions]);
   const [pupil, setPupil] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
+  const [mode, setMode] = useState<SheetMode>('sheet');
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
   const [marks, setMarks] = useState<Mark[]>([]);
   const [crops, setCrops] = useState<Record<number, string>>({});
+
+  async function markExercisePage(photo: File) {
+    setCrops({ [PAGE_KEY]: URL.createObjectURL(photo) });
+    const label = pupil.trim() || `Pupil ${new Date().toLocaleTimeString()}`;
+    const submissionId = await createSubmission(assignment.id, label, []);
+    await saveCrop(submissionId, PAGE_KEY, photo);
+    setPhase({ kind: 'marking', done: 0, total: assignment.scheme.questions.length });
+    const collected = await markPage(assignment.scheme.questions, photo);
+    setMarks(collected);
+    await saveMarks(assignment.id, submissionId, collected);
+    setPhase({ kind: 'done', total: collected.reduce((a, m) => a + m.awarded, 0), max: collected.reduce((a, m) => a + m.max, 0) });
+    setPupil('');
+  }
 
   async function handlePhoto(event: ChangeEvent<HTMLInputElement>) {
     const photo = event.target.files?.[0];
@@ -41,6 +60,7 @@ export function MarkTab({ assignment }: Props) {
     setCrops({});
     setPhase({ kind: 'scanning' });
     try {
+      if (mode === 'page') { await markExercisePage(photo); return; }
       const page = pages[pageIndex];
       const scan = await scanSheet(photo, page.boxes);
       if (!scan.ok) { setPhase({ kind: 'error', message: scan.reason }); return; }
@@ -72,11 +92,19 @@ export function MarkTab({ assignment }: Props) {
 
   return (
     <div className="grid gap-8">
+      <div role="radiogroup" aria-label="What are you photographing?" className="flex flex-wrap gap-2">
+        {([['sheet', 'Printed REDPEN sheet', 'Names never leave the device · works fully offline'], ['page', 'Exercise book page', 'No printer needed · best when online']] as const).map(([value, title, note]) => (
+          <button key={value} type="button" role="radio" aria-checked={mode === value} onClick={() => setMode(value)}
+            className={`paper-card px-4 py-3 text-left transition ${mode === value ? 'ring-2 ring-pen' : 'opacity-75 hover:opacity-100'}`}>
+            <span className="block font-semibold">{title}</span><span className="text-xs text-ink-soft">{note}</span>
+          </button>
+        ))}
+      </div>
       <section className="paper-card grid gap-4 p-6 sm:grid-cols-[1fr_auto_auto] sm:items-end" aria-label="Mark a pupil">
         <label className="text-sm font-medium">Pupil name or number
           <input className={field} value={pupil} onChange={(e) => setPupil(e.target.value)} placeholder="e.g. Ada O. or 14" disabled={busy} />
         </label>
-        {pages.length > 1 && (
+        {mode === 'sheet' && pages.length > 1 && (
           <label className="text-sm font-medium">Sheet page
             <select className={field} value={pageIndex} onChange={(e) => setPageIndex(Number(e.target.value))} disabled={busy}>
               {pages.map((p, i) => <option key={p.page} value={i}>Page {p.page}</option>)}
@@ -84,13 +112,13 @@ export function MarkTab({ assignment }: Props) {
           </label>
         )}
         <label className={`btn-pen cursor-pointer text-center ${busy ? 'pointer-events-none opacity-50' : ''}`}>
-          {busy ? 'Marking…' : 'Photograph answer sheet'}
+          {busy ? 'Marking…' : mode === 'sheet' ? 'Photograph answer sheet' : 'Photograph exercise book page'}
           <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => void handlePhoto(e)} disabled={busy} />
         </label>
       </section>
 
       <div aria-live="polite">
-        {phase.kind === 'scanning' && <p className="font-hand text-3xl text-ink-soft">Finding the answer boxes…</p>}
+        {phase.kind === 'scanning' && <p className="font-hand text-3xl text-ink-soft">{mode === 'sheet' ? 'Finding the answer boxes…' : 'Reading the page…'}</p>}
         {phase.kind === 'marking' && <p className="font-hand text-3xl text-ink-soft">Marking {phase.done} of {phase.total}…</p>}
         {phase.kind === 'done' && <p className="font-display text-3xl font-bold">Total: <span className="font-hand text-5xl text-pen">{phase.total}/{phase.max}</span></p>}
         {phase.kind === 'error' && <p className="text-pen" role="alert">{phase.message}</p>}
@@ -98,7 +126,7 @@ export function MarkTab({ assignment }: Props) {
 
       {marks.length > 0 && (
         <ol className="grid gap-3">
-          {marks.map((m, i) => <MarkRow key={m.q} mark={m} cropUrl={crops[m.q]} index={i} />)}
+          {marks.map((m, i) => <MarkRow key={m.q} mark={m} cropUrl={crops[m.q] ?? crops[PAGE_KEY]} index={i} />)}
         </ol>
       )}
     </div>

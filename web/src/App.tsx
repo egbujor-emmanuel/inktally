@@ -53,8 +53,9 @@ export function App() {
       <header className="sticky top-0 z-20 border-b border-[oklch(88%_0.02_85)] bg-paper/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
-            <Link to="/" className="font-display text-2xl font-bold tracking-tight">
-              RED<span className="text-pen">PEN</span>
+            <Link to="/" className="flex items-center gap-2.5 font-display text-2xl font-bold tracking-tight" aria-label="REDPEN home">
+              <img src="/logo-mark.svg" alt="" width={36} height={36} className="size-9" />
+              <span>RED<span className="text-pen">PEN</span></span>
             </Link>
             <Link to="/new" className="btn-pen text-sm">New assignment</Link>
           </div>

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Mark, Question } from '../../domain/types';
 import { loadCrop, saveMarks, updateQuestion, type Assignment, type Submission } from '../../data/store';
-import { verifyMark } from '../../marking/markAnswer';
+import { verifyMark, verifyPage } from '../../marking/markAnswer';
+import { PAGE_KEY } from './MarkTab';
 import { parseNumericAnswer } from '../../marking/normalize';
 import { MarkRow } from '../../components/MarkRow';
 import { useOnline } from '../../hooks/useStatus';
@@ -40,7 +41,7 @@ export function ReviewTab({ assignment, submissions }: Props) {
     void (async () => {
       const entries: [string, string][] = [];
       for (const { s, m } of pending) {
-        const blob = await loadCrop(s.id, m.q);
+        const blob = (await loadCrop(s.id, m.q)) ?? (await loadCrop(s.id, PAGE_KEY));
         if (blob) { const url = URL.createObjectURL(blob); urls.push(url); entries.push([`${s.id}:${m.q}`, url]); }
       }
       if (alive) setCropUrls(Object.fromEntries(entries));
@@ -57,6 +58,15 @@ export function ReviewTab({ assignment, submissions }: Props) {
     setChecking({ done: 0, total: targets.length });
     let done = 0;
     for (const s of submissions) {
+      const page = await loadCrop(s.id, PAGE_KEY);
+      if (page && s.marks.some(needsCheck)) {
+        try {
+          await saveMarks(assignment.id, s.id, await verifyPage(assignment.scheme.questions, page, s.marks));
+        } catch (e: unknown) { setError(e instanceof Error ? e.message : 'Cloud check failed'); }
+        done += s.marks.filter(needsCheck).length;
+        setChecking({ done, total: targets.length });
+        continue;
+      }
       let changed = false;
       const next: Mark[] = [];
       for (const m of s.marks) {
