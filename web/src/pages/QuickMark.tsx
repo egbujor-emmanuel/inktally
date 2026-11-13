@@ -8,6 +8,7 @@ import { SchemeEditor, isComplete } from '../components/SchemeEditor';
 import { MarkRow } from '../components/MarkRow';
 import { useOnline } from '../hooks/useStatus';
 import { friendlyCloudError } from '../ai/errors';
+import { ensureUser } from '../firebase/app';
 import { Busy, Card, ErrorText, Field, GhostButton, LevelField, PageTitle, PenButton, PhotoButtons } from '../ui/Kit';
 
 type Step =
@@ -53,6 +54,7 @@ export function QuickMark() {
     if (!usable.length) { setError('Add at least one question with an answer.'); return; }
     setStep({ kind: 'marking' });
     try {
+      await ensureUser(); // the form shows before sign-in finishes; saving waits for it
       const today = new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
       const assignmentId = await createAssignment({ title: `Quick mark — ${subject}, ${today}`, className: level, scheme: { subject, level, questions: usable } });
       const submissionId = await createSubmission(assignmentId, pupil.trim() || 'Student', []);

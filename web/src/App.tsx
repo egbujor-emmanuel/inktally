@@ -29,6 +29,10 @@ function friendlyStartError(e: unknown): string {
   return e instanceof Error ? e.message : 'Could not start';
 }
 
+function WhenReady({ ready, children }: { ready: boolean; children: React.ReactNode }) {
+  return ready ? <>{children}</> : <p className="py-20 text-center font-hand text-3xl text-ink-soft">Getting your desk ready…</p>;
+}
+
 export function App() {
   const [boot, setBoot] = useState<Boot>({ state: 'loading' });
   const lenisRef = useRef<LenisRef>(null);
@@ -36,7 +40,11 @@ export function App() {
 
   useEffect(() => {
     let alive = true;
-    Promise.all([ensureUser(), refreshRemoteConfig(), refreshDeviceCapability()])
+    // Only sign-in blocks the first screen. Remote Config (built-in defaults until it arrives) and the
+    // on-device AI check run in the background, so the page paints seconds sooner on slow connections.
+    void refreshRemoteConfig();
+    void refreshDeviceCapability();
+    ensureUser()
       .then(() => { if (alive) setBoot({ state: 'ready' }); })
       .catch((e: unknown) => { if (alive) setBoot({ state: 'error', message: friendlyStartError(e) }); });
     return () => { alive = false; };
@@ -91,18 +99,18 @@ export function App() {
             <button type="button" className="underline" onClick={() => setWriteError(null)}>Dismiss</button>
           </p>
         )}
-        {boot.state === 'loading' && <p className="py-20 text-center font-hand text-3xl text-ink-soft">Getting your desk ready…</p>}
         {boot.state === 'error' && (
           <p className="py-20 text-center text-pen" role="alert">REDPEN could not start: {boot.message}</p>
         )}
-        {boot.state === 'ready' && (
+        {/* The home page paints immediately; screens that read or save data wait for sign-in. */}
+        {boot.state !== 'error' && (
           <Suspense fallback={<p className="py-20 text-center font-hand text-3xl text-ink-soft">Opening…</p>}>
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Home signedIn={boot.state === 'ready'} />} />
               <Route path="/new" element={<NewAssignment />} />
               <Route path="/quick" element={<QuickMark />} />
-              <Route path="/school" element={<School />} />
-              <Route path="/a/:id/*" element={<AssignmentPage />} />
+              <Route path="/school" element={<WhenReady ready={boot.state === 'ready'}><School /></WhenReady>} />
+              <Route path="/a/:id/*" element={<WhenReady ready={boot.state === 'ready'}><AssignmentPage /></WhenReady>} />
             </Routes>
           </Suspense>
         )}

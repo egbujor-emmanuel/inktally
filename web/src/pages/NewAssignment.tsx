@@ -6,6 +6,7 @@ import type { Question } from '../domain/types';
 import { SchemeEditor, isComplete } from '../components/SchemeEditor';
 import { useOnline } from '../hooks/useStatus';
 import { friendlyCloudError } from '../ai/errors';
+import { ensureUser } from '../firebase/app';
 import { Busy, Card, ErrorText, Field, GhostButton, LevelField, PageTitle, PenButton } from '../ui/Kit';
 
 const MAX_PDF_BYTES = 15_000_000;
@@ -93,6 +94,7 @@ export function NewAssignment() {
     const usable = questions.filter(isComplete);
     if (!usable.length) { setError('Add at least one question with an answer.'); return; }
     try {
+      await ensureUser(); // the form shows before sign-in finishes; saving waits for it
       const id = await createAssignment({ title: title || `${subject} — ${level}`, className: className || level, scheme: { subject, level, questions: usable } });
       navigate(`/a/${id}/print`);
     } catch (e: unknown) {

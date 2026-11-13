@@ -33,7 +33,7 @@ function PaperCard({ onClick, children, tick = false, disabled = false }: { onCl
   );
 }
 
-export function Home() {
+export function Home({ signedIn = true }: { signedIn?: boolean }) {
   const [items, setItems] = useState<Assignment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export function Home() {
   const hero = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
 
-  useEffect(() => watchAssignments(setItems, (e) => setError(e.message)), []);
+  useEffect(() => (signedIn ? watchAssignments(setItems, (e) => setError(e.message)) : undefined), [signedIn]);
 
   useGSAP(() => {
     if (reduced) return;
@@ -85,7 +85,7 @@ export function Home() {
         </div>
       </section>
 
-      <div className="hscroll gap-3 px-4" aria-label="How REDPEN works">
+      <div className="hscroll gap-3 px-4" role="region" aria-label="How REDPEN works" tabIndex={0}>
         {STEPS.map((s) => (
           <article key={s.n} className="w-[250px] flex-none rounded-[14px] border border-border bg-paper p-[18px] shadow-[0_3px_8px_rgb(31_42_68/0.12)]">
             <span className="font-hand text-[40px] leading-none text-pen">{s.n}</span>
@@ -117,7 +117,7 @@ export function Home() {
       <ErrorText message={error} />
       <div id="samples" className="grid gap-[14px]">
         {SAMPLES.map((s, i) => (
-          <PaperCard key={s.title} onClick={() => void handleSample(i)} disabled={creating !== null}>
+          <PaperCard key={s.title} onClick={() => void handleSample(i)} disabled={creating !== null || !signedIn}>
             <span className="font-display text-lg font-semibold">{s.title}</span>
             <span className="text-sm text-ink-soft">{s.className} · {s.scheme.subject}</span>
             <span className="mt-1 font-hand text-[22px] text-pen">{creating === s.title ? 'Opening…' : 'Use this →'}</span>
