@@ -109,11 +109,11 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
                 }
                 status = if (sheetMode) "Finding the answer boxes…" else "Reading the page…"
                 val sid = Repo.createSubmission(a.id, label)
-                when (val outcome = MarkSubmission.mark(ctx, a, mode, photo, page, sid, label) { p ->
+                when (val outcome = MarkSubmission.mark(ctx, a, mode, photo, page, sid, label, onProgress = { p ->
                     if (p.crops.isNotEmpty()) crops = p.crops
                     marks = p.marks
                     status = if (p.marks.size < p.total) "Marking ${p.marks.size + 1} of ${p.total}…" else status
-                }) {
+                })) {
                     is MarkSubmission.Outcome.Failed -> { Repo.deleteSubmission(ctx, a.id, sid); status = outcome.reason }
                     is MarkSubmission.Outcome.Ok -> {
                         marks = outcome.marks
