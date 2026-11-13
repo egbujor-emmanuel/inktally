@@ -58,7 +58,7 @@ jobs:
       - name: Build debug APK
         env:
           REDPEN_APPCHECK_DEBUG_TOKEN: ${{ secrets.REDPEN_APPCHECK_DEBUG_TOKEN }}
-        run: gradle --no-daemon assembleDebug
+        run: gradle --no-daemon assembleDebug assembleDebugAndroidTest
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -66,4 +66,5 @@ jobs:
           name: redpen-android
           path: |
             android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/apk/androidTest/debug/*.apk
             android/app/build/reports/tests/

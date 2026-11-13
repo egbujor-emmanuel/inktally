@@ -21,6 +21,7 @@ android {
         targetSdk = 36
         versionCode = 8
         versionName = "0.5.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -85,4 +86,7 @@ dependencies {
     implementation(libs.coroutines.play.services)
 
     testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.junit)
 }
