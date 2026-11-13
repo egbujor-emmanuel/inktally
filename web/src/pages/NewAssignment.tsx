@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { draftScheme } from '../ai/scheme';
 import { createAssignment } from '../data/store';
@@ -19,6 +19,8 @@ function SourceInputs({ name, photos, setPhotos, pdf, setPdf, text, setText, tex
   const take = useRef<HTMLInputElement>(null);
   const gallery = useRef<HTMLInputElement>(null);
   const pdfInput = useRef<HTMLInputElement>(null);
+  const urls = useMemo(() => photos.map((f) => URL.createObjectURL(f)), [photos]);
+  useEffect(() => () => urls.forEach((u) => URL.revokeObjectURL(u)), [urls]);
   const addPhotos = (e: ChangeEvent<HTMLInputElement>) => { setPhotos([...photos, ...Array.from(e.target.files ?? [])]); e.target.value = ''; };
   const addPdf = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; e.target.value = '';
@@ -39,7 +41,7 @@ function SourceInputs({ name, photos, setPhotos, pdf, setPdf, text, setText, tex
         <div className="hscroll gap-2">
           {photos.map((f, i) => (
             <figure key={`${f.name}-${i}`} className="grid flex-none justify-items-center">
-              <img src={URL.createObjectURL(f)} alt={`${name} page ${i + 1}`} className="h-[120px] w-[90px] object-cover" />
+              <img src={urls[i]} alt={`${name} page ${i + 1}`} className="h-[120px] w-[90px] object-cover" />
               <button type="button" className="btn-text !text-xs" onClick={() => setPhotos(photos.filter((_, j) => j !== i))}>Remove</button>
             </figure>
           ))}

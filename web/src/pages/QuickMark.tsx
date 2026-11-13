@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { draftScheme } from '../ai/scheme';
 import { PAGE_KEY, createAssignment, createSubmission, saveCrop, saveMarks } from '../data/store';
@@ -32,6 +32,7 @@ export function QuickMark() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [step, setStep] = useState<Step>({ kind: 'snap' });
   const [error, setError] = useState<string | null>(null);
+  useEffect(() => () => { if (photoUrl) URL.revokeObjectURL(photoUrl); }, [photoUrl]);
 
   async function handlePhoto([file]: File[]) {
     setPhoto(file);

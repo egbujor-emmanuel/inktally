@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Mark } from '../../domain/types';
 import { MARKED_KEY, PAGE_KEY, PHOTO_KEY, createSubmission, deleteSubmission, newSubmissionId, saveCrop, type Assignment, type Submission } from '../../data/store';
 import { layoutSheet } from '../../scan/layout';
@@ -34,6 +34,8 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
   const [marks, setMarks] = useState<Mark[]>([]);
   const [crops, setCrops] = useState<Record<number, string>>({});
   const [copy, setCopy] = useState<{ blob: Blob; pupil: string; submissionId: string } | null>(null);
+  const pageUrl = crops[PAGE_KEY];
+  useEffect(() => () => { if (pageUrl) URL.revokeObjectURL(pageUrl); }, [pageUrl]);
 
   async function handlePhoto([photo]: File[]) {
     if (!photo) return;

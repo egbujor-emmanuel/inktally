@@ -52,9 +52,14 @@ object Connectivity {
 
     fun start(ctx: Context) {
         val cm = ctx.getSystemService(ConnectivityManager::class.java)
-        _online.value = cm.getNetworkCapabilities(cm.activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        _online.value = cm.getNetworkCapabilities(cm.activeNetwork)?.let {
+            it.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) && it.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        } == true
         cm.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) { _online.value = true }
+            override fun onAvailable(network: Network) { _online.value = cm.getNetworkCapabilities(network)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true }
+            override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
+                _online.value = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            }
             override fun onLost(network: Network) { _online.value = false }
         })
     }

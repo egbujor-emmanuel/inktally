@@ -18,10 +18,11 @@ function canvas(width: number, height: number): [OffscreenCanvas, OffscreenCanva
 
 async function pixelsOf(photo: Blob): Promise<ImageData> {
   const bitmap = await createImageBitmap(photo, { imageOrientation: 'from-image' });
-  const [, ctx] = canvas(bitmap.width, bitmap.height);
-  ctx.drawImage(bitmap, 0, 0);
-  bitmap.close();
-  return ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+  try {
+    const [, ctx] = canvas(bitmap.width, bitmap.height);
+    ctx.drawImage(bitmap, 0, 0);
+    return ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+  } finally { bitmap.close(); }
 }
 
 /** Straightens the whole A4 sheet out of the photo (bilinear sampling through the homography). */
