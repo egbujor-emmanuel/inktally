@@ -54,6 +54,14 @@ export function ReviewTab({ assignment, submissions }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pending.map(({ s, m }) => `${s.id}:${m.q}:${m.status}`).join('|')]);
 
+  // Latest marks from Firestore, so a long cloud check never overwrites a score the teacher set meanwhile.
+  const latestSubs = useRef(submissions);
+  latestSubs.current = submissions;
+  const keepReviewed = (submissionId: string, next: Mark[]): Mark[] => {
+    const now = latestSubs.current.find((x) => x.id === submissionId)?.marks ?? [];
+    return next.map((m) => { const cur = now.find((x) => x.q === m.q); return cur?.status === 'reviewed' ? cur : m; });
+  };
+
   const runCloudCheck = useCallback(async () => {
     const targets = submissions.flatMap((s) => s.marks.filter(needsCheck).map((m) => ({ s, m })));
     if (!targets.length) return;
@@ -64,7 +72,7 @@ export function ReviewTab({ assignment, submissions }: Props) {
       const page = await loadCrop(s.id, PAGE_KEY);
       if (page && s.marks.some(needsCheck)) {
         try {
-          await saveMarks(assignment.id, s.id, await verifyPage(assignment.scheme.questions, page, s.marks));
+          await saveMarks(assignment.id, s.id, keepReviewed(s.id, await verifyPage(assignment.scheme.questions, page, s.marks)));
         } catch (e: unknown) { setError(friendlyCloudError(e).message); }
         done += s.marks.filter(needsCheck).length;
         setChecking({ done, total: targets.length });
@@ -79,7 +87,7 @@ export function ReviewTab({ assignment, submissions }: Props) {
           if (question && blob) crops.push({ q: m.q, type: question.type, blob });
         }
         try {
-          await saveMarks(assignment.id, s.id, await verifyMarksBatch(assignment.scheme.questions, crops, s.marks));
+          await saveMarks(assignment.id, s.id, keepReviewed(s.id, await verifyMarksBatch(assignment.scheme.questions, crops, s.marks)));
           done += crops.length;
           setChecking({ done, total: targets.length });
           continue;
@@ -98,7 +106,7 @@ export function ReviewTab({ assignment, submissions }: Props) {
         done += 1;
         setChecking({ done, total: targets.length });
       }
-      if (changed) await saveMarks(assignment.id, s.id, next);
+      if (changed) await saveMarks(assignment.id, s.id, keepReviewed(s.id, next));
     }
     setChecking(null);
   }, [assignment, submissions]);

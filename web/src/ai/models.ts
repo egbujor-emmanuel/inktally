@@ -16,7 +16,9 @@ export function config(key: RemoteKey): string {
 // ---- Dynamic routing across cloud models (quota-aware) ----
 const QUOTA = /quota|RESOURCE_EXHAUSTED|\b429\b|rate.?limit/i;
 const UNSUPPORTED_THINKING = /thinking level .* not supported|thinking.*not supported/i;
-const exhausted = new Set<string>();
+/** Model -> time (ms) until which it is skipped. Rate limits expire in a minute; daily quotas in hours. */
+const exhausted = new Map<string, number>();
+const isExhausted = (m: string) => (exhausted.get(m) ?? 0) > Date.now();
 const noThinking = new Set<string>();
 const errorText = (e: unknown) => (e instanceof Error ? `${e.name} ${e.message}` : String(e));
 let lastModel = '';
@@ -24,14 +26,15 @@ let lastModel = '';
 /** Primary cloud model, then the Remote Config fallbacks, skipping any whose quota is used up this session. */
 export function activeCloudModel(primary = config('cloud_read_model')): string {
   const chain = [primary, ...config('cloud_fallback_models').split(',').map((m) => m.trim()).filter(Boolean)];
-  return chain.find((m) => !exhausted.has(m)) ?? primary;
+  return chain.find((m) => !isExhausted(m)) ?? primary;
 }
 
 setModelErrorHandler((error) => {
   const text = errorText(error);
   if (UNSUPPORTED_THINKING.test(text) && lastModel && !noThinking.has(lastModel)) { noThinking.add(lastModel); return true; }
-  if (QUOTA.test(text) && lastModel && !exhausted.has(lastModel)) {
-    exhausted.add(lastModel);
+  if (QUOTA.test(text) && lastModel && !isExhausted(lastModel)) {
+    const daily = /per ?day|PerDay|daily/i.test(text);
+    exhausted.set(lastModel, Date.now() + (daily ? 12 * 3_600_000 : 60_000));
     return activeCloudModel() !== lastModel; // only retry if there is somewhere else to go
   }
   return false;

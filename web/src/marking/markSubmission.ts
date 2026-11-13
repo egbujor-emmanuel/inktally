@@ -47,7 +47,7 @@ async function buildCopy(submissionId: string, build: () => Promise<Blob>): Prom
 /** Printed REDPEN sheet: find the corner squares, cut out each answer box, read + mark each one. */
 export async function markSheetSubmission(
   assignment: Assignment, photo: Blob, pageIndex: number, submissionId: string, label: string,
-  onProgress?: (p: MarkProgress) => void,
+  onProgress?: (p: MarkProgress) => void, failFast = false,
 ): Promise<MarkOutcome> {
   const page = layoutSheet(assignment.scheme.questions)[pageIndex];
   if (!page) return { ok: false, reason: `This assignment has no sheet page ${pageIndex + 1}.` };
@@ -66,13 +66,13 @@ export async function markSheetSubmission(
       await saveMarks(assignment.id, submissionId, marks);
       const copy = await buildCopy(submissionId, () => markedSheetCopy(photo, scan.sheetToPhoto, page.boxes, marks, label));
       return { ok: true, marks, copy };
-    } catch { /* fall through to one-by-one reading */ }
+    } catch (e: unknown) { if (failFast) throw e; /* otherwise fall through to one-by-one reading */ }
   }
   for (const crop of scan.crops) {
     const question = assignment.scheme.questions.find((q) => q.q === crop.q);
     if (!question) continue;
     let mark: Mark;
-    try { mark = await markAnswer(question, crop.blob); } catch (e: unknown) { mark = failedMark(question.q, question.max, e); }
+    try { mark = await markAnswer(question, crop.blob); } catch (e: unknown) { if (failFast) throw e; mark = failedMark(question.q, question.max, e); }
     collected.push(mark);
     onProgress?.({ marks: [...collected], total: scan.crops.length, crops });
     await saveMarks(assignment.id, submissionId, collected);
@@ -95,11 +95,15 @@ export async function markPageSubmission(
   return { ok: true, marks: collected, copy };
 }
 
+/**
+ * failFast (used by the offline queue): a read error throws instead of becoming a flagged "could not read" mark,
+ * so a dropped connection leaves the student queued for a later retry rather than finishing them with failed marks.
+ */
 export function markSubmission(
   assignment: Assignment, mode: CaptureMode, photo: Blob, pageIndex: number, submissionId: string, label: string,
-  onProgress?: (p: MarkProgress) => void,
+  onProgress?: (p: MarkProgress) => void, failFast = false,
 ): Promise<MarkOutcome> {
   return mode === 'page'
     ? markPageSubmission(assignment, photo, submissionId, label, onProgress)
-    : markSheetSubmission(assignment, photo, pageIndex, submissionId, label, onProgress);
+    : markSheetSubmission(assignment, photo, pageIndex, submissionId, label, onProgress, failFast);
 }

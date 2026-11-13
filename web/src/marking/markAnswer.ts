@@ -41,6 +41,8 @@ export async function markAnswersBatch(questions: Question[], crops: CropToRead[
   for (const crop of crops) {
     const question = questions.find((q) => q.q === crop.q);
     if (!question) continue;
+    // The model left this answer out: fall back to one-by-one reading rather than scoring an unread answer.
+    if (!reads.has(crop.q)) throw new Error(`The cloud did not return answer ${crop.q}`);
     const read = reads.get(crop.q) ?? '';
     if (question.type === 'points') {
       const { found, rejected } = await checkPointsBatch(read, question.points, question.reject);

@@ -3,7 +3,7 @@
 import { Schema } from 'firebase/ai';
 import { z } from 'zod';
 import type { ReadSource } from '../domain/types';
-import { fillTemplate } from './config';
+import { asPromptData, fillTemplate } from './config';
 import { config, judgeModel, type ReadMode } from './models';
 import { withRetry } from './retry';
 import { recordInference } from './telemetry';
@@ -33,6 +33,7 @@ export async function checkPoints(answer: string, points: readonly string[], rej
   const found: string[] = [];
   const rejected: string[] = [];
   const sources: ReadSource[] = [];
+  answer = asPromptData(answer);
   const rejectList = reject.length ? reject.map((r) => `"${r}"`).join(', ') : 'none';
   for (const point of points) {
     if (await askPresent(fillTemplate(config('prompt_point_check'), { answer, point, reject: rejectList }), mode, sources)) found.push(point);

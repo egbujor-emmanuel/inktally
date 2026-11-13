@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Mark } from '../../domain/types';
-import { MARKED_KEY, PAGE_KEY, PHOTO_KEY, createSubmission, saveCrop, type Assignment, type Submission } from '../../data/store';
+import { MARKED_KEY, PAGE_KEY, PHOTO_KEY, createSubmission, deleteSubmission, newSubmissionId, saveCrop, type Assignment, type Submission } from '../../data/store';
 import { layoutSheet } from '../../scan/layout';
 import { MarkRow } from '../../components/MarkRow';
 import { MarkedCopy } from '../../components/MarkedCopy';
@@ -44,8 +44,9 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
     try {
       // No connection and no on-device AI: keep the photo on this device and mark it when the connection is back.
       if (!navigator.onLine && !canReadOffline()) {
-        const submissionId = await createSubmission(assignment.id, label, [], { mode, page: pageIndex });
-        await saveCrop(submissionId, PHOTO_KEY, photo);
+        const submissionId = newSubmissionId(assignment.id);
+        await saveCrop(submissionId, PHOTO_KEY, photo); // photo first, so the queue never sees a record without it
+        await createSubmission(assignment.id, label, [], { mode, page: pageIndex }, submissionId);
         setPupil('');
         setPhase({ kind: 'queued', pupil: label });
         return;
@@ -57,7 +58,7 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
         setMarks(p.marks);
         setPhase({ kind: 'marking', done: p.marks.length, total: p.total });
       });
-      if (!outcome.ok) { setPhase({ kind: 'error', message: outcome.reason }); return; }
+      if (!outcome.ok) { await deleteSubmission(assignment.id, submissionId); setPhase({ kind: 'error', message: outcome.reason }); return; }
       setMarks(outcome.marks);
       setPhase({ kind: 'done', total: outcome.marks.reduce((a, m) => a + m.awarded, 0), max: outcome.marks.reduce((a, m) => a + m.max, 0) });
       setPupil('');

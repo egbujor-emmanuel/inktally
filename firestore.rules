@@ -1,32 +1,56 @@
 rules_version = '2';
 // Each teacher can only read and write their own assignments, marks and telemetry.
+// Every write is also shape- and size-checked so a scripted client cannot store junk or huge documents.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function owns(data) { return signedIn() && data.ownerUid == request.auth.uid; }
+    function shortText(v, n) { return v is string && v.size() <= n; }
+
+    // Assignment: title, class, marking scheme (<= 100 questions), status.
+    function validAssignment(d) {
+      return d.keys().hasOnly(['title', 'className', 'scheme', 'status', 'ownerUid', 'createdAt'])
+        && shortText(d.title, 200) && shortText(d.className, 120)
+        && d.scheme is map && d.scheme.questions is list && d.scheme.questions.size() <= 100
+        && (!('status' in d) || d.status in ['active', 'finished']);
+    }
+
+    // Student record: name, marks (<= 100), optional teacher comment and offline-queue marker.
+    function validSubmission(d) {
+      return d.keys().hasOnly(['assignmentId', 'ownerUid', 'pupil', 'marks', 'comment', 'queued', 'createdAt'])
+        && shortText(d.pupil, 120) && d.marks is list && d.marks.size() <= 100
+        && (!('comment' in d) || shortText(d.comment, 1000))
+        && (!('queued' in d) || (d.queued is map && d.queued.keys().hasOnly(['mode', 'page'])));
+    }
 
     match /assignments/{assignmentId} {
       // resource == null: a listener can attach before a just-created (still queued) doc reaches the
       // server. Reading a doc that does not exist reveals nothing, so allow it instead of killing the listener.
       allow read: if resource == null || owns(resource.data);
-      allow create: if owns(request.resource.data)
-        && request.resource.data.keys().hasAll(['title', 'className', 'scheme', 'ownerUid']);
-      allow update: if owns(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow create: if owns(request.resource.data) && validAssignment(request.resource.data);
+      allow update: if owns(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid
+        && validAssignment(request.resource.data);
       allow delete: if owns(resource.data);
 
       match /submissions/{submissionId} {
         allow read: if resource == null || owns(resource.data);
-        allow create: if owns(request.resource.data)
+        allow create: if owns(request.resource.data) && validSubmission(request.resource.data)
+          && request.resource.data.assignmentId == assignmentId
           && get(/databases/$(database)/documents/assignments/$(assignmentId)).data.ownerUid == request.auth.uid;
         allow update: if owns(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid
-          && (!('comment' in request.resource.data) || (request.resource.data.comment is string && request.resource.data.comment.size() <= 1000))
-          && request.resource.data.pupil is string && request.resource.data.pupil.size() <= 120;
+          && validSubmission(request.resource.data);
         allow delete: if owns(resource.data);
       }
     }
 
+    // One counter document per day: where inference ran (on-device / cloud) and how long it took.
     match /users/{userId}/telemetry/{day} {
-      allow read, write: if signedIn() && request.auth.uid == userId;
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if signedIn() && request.auth.uid == userId
+        && day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.keys().hasOnly([
+          'on_device_read', 'on_device_verify', 'on_device_points', 'on_device_author', 'on_device_ms',
+          'in_cloud_read', 'in_cloud_verify', 'in_cloud_points', 'in_cloud_author', 'in_cloud_ms', 'updatedAt']);
     }
 
     // Institution details shown on sheets, marked copies and the register.
@@ -34,9 +58,9 @@ service cloud.firestore {
       allow read: if signedIn() && request.auth.uid == userId;
       allow write: if signedIn() && request.auth.uid == userId
         && request.resource.data.keys().hasOnly(['institution', 'details', 'teacher', 'updatedAt'])
-        && request.resource.data.institution is string && request.resource.data.institution.size() <= 120
-        && request.resource.data.details is string && request.resource.data.details.size() <= 240
-        && request.resource.data.teacher is string && request.resource.data.teacher.size() <= 80;
+        && shortText(request.resource.data.institution, 120)
+        && shortText(request.resource.data.details, 240)
+        && shortText(request.resource.data.teacher, 80);
     }
   }
 }

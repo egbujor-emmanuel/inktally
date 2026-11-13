@@ -15,7 +15,7 @@ const HINTS: Record<QuestionType, string> = {
   objective: 'It is a multiple-choice answer: a single letter A, B, C, D or E.',
   numeric: 'It is the answer part of a sum, for example "= 42" or "₦27,000".',
   short: 'It is a one-word or short-phrase answer in English.',
-  points: "It is a pupil's short written answer in English (one or more sentences).",
+  points: "It is a student's short written answer in English (one or more sentences).",
 };
 
 export interface ReadResult { text: string; source: ReadSource; ms: number }

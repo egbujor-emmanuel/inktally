@@ -123,19 +123,31 @@ export async function deleteAssignment(id: string): Promise<void> {
   for (const s of subs.docs) {
     const keys = (await db2.getAllKeys('crops')).filter((k) => String(k).startsWith(`${s.id}:`));
     await Promise.all(keys.map((k) => db2.delete('crops', k)));
-    await deleteDoc(s.ref);
+    queueWrite(deleteDoc(s.ref), 'the student'); // not awaited: deletes must not freeze offline
   }
-  await deleteDoc(doc(db, 'assignments', id));
+  queueWrite(deleteDoc(doc(db, 'assignments', id)), 'the assignment');
 }
 
 export async function saveScheme(assignmentId: string, scheme: MarkingScheme): Promise<void> {
   queueWrite(updateDoc(doc(db, 'assignments', assignmentId), { scheme }), 'the marking scheme');
 }
 
-export async function createSubmission(assignmentId: string, pupil: string, marks: Mark[], queued?: QueuedCapture): Promise<string> {
-  const ref = doc(submissions(assignmentId));
-  queueWrite(setDoc(ref, { assignmentId, ownerUid: uid(), pupil, marks, createdAt: serverTimestamp(), ...(queued ? { queued } : {}) }), 'the student');
+/** A fresh student-record id, so device-only images can be saved before the record itself is written. */
+export function newSubmissionId(assignmentId: string): string { return doc(submissions(assignmentId)).id; }
+
+export async function createSubmission(assignmentId: string, pupil: string, marks: Mark[], queued?: QueuedCapture, id?: string): Promise<string> {
+  const ref = id ? doc(submissions(assignmentId), id) : doc(submissions(assignmentId));
+  const name = pupil.trim().slice(0, PUPIL_LIMIT) || 'Student';
+  queueWrite(setDoc(ref, { assignmentId, ownerUid: uid(), pupil: name, marks, createdAt: serverTimestamp(), ...(queued ? { queued } : {}) }), 'the student');
   return ref.id;
+}
+
+/** Removes a student record that never got marks (e.g. the photo had no corner squares) and its device images. */
+export async function deleteSubmission(assignmentId: string, submissionId: string): Promise<void> {
+  const db2 = await crops();
+  const keys = (await db2.getAllKeys('crops')).filter((k) => String(k).startsWith(`${submissionId}:`));
+  await Promise.all(keys.map((k) => db2.delete('crops', k)));
+  queueWrite(deleteDoc(doc(db, 'assignments', assignmentId, 'submissions', submissionId)), 'the student');
 }
 
 /** A queued student has now been marked: store the marks and take them off the waiting list. */
@@ -180,6 +192,10 @@ const cropKey = (submissionId: string, q: number) => `${submissionId}:${q}`;
 
 export async function saveCrop(submissionId: string, q: number, blob: Blob): Promise<void> {
   await (await crops()).put('crops', blob, cropKey(submissionId, q));
+}
+
+export async function deleteCrop(submissionId: string, q: number): Promise<void> {
+  await (await crops()).delete('crops', cropKey(submissionId, q));
 }
 
 export async function loadCrop(submissionId: string, q: number): Promise<Blob | undefined> {

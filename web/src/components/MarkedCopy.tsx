@@ -43,13 +43,24 @@ export function MarkedCopy({ blob: raw, pupil, letterhead }: Props) {
     a.click();
   }
 
+  /** Prints just the marked copy through a hidden iframe (no popup, no document.write). */
   function handlePrint() {
     if (!url) return;
-    const w = window.open('', '_blank', 'noopener=no');
-    if (!w) return;
-    const title = pupil.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-    w.document.write(`<title>${title}</title><style>@page{margin:0}body{margin:0}img{width:100%}</style><img src="${url}" onload="setTimeout(()=>print(),200)">`);
-    w.document.close();
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    Object.assign(frame.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0' });
+    document.body.appendChild(frame);
+    const doc = frame.contentDocument;
+    if (!doc) { frame.remove(); return; }
+    doc.title = pupil;
+    const style = doc.createElement('style');
+    style.textContent = '@page{margin:0}body{margin:0}img{width:100%}';
+    doc.head.appendChild(style);
+    const img = doc.createElement('img');
+    img.alt = `Marked copy of ${pupil}`;
+    img.onload = () => { frame.contentWindow?.print(); setTimeout(() => frame.remove(), 1000); };
+    img.src = url;
+    doc.body.appendChild(img);
   }
 
   if (!url) return null;

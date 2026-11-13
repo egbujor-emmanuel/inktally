@@ -4,7 +4,7 @@
 import { InferenceMode, Schema, type Part } from 'firebase/ai';
 import { z } from 'zod';
 import type { QuestionType } from '../domain/types';
-import { fillTemplate } from './config';
+import { asPromptData, fillTemplate } from './config';
 import { blobToPart, config, readerModel, judgeModel } from './models';
 import { withRetry } from './retry';
 import { recordInference } from './telemetry';
@@ -56,7 +56,7 @@ export async function readAnswersBatch(crops: CropToRead[], kind: 'read' | 'veri
 export async function checkPointsBatch(answer: string, points: readonly string[], reject: readonly string[] = []): Promise<{ found: string[]; rejected: string[] }> {
   if (!answer.trim() || !points.length) return { found: [], rejected: [] };
   const prompt = fillTemplate(config('prompt_points_batch'), {
-    answer,
+    answer: asPromptData(answer),
     points: points.map((p, i) => `${i + 1}. ${p}`).join('\n'),
     reject: reject.length ? reject.map((r, i) => `${i + 1}. ${r}`).join('\n') : 'none',
   });

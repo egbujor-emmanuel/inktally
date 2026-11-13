@@ -13,9 +13,9 @@ const PAGE_SCHEMA = Schema.object({
 });
 const PageResponse = z.object({ answers: z.array(z.object({ q: z.number().int(), text: z.string() })) });
 
-const PAGE_PROMPT = 'This is a photo of a pupil\'s handwritten exercise-book page. For each numbered answer, transcribe exactly what the pupil '
+const PAGE_PROMPT = 'This is a photo of a student\'s handwritten exercise-book page. For each numbered answer, transcribe exactly what the student '
   + 'wrote after the question number, character by character. Keep every mistake — do NOT calculate, solve or correct anything. '
-  + 'Ignore the pupil\'s name, the date and any teacher marks. Only include these question numbers: {numbers}.';
+  + 'Ignore the student\'s name, the date and any teacher marks. Only include these question numbers: {numbers}.';
 
 export interface PageRead { answers: Map<number, string>; source: ReadSource }
 
