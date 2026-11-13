@@ -101,8 +101,9 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
             try {
                 // No connection and no on-device AI: keep the photo on this phone and mark it when the connection is back.
                 if (!online && device != app.redpen.teacher.DeviceModel.State.Ready) {
-                    val sid = Repo.createSubmission(a.id, label, app.redpen.teacher.data.Queued(mode, page))
-                    withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PHOTO_KEY, photo) }
+                    val sid = Repo.newSubmissionId(a.id)
+                    withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PHOTO_KEY, photo) } // photo first
+                    Repo.createSubmission(a.id, label, app.redpen.teacher.data.Queued(mode, page), sid)
                     queuedFor = label; pupil = ""
                     return@launch
                 }
@@ -113,7 +114,7 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
                     marks = p.marks
                     status = if (p.marks.size < p.total) "Marking ${p.marks.size + 1} of ${p.total}…" else status
                 }) {
-                    is MarkSubmission.Outcome.Failed -> status = outcome.reason
+                    is MarkSubmission.Outcome.Failed -> { Repo.deleteSubmission(ctx, a.id, sid); status = outcome.reason }
                     is MarkSubmission.Outcome.Ok -> {
                         marks = outcome.marks
                         status = "Total: ${outcome.marks.total()}/${outcome.marks.maxTotal()}"
@@ -178,6 +179,9 @@ private fun ModeOption(selected: Boolean, title: String, subtitle: String, onCli
 
 class QueueState(val waiting: List<Submission>, val current: Submission?, val error: String?)
 
+/** Students this app session has finished, until the database update arrives (never mark twice). */
+private val finishedHere: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
 /**
  * The offline queue: photos taken offline on a phone without on-device AI are saved on the phone and marked here
  * automatically once the connection is back. Runs while the assignment is open (any tab).
@@ -189,19 +193,32 @@ fun rememberMarkingQueue(a: Assignment, submissions: List<Submission>): QueueSta
     var current by remember { mutableStateOf<Submission?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     val waiting = submissions.filter { it.queued != null }
-    LaunchedEffect(online, waiting.joinToString(",") { it.id }) {
+    var retryTick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(online, waiting.joinToString(",") { it.id }, retryTick) {
         if (!online) return@LaunchedEffect
         for (s in waiting) {
+            if (s.id in finishedHere) continue // finished by us; the database update has not arrived yet
             val q = s.queued ?: continue
             val photo = withContext(Dispatchers.IO) { Repo.loadCrop(ctx, s.id, Repo.PHOTO_KEY) } ?: continue // taken on another device
             current = s
             try {
-                when (val outcome = MarkSubmission.mark(ctx, a, q.mode, photo, q.page, s.id, s.pupil)) {
-                    is MarkSubmission.Outcome.Ok -> { Repo.finishQueued(a.id, s.id, outcome.marks); error = null }
+                when (val outcome = MarkSubmission.mark(ctx, a, q.mode, photo, q.page, s.id, s.pupil, failFast = true)) {
+                    is MarkSubmission.Outcome.Ok -> {
+                        finishedHere += s.id
+                        Repo.finishQueued(a.id, s.id, outcome.marks)
+                        withContext(Dispatchers.IO) { Repo.deleteCrop(ctx, s.id, Repo.PHOTO_KEY) } // crops + copy saved
+                        error = null
+                    }
                     is MarkSubmission.Outcome.Failed -> error = "${s.pupil}: ${outcome.reason}"
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
-                error = "${s.pupil}: ${Repo.friendly(e)}"; break // connection probably dropped again; retry later
+                error = "${s.pupil}: ${Repo.friendly(e)}" // connection or cloud trouble: stays queued, retried shortly
+                current = null
+                kotlinx.coroutines.delay(30_000)
+                retryTick++
+                return@LaunchedEffect
             }
         }
         current = null
@@ -239,6 +256,7 @@ fun ReviewTab(a: Assignment, submissions: List<Submission>) {
     var checking by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     val pending = submissions.flatMap { s -> s.marks.filter { it.needsCheck() }.map { s to it } }
+    val latestSubmissions = androidx.compose.runtime.rememberUpdatedState(submissions)
 
     suspend fun cloudCheck() {
         error = null
@@ -255,7 +273,10 @@ fun ReviewTab(a: Assignment, submissions: List<Submission>) {
                 if (question == null || crop == null || !m.needsCheck()) m
                 else { done++; checking = "Checking $done/${pending.size}…"; runCatching { Marker.verify(question, crop, m) }.getOrElse { error = Repo.friendly(it); m } }
             }
-            if (next != s.marks) Repo.saveMarks(a.id, s.id, next)
+            // Keep any score the teacher set while the check was running.
+            val now = latestSubmissions.value.firstOrNull { it.id == s.id }?.marks ?: s.marks
+            val merged = next.map { m -> now.firstOrNull { it.q == m.q }?.takeIf { it.status == MarkStatus.REVIEWED } ?: m }
+            if (merged != s.marks) Repo.saveMarks(a.id, s.id, merged)
         }
         checking = null
     }

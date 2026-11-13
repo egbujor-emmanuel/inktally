@@ -119,8 +119,8 @@ object Repo {
     private fun Mark.toMap() = mapOf("q" to q, "read" to read, "readSource" to readSource.wire, "awarded" to awarded, "max" to max,
         "engine" to engine.wire, "status" to status.wire, "reasons" to reasons, "pointsFound" to pointsFound)
 
-    private fun markOf(m: Map<String, Any?>) = Mark(
-        q = (m["q"] as Number).toInt(), read = m["read"] as? String ?: "",
+    private fun markOf(m: Map<String, Any?>): Mark? = Mark(
+        q = (m["q"] as? Number)?.toInt() ?: return null, read = m["read"] as? String ?: "",
         readSource = ReadSource.entries.firstOrNull { it.wire == m["readSource"] } ?: ReadSource.IN_CLOUD,
         awarded = (m["awarded"] as? Number)?.toInt() ?: 0, max = (m["max"] as? Number)?.toInt() ?: 1,
         engine = MarkEngine.entries.firstOrNull { it.wire == m["engine"] } ?: MarkEngine.CODE,
@@ -157,7 +157,8 @@ object Repo {
         fun start() {
             reg = attach { e ->
                 Log.w(TAG, "listener error", e)
-                val wait = delays.getOrNull(attempt++) ?: return@attach
+                val wait = delays.getOrNull(attempt++)
+                if (wait == null) { _writeError.value = "Could not load your data: ${friendly(e)}"; return@attach }
                 launch { delay(wait); reg?.remove(); start() }
             }
         }
@@ -210,8 +211,20 @@ object Repo {
     }
 
     // ---- submissions ----
-    fun createSubmission(assignmentId: String, pupil: String, queued: Queued? = null): String {
-        val ref = db.collection("assignments").document(assignmentId).collection("submissions").document()
+    /** A fresh student-record id, so device-only images can be saved before the record itself is written. */
+    fun newSubmissionId(assignmentId: String): String = db.collection("assignments").document(assignmentId).collection("submissions").document().id
+
+    /** Removes a student record that never got marks (e.g. no corner squares found) and its device images. */
+    fun deleteSubmission(ctx: Context, assignmentId: String, submissionId: String) {
+        File(ctx.filesDir, "crops").listFiles { f -> f.name.startsWith("${submissionId}_") }?.forEach { it.delete() }
+        queue("the student", db.collection("assignments").document(assignmentId).collection("submissions").document(submissionId).delete())
+    }
+
+    fun deleteCrop(ctx: Context, submissionId: String, q: Int) { cropFile(ctx, submissionId, q).delete() }
+
+    fun createSubmission(assignmentId: String, pupil: String, queued: Queued? = null, id: String? = null): String {
+        val col = db.collection("assignments").document(assignmentId).collection("submissions")
+        val ref = if (id != null) col.document(id) else col.document()
         val data = buildMap<String, Any> {
             put("assignmentId", assignmentId); put("ownerUid", uid()); put("pupil", pupil.take(PUPIL_LIMIT))
             put("marks", emptyList<Any>()); put("createdAt", FieldValue.serverTimestamp())

@@ -36,10 +36,12 @@ object MarkSubmission {
         listOf("Could not read this answer (${Repo.friendly(e)}). Check it by hand or retry when online."))
 
     private suspend fun saveCopy(ctx: Context, sid: String, build: () -> Bitmap): Bitmap? =
-        runCatching { withContext(Dispatchers.Default) { build() } }.getOrNull()?.also { withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.MARKED_KEY, it) } }
+        try { withContext(Dispatchers.Default) { build() } } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { null }
+            ?.also { withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.MARKED_KEY, it) } }
 
+    /** failFast (offline queue): a read error throws instead of becoming a flagged mark, so the student stays queued. */
     suspend fun mark(ctx: Context, a: Assignment, mode: String, photo: Bitmap, pageIndex: Int, sid: String, label: String,
-                     onProgress: (Progress) -> Unit = {}): Outcome {
+                     onProgress: (Progress) -> Unit = {}, failFast: Boolean = false): Outcome {
         if (mode == PAGE) {
             withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PAGE_KEY, photo) }
             onProgress(Progress(emptyList(), a.scheme.questions.size))
@@ -57,9 +59,9 @@ object MarkSubmission {
                 onProgress(Progress(emptyList(), scan.crops.size, scan.crops))
                 withContext(Dispatchers.IO) { scan.crops.forEach { (q, crop) -> Repo.saveCrop(ctx, sid, q, crop) } }
                 // Reading goes to the cloud anyway (no on-device model): one request for the whole sheet.
-                if (Ai.batchingEnabled() && app.redpen.teacher.Connectivity.online.value && app.redpen.teacher.DeviceModel.state.value != app.redpen.teacher.DeviceModel.State.Ready) {
+                if (Ai.batchingEnabled() && app.redpen.teacher.Connectivity.online.value && Ai.cloudWillRead(app.redpen.teacher.DeviceModel.state.value == app.redpen.teacher.DeviceModel.State.Ready)) {
                     val pairs = scan.crops.mapNotNull { (q, crop) -> a.scheme.questions.firstOrNull { it.q == q }?.let { it to crop } }
-                    val batched = runCatching { Marker.markBatch(a.scheme.questions, pairs) }.getOrNull()
+                    val batched = try { Marker.markBatch(a.scheme.questions, pairs) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { if (failFast) throw e; null }
                     if (batched != null) {
                         onProgress(Progress(batched, scan.crops.size, scan.crops))
                         Repo.saveMarks(a.id, sid, batched)
@@ -68,7 +70,7 @@ object MarkSubmission {
                 }
                 for ((q, crop) in scan.crops) {
                     val question = a.scheme.questions.firstOrNull { it.q == q } ?: continue
-                    collected += runCatching { Marker.mark(question, crop) }.getOrElse { failedMark(q, question.max, it) }
+                    collected += try { Marker.mark(question, crop) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { if (failFast) throw e; failedMark(q, question.max, e) }
                     onProgress(Progress(collected.toList(), scan.crops.size, scan.crops))
                     Repo.saveMarks(a.id, sid, collected)
                 }

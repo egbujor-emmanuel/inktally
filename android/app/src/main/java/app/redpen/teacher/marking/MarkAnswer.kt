@@ -27,7 +27,7 @@ object Marker {
             if (base.awarded > 0 || question.methodPoints.isEmpty() || base.status == MarkStatus.FLAGGED) base
             else {
                 val (found, _) = Ai.checkPoints(read, question.methodPoints, emptyList(), force)
-                if (found.isEmpty()) base else base.copy(awarded = minOf(found.size, question.max - 1), pointsFound = found,
+                if (found.isEmpty()) base else base.copy(awarded = minOf(found.size, question.max - 1), engine = app.redpen.teacher.domain.MarkEngine.AI_POINTS, pointsFound = found,
                     reasons = base.reasons + "Method marks for: ${found.joinToString("; ")}.")
             }
         }
@@ -41,7 +41,7 @@ object Marker {
     suspend fun markBatch(questions: List<Question>, crops: List<Pair<Question, Bitmap>>, verify: Boolean = false): List<Mark> {
         val reads = Ai.readAnswersBatch(crops, verify)
         return crops.map { (q, _) ->
-            val read = reads[q.q] ?: ""
+            val read = reads[q.q] ?: throw IllegalStateException("The cloud did not return answer ${q.q}")
             when (q) {
                 is Question.Objective -> markObjective(q, read, ReadSource.IN_CLOUD)
                 is Question.Short -> markShort(q, read, ReadSource.IN_CLOUD)
@@ -50,7 +50,7 @@ object Marker {
                     val base = markNumeric(q, read, ReadSource.IN_CLOUD)
                     if (base.awarded > 0 || q.methodPoints.isEmpty() || base.status == MarkStatus.FLAGGED) base
                     else Ai.checkPointsBatch(read, q.methodPoints, emptyList()).first.let { found ->
-                        if (found.isEmpty()) base else base.copy(awarded = minOf(found.size, q.max - 1), pointsFound = found,
+                        if (found.isEmpty()) base else base.copy(awarded = minOf(found.size, q.max - 1), engine = app.redpen.teacher.domain.MarkEngine.AI_POINTS, pointsFound = found,
                             reasons = base.reasons + "Method marks for: ${found.joinToString("; ")}.")
                     }
                 }

@@ -49,4 +49,9 @@ class EngineTest {
         val m = markPoints(red, "To fight diseases.", ReadSource.IN_CLOUD, emptyList(), listOf("fights disease"))
         assertEquals(0, m.awarded); assertEquals(MarkStatus.VERIFIED, m.status)
     }
+
+    // Parity with web/src/marking/normalize.ts (JS regex /gi with Unicode \s).
+    @Test fun parsesLowercaseNairaPrefix() = assertEquals(500.0, parseNumericAnswer("= n500").value!!, 0.0)
+    @Test fun parsesNoBreakSpaceThousands() = assertEquals(1000.0, parseNumericAnswer("1 000").value!!, 0.0)
+    @Test fun mapsArabicIndicDigits() { val r = parseNumericAnswer("٣"); assertEquals(3.0, r.value!!, 0.0); assertTrue(!r.clean) }
 }
