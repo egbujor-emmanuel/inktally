@@ -37,6 +37,27 @@ object Marker {
         }
     }
 
+    /** Cloud marking of a whole sheet in as few requests as possible (same as web markAnswersBatch). */
+    suspend fun markBatch(questions: List<Question>, crops: List<Pair<Question, Bitmap>>, verify: Boolean = false): List<Mark> {
+        val reads = Ai.readAnswersBatch(crops, verify)
+        return crops.map { (q, _) ->
+            val read = reads[q.q] ?: ""
+            when (q) {
+                is Question.Objective -> markObjective(q, read, ReadSource.IN_CLOUD)
+                is Question.Short -> markShort(q, read, ReadSource.IN_CLOUD)
+                is Question.Points -> Ai.checkPointsBatch(read, q.points, q.reject).let { (found, rejected) -> markPoints(q, read, ReadSource.IN_CLOUD, found, rejected) }
+                is Question.Numeric -> {
+                    val base = markNumeric(q, read, ReadSource.IN_CLOUD)
+                    if (base.awarded > 0 || q.methodPoints.isEmpty() || base.status == MarkStatus.FLAGGED) base
+                    else Ai.checkPointsBatch(read, q.methodPoints, emptyList()).first.let { found ->
+                        if (found.isEmpty()) base else base.copy(awarded = minOf(found.size, q.max - 1), pointsFound = found,
+                            reasons = base.reasons + "Method marks for: ${found.joinToString("; ")}.")
+                    }
+                }
+            }
+        }
+    }
+
     /** Exercise-book mode: one page read, then code marks each question. On-device page reads are never final. */
     suspend fun markPage(questions: List<Question>, photo: Bitmap, force: InferenceMode? = InferenceMode.PREFER_IN_CLOUD): List<Mark> {
         val page = Ai.readPage(photo, questions.map { it.q }, force)

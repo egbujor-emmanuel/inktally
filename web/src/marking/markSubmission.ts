@@ -3,7 +3,9 @@
 import type { Assignment } from '../data/store';
 import { MARKED_KEY, PAGE_KEY, saveCrop, saveMarks } from '../data/store';
 import type { Mark } from '../domain/types';
-import { markAnswer, markPage } from './markAnswer';
+import { markAnswer, markAnswersBatch, markPage } from './markAnswer';
+import { batchingEnabled } from '../ai/batch';
+import { cloudWillRead } from '../ai/models';
 import { layoutSheet } from '../scan/layout';
 import { scanSheet } from '../scan/pipeline';
 import { markedPageCopy, markedSheetCopy } from '../scan/markedCopy';
@@ -54,10 +56,21 @@ export async function markSheetSubmission(
   const crops = Object.fromEntries(scan.crops.map((c) => [c.q, c.dataUrl]));
   const collected: Mark[] = [];
   onProgress?.({ marks: [], total: scan.crops.length, crops });
+  for (const crop of scan.crops) await saveCrop(submissionId, crop.q, crop.blob);
+  // Reading goes to the cloud anyway: do the whole sheet in one request (falls back to one-by-one if that fails).
+  if (batchingEnabled() && navigator.onLine && cloudWillRead()) {
+    const toRead = scan.crops.flatMap((c) => { const q = assignment.scheme.questions.find((x) => x.q === c.q); return q ? [{ q: c.q, type: q.type, blob: c.blob }] : []; });
+    try {
+      const marks = await markAnswersBatch(assignment.scheme.questions, toRead);
+      onProgress?.({ marks, total: scan.crops.length, crops });
+      await saveMarks(assignment.id, submissionId, marks);
+      const copy = await buildCopy(submissionId, () => markedSheetCopy(photo, scan.sheetToPhoto, page.boxes, marks, label));
+      return { ok: true, marks, copy };
+    } catch { /* fall through to one-by-one reading */ }
+  }
   for (const crop of scan.crops) {
     const question = assignment.scheme.questions.find((q) => q.q === crop.q);
     if (!question) continue;
-    await saveCrop(submissionId, crop.q, crop.blob);
     let mark: Mark;
     try { mark = await markAnswer(question, crop.blob); } catch (e: unknown) { mark = failedMark(question.q, question.max, e); }
     collected.push(mark);

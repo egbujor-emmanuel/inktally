@@ -55,4 +55,15 @@ class GeometryTest {
         assertEquals(62.0, boxes[0].y, 0.0)
         assertEquals(83.0, boxes[1].y, 0.0) // 62 + 16 + 5, same as web/src/scan/layout.ts
     }
+
+    /** Same 12-question assignment as web/e2e/multipage-scan.mjs: both platforms must split sheet pages identically. */
+    @Test fun multiPageSplitMatchesWeb() {
+        val questions = (1..12).map { n ->
+            if (n % 3 == 0) app.redpen.teacher.domain.Question.Points(n, "Theory $n", 3, listOf("a", "b", "c"))
+            else app.redpen.teacher.domain.Question.Short(n, "Q$n", 1, listOf("x"))
+        }
+        val pages = SheetLayout.pages(questions)
+        org.junit.Assert.assertEquals(2, pages.size)
+        org.junit.Assert.assertEquals(listOf(7, 8, 9, 10, 11, 12), pages[1].map { it.q })
+    }
 }

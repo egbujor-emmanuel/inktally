@@ -4,6 +4,7 @@ package app.redpen.teacher.marking
 
 import android.content.Context
 import android.graphics.Bitmap
+import app.redpen.teacher.ai.Ai
 import app.redpen.teacher.data.Assignment
 import app.redpen.teacher.data.Repo
 import app.redpen.teacher.domain.Mark
@@ -54,9 +55,19 @@ object MarkSubmission {
             is Scanner.Result.Ok -> {
                 val collected = mutableListOf<Mark>()
                 onProgress(Progress(emptyList(), scan.crops.size, scan.crops))
+                withContext(Dispatchers.IO) { scan.crops.forEach { (q, crop) -> Repo.saveCrop(ctx, sid, q, crop) } }
+                // Reading goes to the cloud anyway (no on-device model): one request for the whole sheet.
+                if (Ai.batchingEnabled() && app.redpen.teacher.Connectivity.online.value && app.redpen.teacher.DeviceModel.state.value != app.redpen.teacher.DeviceModel.State.Ready) {
+                    val pairs = scan.crops.mapNotNull { (q, crop) -> a.scheme.questions.firstOrNull { it.q == q }?.let { it to crop } }
+                    val batched = runCatching { Marker.markBatch(a.scheme.questions, pairs) }.getOrNull()
+                    if (batched != null) {
+                        onProgress(Progress(batched, scan.crops.size, scan.crops))
+                        Repo.saveMarks(a.id, sid, batched)
+                        return Outcome.Ok(batched, saveCopy(ctx, sid) { Render.sheetCopy(ctx, photo, scan.sheetToPhoto, boxes, batched, label) })
+                    }
+                }
                 for ((q, crop) in scan.crops) {
                     val question = a.scheme.questions.firstOrNull { it.q == q } ?: continue
-                    withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, q, crop) }
                     collected += runCatching { Marker.mark(question, crop) }.getOrElse { failedMark(q, question.max, it) }
                     onProgress(Progress(collected.toList(), scan.crops.size, scan.crops))
                     Repo.saveMarks(a.id, sid, collected)

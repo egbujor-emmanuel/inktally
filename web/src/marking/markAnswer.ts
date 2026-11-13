@@ -5,6 +5,7 @@ import type { Mark, NumericQuestion, Question, ReadSource } from '../domain/type
 import { checkPoints } from '../ai/points';
 import { readAnswer } from '../ai/read';
 import { readPage } from '../ai/readPage';
+import { checkPointsBatch, readAnswersBatch, type CropToRead } from '../ai/batch';
 import type { ReadMode } from '../ai/models';
 import { markNumeric, markObjective, markPoints, markShort } from './engine';
 
@@ -31,6 +32,36 @@ async function markNumericWithMethod(question: NumericQuestion, read: string, so
     ...base, awarded: methodMarks, engine: 'ai-points', pointsFound: found,
     reasons: [...base.reasons, `Method marks for: ${found.join('; ')}.`],
   };
+}
+
+/** Cloud marking of a whole sheet in as few requests as possible: one read for every box, one point check per theory answer. */
+export async function markAnswersBatch(questions: Question[], crops: CropToRead[], kind: 'read' | 'verify' = 'read'): Promise<Mark[]> {
+  const reads = await readAnswersBatch(crops, kind);
+  const marks: Mark[] = [];
+  for (const crop of crops) {
+    const question = questions.find((q) => q.q === crop.q);
+    if (!question) continue;
+    const read = reads.get(crop.q) ?? '';
+    if (question.type === 'points') {
+      const { found, rejected } = await checkPointsBatch(read, question.points, question.reject);
+      marks.push(markPoints(question, read, 'in_cloud', found, rejected));
+    } else if (question.type === 'numeric') {
+      const base = markNumeric(question, read, 'in_cloud');
+      if (base.awarded > 0 || !question.methodPoints?.length || base.status === 'flagged') { marks.push(base); continue; }
+      const { found } = await checkPointsBatch(read, question.methodPoints);
+      marks.push(found.length ? { ...base, awarded: Math.min(found.length, question.max - 1), engine: 'ai-points', pointsFound: found,
+        reasons: [...base.reasons, `Method marks for: ${found.join('; ')}.`] } : base);
+    } else {
+      marks.push(question.type === 'objective' ? markObjective(question, read, 'in_cloud') : markShort(question, read, 'in_cloud'));
+    }
+  }
+  return marks;
+}
+
+/** Cloud check of several provisional/flagged answers from one student in a single read request. */
+export async function verifyMarksBatch(questions: Question[], crops: CropToRead[], previous: Mark[]): Promise<Mark[]> {
+  const cloud = await markAnswersBatch(questions, crops, 'verify');
+  return previous.map((p) => { const c = cloud.find((m) => m.q === p.q); return c ? reconcile(p, c) : p; });
 }
 
 export async function markAnswer(question: Question, crop: Blob, mode?: ReadMode): Promise<Mark> {

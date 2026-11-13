@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Mark, Question } from '../../domain/types';
 import { loadCrop, saveMarks, updateQuestion, type Assignment, type Submission } from '../../data/store';
-import { verifyMark, verifyPage } from '../../marking/markAnswer';
+import { verifyMark, verifyMarksBatch, verifyPage } from '../../marking/markAnswer';
+import { batchingEnabled } from '../../ai/batch';
 import { PAGE_KEY } from './MarkTab';
 import { parseNumericAnswer } from '../../marking/normalize';
 import { MarkRow } from '../../components/MarkRow';
@@ -68,6 +69,21 @@ export function ReviewTab({ assignment, submissions }: Props) {
         done += s.marks.filter(needsCheck).length;
         setChecking({ done, total: targets.length });
         continue;
+      }
+      // One cloud request for all of this student's answers that need checking.
+      if (batchingEnabled() && s.marks.filter(needsCheck).length > 1) {
+        const crops: { q: number; type: Question['type']; blob: Blob }[] = [];
+        for (const m of s.marks.filter(needsCheck)) {
+          const question = assignment.scheme.questions.find((q) => q.q === m.q);
+          const blob = await loadCrop(s.id, m.q);
+          if (question && blob) crops.push({ q: m.q, type: question.type, blob });
+        }
+        try {
+          await saveMarks(assignment.id, s.id, await verifyMarksBatch(assignment.scheme.questions, crops, s.marks));
+          done += crops.length;
+          setChecking({ done, total: targets.length });
+          continue;
+        } catch { /* fall back to checking one answer at a time */ }
       }
       let changed = false;
       const next: Mark[] = [];

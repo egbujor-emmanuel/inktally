@@ -37,6 +37,10 @@ val REMOTE_DEFAULTS: Map<String, Any> = mapOf(
     "cloud_read_model" to "gemini-3.5-flash-lite",
     "cloud_author_model" to "gemini-3.5-flash-lite",
     "read_mode" to "prefer_on_device",
+    "cloud_fallback_models" to "gemini-3.5-flash,gemini-3.8-flash",
+    "batch_cloud_reads" to "false",
+    "prompt_read_batch" to "Each image below is ONE answer box cut from a student's answer sheet, labelled with its question number and the kind of answer it holds. Transcribe exactly what is handwritten in each image, character by character. Do NOT calculate, solve or correct anything; if the writing is wrong, copy it wrong. Read each image on its own — never use one answer to read another. If an image is blank, return an empty string for it. Return one entry per labelled answer.",
+    "prompt_points_batch" to "A student wrote this answer (spelling may be poor; judge meaning): \"{answer}\"\n\nMARKING POINTS:\n{points}\n\nFor each marking point, in order, answer true only if the answer clearly states that specific point. Do not give credit for anything that matches a NOT ACCEPTABLE statement:\n{reject}\n\nAlso, for each NOT ACCEPTABLE statement in order, answer true if the student's answer makes that statement. Return points and rejected as true/false lists in the same order (rejected is empty when there are none).",
     "read_thinking" to "MINIMAL",
     "author_thinking" to "LOW",
     "android_ondevice_model" to "preview",
@@ -111,10 +115,28 @@ object Ai {
         else -> null
     }
 
+    // ---- Dynamic routing across cloud models (quota-aware), same rules as web/src/ai/models.ts ----
+    private val QUOTA = Regex("quota|RESOURCE_EXHAUSTED|\\b429\\b|rate.?limit", RegexOption.IGNORE_CASE)
+    private val UNSUPPORTED_THINKING = Regex("thinking.*not supported", RegexOption.IGNORE_CASE)
+    private val exhausted = mutableSetOf<String>()
+    private val noThinking = mutableSetOf<String>()
+    @Volatile private var lastModel = ""
+
+    fun activeCloudModel(primary: String = cfg("cloud_read_model")): String =
+        (listOf(primary) + cfg("cloud_fallback_models").split(",").map { it.trim() }.filter { it.isNotEmpty() }).firstOrNull { it !in exhausted } ?: primary
+
+    /** On quota / unsupported-option errors: route to the next model. Returns true if the call should be retried. */
+    private fun switchModel(e: Throwable): Boolean {
+        val text = "${e::class.simpleName} ${e.message}"
+        if (UNSUPPORTED_THINKING.containsMatchIn(text) && lastModel.isNotEmpty() && noThinking.add(lastModel)) return true
+        if (QUOTA.containsMatchIn(text) && lastModel.isNotEmpty() && exhausted.add(lastModel)) return activeCloudModel() != lastModel
+        return false
+    }
+
     private fun model(schema: Schema, force: InferenceMode?) = Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel(
-        modelName = cfg("cloud_read_model"),
+        modelName = activeCloudModel().also { lastModel = it },
         generationConfig = generationConfig {
-            responseMimeType = "application/json"; responseSchema = schema; temperature = 0f; thinkingConfig = thinking("read_thinking")
+            responseMimeType = "application/json"; responseSchema = schema; temperature = 0f; thinkingConfig = if (lastModel in noThinking) null else thinking("read_thinking")
         },
         requestOptions = RequestOptions(timeoutInMillis = TIMEOUT_MS),
         onDeviceConfig = OnDeviceConfig(mode = mode(force), temperature = 0f, modelOption = deviceModel()),
@@ -122,20 +144,25 @@ object Ai {
 
     /** Long-form authoring (answer keys, catch-up sheets): cloud only. */
     private fun authorModel(schema: Schema) = Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel(
-        modelName = cfg("cloud_author_model"),
+        modelName = activeCloudModel(cfg("cloud_author_model")).also { lastModel = it },
         generationConfig = generationConfig {
-            responseMimeType = "application/json"; responseSchema = schema; temperature = 0.2f; thinkingConfig = thinking("author_thinking")
+            responseMimeType = "application/json"; responseSchema = schema; temperature = 0.2f; thinkingConfig = if (lastModel in noThinking) null else thinking("author_thinking")
         },
         requestOptions = RequestOptions(timeoutInMillis = AUTHOR_TIMEOUT_MS),
     )
 
     private suspend fun <T> retry(attempts: Int = MAX_ATTEMPTS, block: suspend () -> T): T {
         var last: Throwable? = null
-        repeat(attempts) { attempt ->
+        var attempt = 0
+        var switches = 0
+        while (attempt < attempts) {
             try { return block() } catch (e: Throwable) {
                 last = e
+                // Quota used up on this model (or it rejects an option): try the next model at once.
+                if (switches < 4 && switchModel(e)) { switches++; continue }
                 if (!TRANSIENT.containsMatchIn("${e::class.simpleName} ${e.message}")) throw e
                 if (attempt < attempts - 1) delay(2_000L shl attempt) // exponential backoff; AICore BUSY is also transient
+                attempt++
             }
         }
         throw last ?: IllegalStateException("Model call failed")
@@ -180,6 +207,51 @@ object Ai {
         val rejectList = if (reject.isEmpty()) "none" else reject.joinToString { "\"$it\"" }
         val found = points.filter { ask(it, rejectList) }
         val rejected = if (found.isEmpty()) reject.filter { ask(it, "none") } else emptyList()
+        return found to rejected
+    }
+
+    // ---- quota-saving cloud batches (same prompts and switch as web/src/ai/batch.ts) ----
+
+    fun batchingEnabled() = cfg("batch_cloud_reads").trim().equals("true", ignoreCase = true)
+
+    private val BATCH_HINTS = mapOf(
+        Question.Objective::class to "a multiple-choice answer: a single letter A, B, C, D or E",
+        Question.Numeric::class to "the answer part of a sum, for example \"= 42\" or \"₦27,000\"",
+        Question.Short::class to "a one-word or short-phrase answer",
+        Question.Points::class to "a student's short written answer (one or more sentences)",
+    )
+
+    /** Reads every answer box in ONE cloud request. Returns text by question number. */
+    suspend fun readAnswersBatch(crops: List<Pair<Question, Bitmap>>, verify: Boolean = false): Map<Int, String> {
+        if (crops.isEmpty()) return emptyMap()
+        val schema = Schema.obj(mapOf("answers" to Schema.array(Schema.obj(mapOf("q" to Schema.integer(), "text" to Schema.string())))))
+        val request = content {
+            text(cfg("prompt_read_batch"))
+            crops.forEach { (q, bmp) -> text("ANSWER ${q.q} — ${BATCH_HINTS[q::class] ?: ""}:"); image(bmp) }
+        }
+        val started = System.currentTimeMillis()
+        val r = retry { model(schema, InferenceMode.ONLY_IN_CLOUD).generateContent(request) }
+        Telemetry.record(if (verify) "verify" else "read", ReadSource.IN_CLOUD, System.currentTimeMillis() - started)
+        val arr = runCatching { JSONObject(stripFence(r.text ?: "")).getJSONArray("answers") }.getOrElse { throw IllegalStateException("The model returned an unexpected reading format") }
+        return (0 until arr.length()).associate { i -> arr.getJSONObject(i).let { it.getInt("q") to it.optString("text").trim() } }
+    }
+
+    /** Checks every marking point (and "do not accept" statement) of one answer in ONE cloud request. */
+    suspend fun checkPointsBatch(answer: String, points: List<String>, reject: List<String>): Pair<List<String>, List<String>> {
+        if (answer.isBlank() || points.isEmpty()) return emptyList<String>() to emptyList()
+        val schema = Schema.obj(mapOf("points" to Schema.array(Schema.boolean()), "rejected" to Schema.array(Schema.boolean())))
+        val prompt = fill(cfg("prompt_points_batch"), mapOf(
+            "answer" to answer,
+            "points" to points.mapIndexed { i, p -> "${i + 1}. $p" }.joinToString("\n"),
+            "reject" to if (reject.isEmpty()) "none" else reject.mapIndexed { i, p -> "${i + 1}. $p" }.joinToString("\n"),
+        ))
+        val started = System.currentTimeMillis()
+        val r = retry { model(schema, InferenceMode.ONLY_IN_CLOUD).generateContent(prompt) }
+        Telemetry.record("points", ReadSource.IN_CLOUD, System.currentTimeMillis() - started)
+        val o = runCatching { JSONObject(stripFence(r.text ?: "")) }.getOrElse { throw IllegalStateException("The model returned an unexpected point-check format") }
+        fun flags(key: String) = o.optJSONArray(key)?.let { a -> (0 until a.length()).map { a.optBoolean(it) } } ?: emptyList()
+        val found = points.filterIndexed { i, _ -> flags("points").getOrNull(i) == true }
+        val rejected = if (found.isNotEmpty()) emptyList() else reject.filterIndexed { i, _ -> flags("rejected").getOrNull(i) == true }
         return found to rejected
     }
 

@@ -60,6 +60,12 @@ export async function refreshDeviceCapability(): Promise<void> {
   deviceReadyOffline = status === 'available';
 }
 
+/** True when a read with this mode will go to the cloud (so it can be batched). */
+export function cloudWillRead(override?: ReadMode): boolean {
+  const mode = readMode(override);
+  return mode === InferenceMode.ONLY_IN_CLOUD || mode === InferenceMode.PREFER_IN_CLOUD;
+}
+
 function readMode(override?: ReadMode): ReadMode {
   if (override) return override;
   const fromConfig = config('read_mode') as ReadMode;
