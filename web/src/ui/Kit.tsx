@@ -1,6 +1,7 @@
 // Web twins of the Android app's building blocks (android/.../ui/Kit.kt + Components.kt), so every screen
 // is laid out and labelled identically on both platforms.
 import { useEffect, useId, useRef, type ChangeEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 type ButtonProps = { children: ReactNode; onClick?: () => void; disabled?: boolean; className?: string; type?: 'button' | 'submit' };
 
@@ -117,7 +118,7 @@ export function Dialog({ title, children, onClose, actions }: { title: string; c
     ref.current?.querySelector<HTMLElement>('input,textarea,button')?.focus();
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-6" onClick={onClose}>
       <div ref={ref} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}
         className="grid w-full max-w-md gap-4 rounded-[28px] bg-[#F3EEF6] p-6 shadow-xl">
@@ -125,6 +126,7 @@ export function Dialog({ title, children, onClose, actions }: { title: string; c
         <div className="text-ink-soft">{children}</div>
         <div className="flex justify-end gap-2">{actions}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

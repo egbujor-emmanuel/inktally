@@ -3,7 +3,7 @@ import { getGenerativeModel, InferenceMode, Schema, ThinkingLevel, type Generati
 import { getValue } from 'firebase/remote-config';
 import { ai, remoteConfig } from '../firebase/app';
 import type { RemoteKey } from './config';
-import { isTransient, withRetry } from './retry';
+import { isTransient, setModelErrorHandler, withRetry } from './retry';
 import { friendlyCloudError } from './errors';
 
 export type ReadMode = (typeof InferenceMode)[keyof typeof InferenceMode];
@@ -13,8 +13,33 @@ export function config(key: RemoteKey): string {
   return getValue(remoteConfig, key).asString();
 }
 
-/** Thinking level from Remote Config; anything unrecognised falls back to the model's default. */
-function thinking(key: 'read_thinking' | 'author_thinking'): { thinkingConfig?: ThinkingConfig } {
+// ---- Dynamic routing across cloud models (quota-aware) ----
+const QUOTA = /quota|RESOURCE_EXHAUSTED|\b429\b|rate.?limit/i;
+const UNSUPPORTED_THINKING = /thinking level .* not supported|thinking.*not supported/i;
+const exhausted = new Set<string>();
+const noThinking = new Set<string>();
+const errorText = (e: unknown) => (e instanceof Error ? `${e.name} ${e.message}` : String(e));
+let lastModel = '';
+
+/** Primary cloud model, then the Remote Config fallbacks, skipping any whose quota is used up this session. */
+export function activeCloudModel(primary = config('cloud_read_model')): string {
+  const chain = [primary, ...config('cloud_fallback_models').split(',').map((m) => m.trim()).filter(Boolean)];
+  return chain.find((m) => !exhausted.has(m)) ?? primary;
+}
+
+setModelErrorHandler((error) => {
+  const text = errorText(error);
+  if (UNSUPPORTED_THINKING.test(text) && lastModel && !noThinking.has(lastModel)) { noThinking.add(lastModel); return true; }
+  if (QUOTA.test(text) && lastModel && !exhausted.has(lastModel)) {
+    exhausted.add(lastModel);
+    return activeCloudModel() !== lastModel; // only retry if there is somewhere else to go
+  }
+  return false;
+});
+
+/** Thinking level from Remote Config; anything unrecognised (or unsupported by the model) uses the model's default. */
+function thinking(key: 'read_thinking' | 'author_thinking', model: string): { thinkingConfig?: ThinkingConfig } {
+  if (noThinking.has(model)) return {};
   const level = config(key).trim().toUpperCase();
   return (Object.values(ThinkingLevel) as string[]).includes(level) ? { thinkingConfig: { thinkingLevel: level as ThinkingConfig['thinkingLevel'] } } : {};
 }
@@ -51,8 +76,8 @@ export function readerModel(schema: ObjectSchema, mode?: ReadMode): GenerativeMo
   return getGenerativeModel(ai, {
     mode: readMode(mode),
     inCloudParams: {
-      model: config('cloud_read_model'),
-      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...thinking('read_thinking') },
+      model: (lastModel = activeCloudModel()),
+      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...thinking('read_thinking', lastModel) },
     },
     onDeviceParams: {
       createOptions: { expectedInputs: [{ type: 'text', languages: ['en'] }, { type: 'image' }], expectedOutputs: [{ type: 'text', languages: ['en'] }] },
@@ -66,8 +91,8 @@ export function judgeModel(schema: ObjectSchema, mode?: ReadMode): GenerativeMod
   return getGenerativeModel(ai, {
     mode: readMode(mode),
     inCloudParams: {
-      model: config('cloud_read_model'),
-      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...thinking('read_thinking') },
+      model: (lastModel = activeCloudModel()),
+      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...thinking('read_thinking', lastModel) },
     },
     onDeviceParams: {
       createOptions: { expectedInputs: [{ type: 'text', languages: ['en'] }], expectedOutputs: [{ type: 'text', languages: ['en'] }] },
@@ -78,11 +103,12 @@ export function judgeModel(schema: ObjectSchema, mode?: ReadMode): GenerativeMod
 
 /** Long-form authoring (marking schemes, catch-up worksheets): cloud only, needs PDFs and long output. */
 export function authorModel(schema: ObjectSchema, modelName = config('cloud_author_model'), timeout = AUTHOR_TIMEOUT_MS): GenerativeModel {
+  const model = (lastModel = activeCloudModel(modelName));
   return getGenerativeModel(ai, {
     mode: InferenceMode.ONLY_IN_CLOUD,
     inCloudParams: {
-      model: modelName,
-      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.2, ...thinking('author_thinking') },
+      model,
+      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.2, ...thinking('author_thinking', model) },
     },
   }, { timeout });
 }

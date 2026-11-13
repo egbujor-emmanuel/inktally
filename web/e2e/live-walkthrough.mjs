@@ -60,9 +60,9 @@ await step('school details: save institution profile', async () => {
 
 await step('new assignment: draft scheme from TYPED questions', async () => {
   await page.goto(`${URL_}/new`);
-  await page.getByText('Draft the marking scheme').waitFor();
+  await page.getByRole('heading', { name: 'The question paper' }).waitFor();
   await page.getByLabel('Title').fill('Walkthrough typed');
-  await page.getByLabel('Class', { exact: true }).fill('Grade 6');
+  await page.getByLabel('Class / group').fill('Grade 6');
   await page.getByLabel('Subject').fill('Science');
   await page.getByPlaceholder(/1\. 7 × 8/).fill('1. What is 7 x 8?\n2. State two functions of blood. (2 marks)\n3. The capital of Nigeria is ____\n4. Which is a mammal? (A) shark (B) whale (C) trout (D) eel');
   await page.getByRole('button', { name: 'Draft marking scheme' }).click();
@@ -83,8 +83,8 @@ await step('new assignment: save -> print sheet', async () => {
 
 await step('new assignment: draft scheme from PHOTO of a page', async () => {
   await page.goto(`${URL_}/new`);
-  await page.getByText('Draft the marking scheme').waitFor();
-  await page.locator('input[type=file]').first().setInputFiles(`${SAMPLES}/maths.png`);
+  await page.getByRole('heading', { name: 'The question paper' }).waitFor();
+  await page.locator('input[aria-label="Question paper: photos"]').setInputFiles(`${SAMPLES}/maths.png`);
   await page.getByRole('button', { name: 'Draft marking scheme' }).click();
   await page.locator('fieldset').first().waitFor({ timeout: 90_000 });
   return `${await page.locator('fieldset').count()} questions from photo`;
@@ -92,8 +92,8 @@ await step('new assignment: draft scheme from PHOTO of a page', async () => {
 
 await step('new assignment: COPY teacher marking scheme from a PHOTO', async () => {
   await page.goto(`${URL_}/new`);
-  await page.getByText('Draft the marking scheme').waitFor();
-  await page.locator('input[type=file]').nth(1).setInputFiles(`${SAMPLES}/english-marking-scheme.jpg`);
+  await page.getByRole('heading', { name: 'The question paper' }).waitFor();
+  await page.locator('input[aria-label="Marking scheme: photos"]').setInputFiles(`${SAMPLES}/english-marking-scheme.jpg`);
   await page.getByRole('button', { name: 'Use my marking scheme' }).click();
   await page.locator('fieldset').first().waitFor({ timeout: 90_000 });
   const values = await page.locator('fieldset input, fieldset textarea').evaluateAll((els) => els.map((e) => e.value).join(' | '));
@@ -105,7 +105,7 @@ await step('new assignment: COPY teacher marking scheme from a PHOTO', async () 
 
 await step('new assignment: COPY teacher marking scheme TYPED (no question paper)', async () => {
   await page.goto(`${URL_}/new`);
-  await page.getByText('Draft the marking scheme').waitFor();
+  await page.getByRole('heading', { name: 'The question paper' }).waitFor();
   await page.getByPlaceholder(/1\. 56 \(1 mark\)/).fill('1. 56 (1 mark)\n2. Abuja — accept FCT or Federal Capital Territory (1 mark)\n3. went — do not accept goed (2 marks)');
   await page.getByRole('button', { name: 'Use my marking scheme' }).click();
   await page.locator('fieldset').first().waitFor({ timeout: 90_000 });
@@ -116,7 +116,7 @@ await step('new assignment: COPY teacher marking scheme TYPED (no question paper
 
 await step('quick mark: photo -> key -> marked', async () => {
   await page.goto(`${URL_}/quick`);
-  await page.locator('input[type=file]').setInputFiles(`${SAMPLES}/maths.png`);
+  await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles(`${SAMPLES}/maths.png`);
   await page.getByText('Does this answer key look right?').waitFor({ timeout: 90_000 });
   await page.getByRole('button', { name: /Looks right/ }).click();
   await page.getByText(/^Total:/).waitFor({ timeout: 90_000 });
@@ -130,7 +130,7 @@ await step('sample English -> mark printed sheet photo', async () => {
   await page.goto(`${base()}/mark`);
   await page.getByText('Photograph answer sheet').waitFor();
   await page.getByLabel('Student name or number').fill('Walkthrough Pupil');
-  await page.locator('input[type=file]').setInputFiles(`${SAMPLES}/english-sheet-photo.jpg`);
+  await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles(`${SAMPLES}/english-sheet-photo.jpg`);
   await page.getByText(/^Total:/).waitFor({ timeout: 120_000 });
   const total = await page.getByText(/^Total:/).innerText();
   await page.getByText('Marked copy for').waitFor({ timeout: 30_000 });
@@ -138,7 +138,7 @@ await step('sample English -> mark printed sheet photo', async () => {
 });
 
 await step('comment after marking -> on the marked copy', async () => {
-  const box = page.getByLabel(/^Comment for/);
+  const box = page.getByLabel('Teacher’s comment');
   await box.fill('Good work. Revise past tenses before Friday.');
   await page.getByRole('button', { name: 'Save comment' }).click();
   await page.getByText(/^Saved\. It is on the marked copy/).waitFor({ timeout: 10_000 });
@@ -149,7 +149,7 @@ await step('comment after marking -> on the marked copy', async () => {
 
 await step('exercise-book mode on the same assignment', async () => {
   await page.getByRole('radio', { name: /Exercise book page/ }).click();
-  await page.locator('input[type=file]').setInputFiles(`${SAMPLES}/maths.png`);
+  await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles(`${SAMPLES}/maths.png`);
   await page.getByText(/^Total:/).waitFor({ timeout: 120_000 });
   return await page.getByText(/^Total:/).innerText();
 });
@@ -159,7 +159,7 @@ await step('OFFLINE without on-device AI: queued, then marked automatically back
   await page.getByText('Photograph answer sheet').waitFor();
   await ctx.setOffline(true);
   await page.getByLabel('Student name or number').fill('Offline Student');
-  await page.locator('input[type=file]').setInputFiles(`${SAMPLES}/english-sheet-photo.jpg`);
+  await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles(`${SAMPLES}/english-sheet-photo.jpg`);
   await page.getByText('Saved for marking: Offline Student').waitFor({ timeout: 20_000 });
   await page.getByText(/1 waiting to be marked/).waitFor({ timeout: 20_000 });
   await ctx.setOffline(false);
@@ -184,8 +184,9 @@ await step('mark register + Excel download', async () => {
   await page.goto(`${base()}/register`);
   await page.getByRole('button', { name: /Download Excel/ }).waitFor({ timeout: 30_000 });
   const rows = await page.locator('tbody tr').count();
-  const nameCell = page.getByLabel(/^Student name for Walkthrough Pupil/).first();
-  await nameCell.fill('Ada Renamed'); await nameCell.press('Enter');
+  await page.getByLabel(/^Student name for Walkthrough Pupil/).first().click();
+  await page.getByRole('dialog').getByLabel('Name or number').fill('Ada Renamed');
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await page.getByLabel(/^Student name for Ada Renamed/).waitFor({ timeout: 10_000 });
   const [download] = await Promise.all([page.waitForEvent('download', { timeout: 30_000 }), page.getByRole('button', { name: /Download Excel/ }).click()]);
   const file = `${OUT}/${download.suggestedFilename()}`; await download.saveAs(file);
@@ -214,8 +215,8 @@ await step('finish + reopen', async () => {
 });
 
 await step('delete assignment', async () => {
-  page.once('dialog', (d) => d.accept());
-  await page.getByRole('button', { name: 'Delete' }).click();
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete for good' }).click();
   await page.waitForURL((u) => new URL(u).pathname === '/', { timeout: 20_000 });
 });
 

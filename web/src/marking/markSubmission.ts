@@ -7,6 +7,7 @@ import { markAnswer, markPage } from './markAnswer';
 import { layoutSheet } from '../scan/layout';
 import { scanSheet } from '../scan/pipeline';
 import { markedPageCopy, markedSheetCopy } from '../scan/markedCopy';
+import { friendlyCloudError } from '../ai/errors';
 
 export type CaptureMode = 'sheet' | 'page';
 
@@ -22,7 +23,8 @@ export type MarkOutcome =
   | { ok: false; reason: string };
 
 export function failedMark(q: number, max: number, error: unknown): Mark {
-  const message = error instanceof Error ? error.message : 'Unknown error';
+  // Teachers see a short, plain reason — never a raw API error dump.
+  const message = friendlyCloudError(error).message.replace(/\s*\(.*$/s, '');
   return {
     q, max, read: '', readSource: 'on_device', awarded: 0, engine: 'code', status: 'flagged',
     reasons: [`Could not read this answer (${message}). Check it by hand or retry when online.`],

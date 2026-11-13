@@ -1,0 +1,10 @@
+{
+  "done": true,
+  "log": [
+    "ERROR FirebaseError: AI: Error fetching from https://firebasevertexai.googleapis.com/v1beta/projects/redpen-hybrid/models/gemini-3.8-flash:generateContent: [400 ] Thinking level MINIMAL is not supported for this model. Please retry with other thinking level. (AI/fetch-error)",
+    "DONE"
+  ],
+  "results": [],
+  "error": "FirebaseError: AI: Error fetching from https://firebasevertexai.googleapis.com/v1beta/projects/redpen-hybrid/models/gemini-3.8-flash:generateContent: [400 ] Thinking level MINIMAL is not supported for this model. Please retry with other thinking level. (AI/fetch-error)",
+  "summary": null
+}

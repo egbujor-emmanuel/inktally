@@ -10,6 +10,11 @@ export const REMOTE_DEFAULTS = {
    * Switch in Remote Config without shipping an update.
    */
   cloud_author_model: 'gemini-3.5-flash-lite',
+  /**
+   * Used in order when a model's quota runs out (free tier: 500 requests/day per model, measured 2026-11-13).
+   * Each model has its own quota, so routing to the next one keeps teachers marking.
+   */
+  cloud_fallback_models: 'gemini-3.5-flash,gemini-3.8-flash',
   /** prefer_on_device | prefer_in_cloud | only_on_device | only_in_cloud */
   read_mode: 'prefer_on_device',
   /**

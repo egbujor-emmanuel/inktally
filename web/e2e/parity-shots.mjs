@@ -5,7 +5,12 @@ const OUT = 'e2e/out/parity';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true });
 const page = await ctx.newPage();
-const shot = (n) => page.screenshot({ path: `${OUT}/${n}.png` });
+const overflow = [];
+const shot = async (n) => {
+  const w = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
+  if (w[0] > w[1] + 1) overflow.push(`${n}: page is ${w[0]}px wide on a ${w[1]}px screen`);
+  await page.screenshot({ path: `${OUT}/${n}.png` });
+};
 await page.goto(U); if (await page.getByText('REDPEN preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
 await page.getByText('Try it with a sample').waitFor({ timeout: 60000 }); await page.waitForTimeout(1200);
 await shot('01-home');
@@ -18,11 +23,11 @@ await shot('06-print');
 const base = page.url().replace(/\/print$/, '');
 await page.goto(`${base}/mark`); await page.getByText('Photograph answer sheet').waitFor(); await shot('07-mark');
 await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles('../samples/english-sheet-photo.jpg');
-await page.getByText(/^Total:/).waitFor({ timeout: 120000 }); await page.waitForTimeout(1500); await shot('08-marked');
+await page.getByText(/^Total:/).waitFor({ timeout: 180000 }); await page.waitForTimeout(1500); await shot('08-marked');
 await page.getByText('Marked copy for').scrollIntoViewIfNeeded(); await shot('09-marked-copy');
 await page.goto(`${base}/review`); await page.waitForTimeout(1500); await shot('10-review');
 await page.goto(`${base}/register`); await page.getByText('Download Excel (.xlsx)').waitFor(); await shot('11-register');
 await page.goto(`${base}/insights`); await page.waitForTimeout(1200); await shot('12-insights');
-await page.goto(`${base}/mark`); await page.getByRole('button', { name: 'Delete' }).click(); await page.getByText('Delete for good').click();
+await page.goto(`${base}/mark`); await page.getByRole('button', { name: 'Delete', exact: true }).click(); await page.getByText('Delete for good').click();
 await page.waitForURL((u) => new URL(u).pathname === '/');
-await browser.close(); console.log('parity shots done');
+await browser.close(); console.log('horizontal overflow:', overflow.length ? overflow : 'none'); console.log('parity shots done');

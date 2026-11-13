@@ -76,6 +76,13 @@
       },
       "description": "Prompt template (shared by web and Android)",
       "valueType": "STRING"
+    },
+    "cloud_fallback_models": {
+      "defaultValue": {
+        "value": "gemini-3.5-flash,gemini-3.8-flash"
+      },
+      "description": "Cloud models used in order when a model quota runs out (dynamic routing, no app release needed)",
+      "valueType": "STRING"
     }
   }
 }

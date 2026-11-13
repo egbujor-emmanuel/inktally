@@ -68,7 +68,7 @@ export function RegisterTab({ assignment, submissions }: Props) {
 
   const cell = 'px-1.5 py-1.5 align-top';
   return (
-    <div className="grid gap-2.5 pb-10">
+    <div className="grid min-w-0 gap-2.5 pb-10">
       {editing && (
         <Dialog title={editing.field === 'pupil' ? 'Student name' : `Comment for ${editing.submission.pupil}`} onClose={() => setEditing(null)} actions={<>
           <button type="button" className="btn-text" onClick={() => setEditing(null)}>Cancel</button>
@@ -91,14 +91,14 @@ export function RegisterTab({ assignment, submissions }: Props) {
         <p className="text-[13px] text-ink-soft">Tap a student’s name or comment to edit it. Changes save automatically and go into the Excel file.</p>
       </div>
       <ErrorText message={error} />
-      <div className="print-area grid gap-2.5">
+      <div className="print-area grid min-w-0 gap-2.5">
         <div className="px-4">
           {profile.institution && <p className="text-[11px] font-semibold text-pen">{profile.institution.toUpperCase()}</p>}
           {profile.details && <p className="hidden text-sm print:block">{profile.details}</p>}
           <p className="font-display text-lg font-bold">{assignment.title} — {assignment.className}</p>
           {profile.teacher && <p className="text-xs text-ink-soft">Teacher: {profile.teacher}</p>}
         </div>
-        <div className="mx-4 overflow-x-auto bg-white">
+        <div className="relative mx-4 min-w-0 overflow-x-auto bg-white">
           <table className="min-w-full border-collapse text-sm">
             <thead className="bg-ink text-white">
               <tr>

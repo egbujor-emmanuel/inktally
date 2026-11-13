@@ -1,0 +1,58 @@
+{
+  "done": true,
+  "log": [
+    "[A maths] 23810 ms src=in_cloud exact 6/6 total 5/5\n   Q1 read \"7 x 8 = 56\" 1/1\n   Q2 read \"15 + 9 = 23\" 0/0\n   Q3 read \"144 ÷ 12 = 12\" 1/1\n   Q4 read \"3/4 + 1/4 = 1\" 1/1\n   Q5 read \"25% of 80 = 25\" 0/0\n   Q6 read \"6 crates x 4,500 = ₦27,000\nAnswer = 27,000\" 2/2",
+    "SUMMARY {\"mathsCropsReadCorrectly\":\"0/6\"}",
+    "DONE"
+  ],
+  "results": [
+    {
+      "design": "A-page",
+      "id": "maths",
+      "ms": 23810,
+      "source": "in_cloud",
+      "perQ": [
+        {
+          "q": 1,
+          "exp": 1,
+          "got": 1,
+          "read": "7 x 8 = 56"
+        },
+        {
+          "q": 2,
+          "exp": 0,
+          "got": 0,
+          "read": "15 + 9 = 23"
+        },
+        {
+          "q": 3,
+          "exp": 1,
+          "got": 1,
+          "read": "144 ÷ 12 = 12"
+        },
+        {
+          "q": 4,
+          "exp": 1,
+          "got": 1,
+          "read": "3/4 + 1/4 = 1"
+        },
+        {
+          "q": 5,
+          "exp": 0,
+          "got": 0,
+          "read": "25% of 80 = 25"
+        },
+        {
+          "q": 6,
+          "exp": 2,
+          "got": 2,
+          "read": "6 crates x 4,500 = ₦27,000\nAnswer = 27,000"
+        }
+      ]
+    }
+  ],
+  "error": null,
+  "summary": {
+    "mathsCropsReadCorrectly": "0/6"
+  }
+}

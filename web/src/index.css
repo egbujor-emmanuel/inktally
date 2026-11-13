@@ -97,14 +97,17 @@ html, body { background: var(--color-paper); color: var(--color-ink); font-famil
 }
 .assist-chip:hover { background: var(--color-paper-deep); }
 .pill { display: inline-flex; align-items: center; border: 1px solid currentColor; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 600; }
-.hscroll { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.hscroll { position: relative; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
 .hscroll::-webkit-scrollbar { display: none; }
 
 /* Material tab row (Android TabRow / ScrollableTabRow). */
-.tabs { display: flex; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--color-border); }
+.tabs { position: relative; display: flex; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--color-border); }
 .tabs::-webkit-scrollbar { display: none; }
 .tab { flex: none; padding: 14px 18px; font-size: 14px; font-weight: 500; color: var(--color-pen); border-bottom: 3px solid transparent; white-space: nowrap; }
 .tab[aria-current="page"], .tab[aria-selected="true"] { border-bottom-color: var(--color-pen); }
+
+/* Grid children may shrink below their content width, so wide tables scroll inside their box instead of widening the page. */
+main .grid > * { min-width: 0; }
 
 :focus-visible { outline: 3px solid var(--color-pen); outline-offset: 2px; border-radius: 6px; }
 
