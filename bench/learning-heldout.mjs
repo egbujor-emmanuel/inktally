@@ -17,6 +17,8 @@ const CODE = process.env.REDPEN_CODE;
 const DIR = process.env.SHEETS || 'heldout';
 const PROFILE = process.env.CHROME_PROFILE || '/tmp/chrome-profile';
 const OUT = 'out';
+/** Which conditions to run, e.g. CONDITIONS=B (default: all three). */
+const ONLY = (process.env.CONDITIONS || 'A,B,C').split(',');
 if (!CODE) throw new Error('Set REDPEN_CODE');
 mkdirSync(OUT, { recursive: true });
 mkdirSync(PROFILE, { recursive: true });
@@ -83,7 +85,8 @@ async function markOne(sheet) {
   const rows = await readRows();
   const total = await page.getByText(/^Total:/).first().innerText();
   log(`  ${sheet.name}: ${total} | device read ${rows.map((r) => JSON.stringify(r.read)).join(' ')}`);
-  return { name: sheet.name, truth: sheet.truth, device: rows.map((r) => r.read), total, rows: rows.map((r) => r.text) };
+  const held = rows.map((r) => /Held for checking/.test(r.text));
+  return { name: sheet.name, truth: sheet.truth, device: rows.map((r) => r.read), held, total, rows: rows.map((r) => r.text) };
 }
 
 async function markOffline(sheets) {
@@ -121,36 +124,44 @@ try {
   await page.getByText('Gemini Nano ready').first().waitFor({ timeout: 20 * 60_000 });
   log('Gemini Nano ready');
 
+  if (ONLY.includes('A')) {
   await newAssignment('A-control');
   const aRead = await markOffline(HELD_OUT);
   const aCheck = await onlineCheck('A-control');
   result.conditions.A = { training: [], learned: 'none (no training sheet)', heldOut: aRead, afterCheck: aCheck.summary };
+  }
 
+  if (ONLY.includes('B')) {
   await newAssignment('B-guard');
   const bTrain = await markOffline([TRAIN]);
   const bLearn = await onlineCheck('B-guard-training');
   const bRead = await markOffline(HELD_OUT);
   const bCheck = await onlineCheck('B-guard');
   result.conditions.B = { training: bTrain, learned: bLearn.learned, trainingCheck: bLearn.summary, heldOut: bRead, afterCheck: bCheck.summary };
+  }
 
+  if (ONLY.includes('C')) {
   await newAssignment('C-noguard');
   const cTrain = await markOffline([TRAIN, { ...TRAIN, name: 'Chidi Okafor (training, 2nd copy)' }]);
   const cLearn = await onlineCheck('C-noguard-training');
   const cRead = await markOffline(HELD_OUT);
   const cCheck = await onlineCheck('C-noguard');
   result.conditions.C = { training: cTrain, learned: cLearn.learned, trainingCheck: cLearn.summary, heldOut: cRead, afterCheck: cCheck.summary };
+  }
 
   // Scoring: exact device reads vs what was written; "pushed to the key" = a correct letter read as another letter.
   const norm = (s) => (s ?? '').trim().toLowerCase();
   for (const [k, c] of Object.entries(result.conditions)) {
-    let exact = 0, total = 0;
+    let exact = 0, total = 0, heldCount = 0, misreadsHeld = 0;
     const misreads = [];
     for (const s of c.heldOut) s.truth.forEach((t, i) => {
       total += 1;
-      if (norm(s.device[i]) === norm(t)) exact += 1; else misreads.push(`${s.name} Q${i + 1}: wrote "${t}", device read "${s.device[i]}"`);
+      const ok = norm(s.device[i]) === norm(t);
+      if (s.held?.[i]) heldCount += 1;
+      if (ok) exact += 1; else { misreads.push(`${s.name} Q${i + 1}: wrote "${t}", device read "${s.device[i]}"${s.held?.[i] ? ' — HELD' : ''}`); if (s.held?.[i]) misreadsHeld += 1; }
     });
-    c.score = { exact, total, misreads };
-    log(`${k}: held-out device reads exactly right ${exact}/${total}` + NL + misreads.map((m) => '   ' + m).join(NL));
+    c.score = { exact, total, misreads, held: heldCount, misreadsHeld };
+    log(`${k}: held-out device reads exactly right ${exact}/${total}; held for checking ${heldCount} (misreads held ${misreadsHeld}/${misreads.length})` + NL + misreads.map((m) => '   ' + m).join(NL));
   }
   log('HELDOUT DONE');
 } catch (err) {
