@@ -7,9 +7,11 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import app.redpen.teacher.ai.REMOTE_DEFAULTS
 import com.google.firebase.Firebase
-import com.google.firebase.ai.ondevice.DownloadStatus
-import com.google.firebase.ai.ondevice.FirebaseAIOnDevice
-import com.google.firebase.ai.ondevice.OnDeviceModelStatus
+import app.redpen.teacher.ai.Ai
+import com.google.firebase.ai.DownloadStatus
+import com.google.firebase.ai.OnDeviceModelOption
+import com.google.firebase.ai.OnDeviceModelStatus
+import com.google.firebase.ai.type.PublicPreviewAPI
 import com.google.firebase.appcheck.appCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
@@ -65,7 +67,12 @@ object Connectivity {
     }
 }
 
-/** Gemini Nano (AICore) status. The SDK does NOT auto-download, so the app offers the download. */
+/**
+ * Gemini Nano (AICore) status. The SDK does NOT auto-download, so the app offers the download.
+ * Status and download go through the reading model's own on-device extension, for each Nano option, because a phone
+ * can support one Nano model (e.g. PREVIEW, Gemini Nano 4) while reporting the default one as unavailable.
+ */
+@OptIn(PublicPreviewAPI::class)
 object DeviceModel {
     sealed interface State {
         data object Checking : State
@@ -83,21 +90,46 @@ object DeviceModel {
      * Re-checks Gemini Nano. Called at start-up, after a download finishes, and whenever the connection changes,
      * so "offline: mark on this device" is always current in the same session (same as web refreshDeviceCapability).
      */
+    /** Every option's status from the last check, e.g. "preview=AVAILABLE, stable=UNAVAILABLE" (shown in logs and tests). */
+    @Volatile var lastStatuses: String = ""
+        private set
+
     suspend fun refresh() {
         val fresh = try {
-            when (FirebaseAIOnDevice.checkStatus()) {
-                OnDeviceModelStatus.AVAILABLE -> State.Ready
-                OnDeviceModelStatus.DOWNLOADABLE -> State.Downloadable
-                OnDeviceModelStatus.DOWNLOADING -> State.Downloading(0)
-                else -> State.Unavailable
-            }
+            probe()
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
+            lastStatuses = "error: ${e.message}"
             State.Unavailable
         }
         // Keep the byte count of a download in progress instead of resetting it to 0.
         if (!(fresh is State.Downloading && _state.value is State.Downloading)) _state.value = fresh
+    }
+
+    /** Ready beats downloading beats downloadable; the chosen option is used for every on-device read. */
+    private suspend fun probe(): State {
+        val found = Ai.deviceOptions().map { it to statusOf(it) }
+        lastStatuses = found.joinToString { (option, status) -> "${Ai.optionName(option)}=${status.second ?: status.first}" }
+        val pick = found.firstOrNull { it.second.first == OnDeviceModelStatus.AVAILABLE }
+            ?: found.firstOrNull { it.second.first == OnDeviceModelStatus.DOWNLOADING }
+            ?: found.firstOrNull { it.second.first == OnDeviceModelStatus.DOWNLOADABLE }
+            ?: return State.Unavailable
+        Ai.deviceOption = pick.first
+        return when (pick.second.first) {
+            OnDeviceModelStatus.AVAILABLE -> State.Ready
+            OnDeviceModelStatus.DOWNLOADING -> State.Downloading(0)
+            else -> State.Downloadable
+        }
+    }
+
+    /** Status of one Nano option. AICore can throw (e.g. 606 "feature not found") instead of answering UNAVAILABLE. */
+    private suspend fun statusOf(option: OnDeviceModelOption): Pair<OnDeviceModelStatus, String?> = try {
+        (Ai.onDevice(option)?.checkStatus() ?: OnDeviceModelStatus.UNAVAILABLE) to null
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        OnDeviceModelStatus.UNAVAILABLE to "error(${e::class.simpleName}: ${e.message?.take(80)})"
     }
 
     suspend fun download() {
@@ -106,7 +138,9 @@ object DeviceModel {
     }
 
     private suspend fun collectDownload() {
-        FirebaseAIOnDevice.download().collect { s ->
+        val option = Ai.deviceOption ?: Ai.deviceOptions().first()
+        val extension = Ai.onDevice(option) ?: run { _state.value = State.Unavailable; return }
+        extension.download().collect { s ->
             _state.value = when (s) {
                 is DownloadStatus.DownloadStarted -> State.Downloading(0)
                 is DownloadStatus.DownloadInProgress -> State.Downloading(s.totalBytesDownloaded)

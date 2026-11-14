@@ -11,9 +11,8 @@ import app.redpen.teacher.domain.Question
 import app.redpen.teacher.domain.ReadSource
 import app.redpen.teacher.marking.parseNumericAnswer
 import com.google.firebase.ai.InferenceMode
-import com.google.firebase.ai.ondevice.DownloadStatus
-import com.google.firebase.ai.ondevice.FirebaseAIOnDevice
-import com.google.firebase.ai.ondevice.OnDeviceModelStatus
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertTrue
@@ -46,24 +45,27 @@ class OnDeviceNanoTest {
     @Test
     fun readsStudentHandwritingWithGeminiNanoOnDevice() = runBlocking {
         val device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} (API ${android.os.Build.VERSION.SDK_INT})"
-        var status = FirebaseAIOnDevice.checkStatus()
-        log("DEVICE $device | Nano status $status")
-        if (status == OnDeviceModelStatus.DOWNLOADABLE || status == OnDeviceModelStatus.DOWNLOADING) {
-            val started = System.currentTimeMillis()
-            withTimeoutOrNull(20 * 60_000L) {
-                FirebaseAIOnDevice.download().collect { s ->
-                    when (s) {
-                        is DownloadStatus.DownloadInProgress -> if (s.totalBytesDownloaded % (50_000_000L) < 1_000_000L) log("download ${s.totalBytesDownloaded / 1_000_000} MB")
-                        is DownloadStatus.DownloadCompleted -> log("download completed in ${(System.currentTimeMillis() - started) / 1000} s")
-                        is DownloadStatus.DownloadFailed -> log("download FAILED: $s")
-                        else -> log("download $s")
-                    }
-                }
-            } ?: log("download timed out after 20 min")
-            status = FirebaseAIOnDevice.checkStatus()
-            log("Nano status after download: $status")
+        // Same check the app makes (DeviceModel): every Nano option through the reading model's own on-device API.
+        DeviceModel.refresh()
+        log("DEVICE $device | Nano ${DeviceModel.state.value} | ${DeviceModel.lastStatuses}")
+        // A freshly wiped phone may not have fetched its AICore configuration yet: keep checking for a few minutes.
+        val waitUntil = System.currentTimeMillis() + CONFIG_WAIT_MS
+        while (DeviceModel.state.value == DeviceModel.State.Unavailable && System.currentTimeMillis() < waitUntil) {
+            delay(30_000)
+            DeviceModel.refresh()
+            log("re-check | ${DeviceModel.state.value} | ${DeviceModel.lastStatuses}")
         }
-        assumeTrue("Gemini Nano not available on $device ($status)", status == OnDeviceModelStatus.AVAILABLE)
+        if (DeviceModel.state.value == DeviceModel.State.Downloadable || DeviceModel.state.value is DeviceModel.State.Downloading) {
+            val started = System.currentTimeMillis()
+            val progress = launch { while (true) { delay(30_000); log("download ${DeviceModel.state.value}") } }
+            withTimeoutOrNull(20 * 60_000L) { DeviceModel.download() } ?: log("download timed out after 20 min")
+            progress.cancel()
+            DeviceModel.refresh()
+            log("after download (${(System.currentTimeMillis() - started) / 1000} s) | ${DeviceModel.state.value} | ${DeviceModel.lastStatuses}")
+        }
+        val status = DeviceModel.state.value
+        assumeTrue("Gemini Nano not ready on $device: $status | ${DeviceModel.lastStatuses}", status == DeviceModel.State.Ready)
+        log("USING Nano option ${Ai.deviceOption?.let { Ai.optionName(it) }}")
 
         val assets = InstrumentationRegistry.getInstrumentation().context.assets
         var mathsExact = 0
@@ -82,5 +84,9 @@ class OnDeviceNanoTest {
         assertTrue("expected every read to run on-device", onDeviceReads == cases.size)
     }
 
-    private companion object { const val TAG = "REDPEN_NANO" }
+    private companion object {
+        const val TAG = "REDPEN_NANO"
+        /** How long to wait for a freshly wiped Test Lab phone to fetch its AICore (Gemini Nano) configuration. */
+        const val CONFIG_WAIT_MS = 5 * 60_000L
+    }
 }

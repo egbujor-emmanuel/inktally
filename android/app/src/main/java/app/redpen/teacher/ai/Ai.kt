@@ -105,6 +105,28 @@ object Ai {
         else -> OnDeviceModelOption.PREVIEW // Gemini Nano 4 Full on supported devices
     }
 
+    /**
+     * The Gemini Nano model this phone actually uses: Remote Config's choice when the phone supports it, otherwise the
+     * first other option it does support. Chosen by DeviceModel.refresh() with the same API the reads use.
+     */
+    @Volatile var deviceOption: OnDeviceModelOption? = null
+
+    /** Nano options to try on this phone, Remote Config's choice first. */
+    fun deviceOptions(): List<OnDeviceModelOption> =
+        listOf(deviceModel(), OnDeviceModelOption.PREVIEW, OnDeviceModelOption.STABLE, OnDeviceModelOption.PREVIEW_FAST).distinct()
+
+    fun optionName(option: OnDeviceModelOption): String = when (option) {
+        OnDeviceModelOption.STABLE -> "stable"
+        OnDeviceModelOption.PREVIEW_FAST -> "preview_fast"
+        else -> "preview"
+    }
+
+    /** The on-device side of a model set up exactly like the reading model: used for status checks and the download. */
+    fun onDevice(option: OnDeviceModelOption) = Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel(
+        modelName = cfg("cloud_read_model"),
+        onDeviceConfig = OnDeviceConfig(mode = InferenceMode.ONLY_ON_DEVICE, modelOption = option),
+    ).onDeviceExtension
+
     /** Thinking level from Remote Config (benchmarked: MINIMAL reads as accurately as the default, ~3x faster). */
     private fun thinking(key: String) = when (cfg(key).trim().uppercase()) {
         "MINIMAL" -> thinkingConfig { thinkingLevel = ThinkingLevel.MINIMAL }
@@ -133,7 +155,7 @@ object Ai {
             thinkingConfig = if (routing.thinkingAllowed(cloudModel)) thinking("read_thinking") else null
         },
         requestOptions = RequestOptions(timeoutInMillis = TIMEOUT_MS),
-        onDeviceConfig = OnDeviceConfig(mode = mode(force), temperature = 0f, modelOption = deviceModel()),
+        onDeviceConfig = OnDeviceConfig(mode = mode(force), temperature = 0f, modelOption = deviceOption ?: deviceModel()),
     )
 
     /** Long-form authoring (answer keys, catch-up sheets): cloud only. */
