@@ -2,9 +2,9 @@ package app.redpen.teacher.ai
 
 // Strict parsing of model replies that decide marks (pure, unit-tested).
 
-private val PRESENT_FIELD = Regex("\"present\"\s*:\s*(true|false)", RegexOption.IGNORE_CASE)
-private val BARE_YES = Regex("^(true|yes)\b", RegexOption.IGNORE_CASE)
-private val BARE_NO = Regex("^(false|no)\b", RegexOption.IGNORE_CASE)
+private val PRESENT_FIELD = Regex(""""present"\s*:\s*(true|false)""", RegexOption.IGNORE_CASE)
+private val BARE_YES = Regex("""^(true|yes)\b""", RegexOption.IGNORE_CASE)
+private val BARE_NO = Regex("""^(false|no)\b""", RegexOption.IGNORE_CASE)
 
 /**
  * The yes/no answer of one marking-point check. Accepts {"present": true|false} (cloud, or on-device honouring the
