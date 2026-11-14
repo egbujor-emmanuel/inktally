@@ -1,0 +1,100 @@
+{
+  "at": "2026-11-14T19:15:36.616Z",
+  "site": "https://redpen-hybrid.web.app",
+  "quickMark": [
+    {
+      "run": 1,
+      "total": "Total: 4/6",
+      "keyQuestions": 18,
+      "seconds": 27,
+      "rows": [
+        "Q1 1/1 AI read: “7x8=56” Cloud Marked by code Cloud read Answer 56 matches the marking scheme.",
+        "Q2 0/1 AI read: “15+9=23” Cloud Marked by code Cloud read Answer 23; expected 24.",
+        "Q3 1/1 AI read: “144÷12=12” Cloud Marked by code Cloud read Answer 12 matches the marking scheme.",
+        "Q4 1/1 AI read: “3/4+1/4=1” Cloud Marked by code Cloud read Answer 1 matches the marking scheme.",
+        "Q5 0/1 AI read: “25% of 80=25” Cloud Marked by code Cloud read Answer 25; expected 20.",
+        "Q6 1/1 AI read: “6 crates x 4,500= #27,000 Answer = 27,000” Cloud Marked by code Cloud read Answer 27000 matches the marking scheme."
+      ]
+    },
+    {
+      "run": 2,
+      "total": "Total: 4/6",
+      "keyQuestions": 18,
+      "seconds": 20,
+      "rows": [
+        "Q1 1/1 AI read: “7 x 8 = 56” Cloud Marked by code Cloud read Answer 56 matches the marking scheme.",
+        "Q2 0/1 AI read: “15 + 9 = 23” Cloud Marked by code Cloud read Answer 23; expected 24.",
+        "Q3 1/1 AI read: “144 ÷ 12 = 12” Cloud Marked by code Cloud read Answer 12 matches the marking scheme.",
+        "Q4 1/1 AI read: “3 – – + 4 – – = 1” Cloud Marked by code Cloud read Answer 1 matches the marking scheme.",
+        "Q5 0/1 AI read: “25% of 80 = 25” Cloud Marked by code Cloud read Answer 25; expected 20.",
+        "Q6 1/1 AI read: “6 crates x 4,500 = ₦ 27,000” Cloud Marked by code Cloud read Answer 27000 matches the marking scheme."
+      ]
+    },
+    {
+      "run": 3,
+      "total": "Total: 4/6",
+      "keyQuestions": 18,
+      "seconds": 14,
+      "rows": [
+        "Q1 1/1 AI read: “7 x 8 = 56” Cloud Marked by code Cloud read Answer 56 matches the marking scheme.",
+        "Q2 0/1 AI read: “15 + 9 = 23” Cloud Marked by code Cloud read Answer 23; expected 24.",
+        "Q3 1/1 AI read: “144 ÷ 12 = 12” Cloud Marked by code Cloud read Answer 12 matches the marking scheme.",
+        "Q4 1/1 AI read: “3 ¼ + 1 ¼ = 1” Cloud Marked by code Cloud read Answer 1 matches the marking scheme.",
+        "Q5 0/1 AI read: “25% of 80 = 25” Cloud Marked by code Cloud read Answer 25; expected 20.",
+        "Q6 1/1 AI read: “6 crates x 4,500 = ₦ 27,000 Answer = 27,000” Cloud Marked by code Cloud read Answer 27000 matches the marking scheme."
+      ]
+    },
+    {
+      "run": 4,
+      "total": "Total: 4/6",
+      "keyQuestions": 18,
+      "seconds": 13,
+      "rows": [
+        "Q1 1/1 AI read: “7 x 8 = 56” Cloud Marked by code Cloud read Answer 56 matches the marking scheme.",
+        "Q2 0/1 AI read: “15 + 9 = 23” Cloud Marked by code Cloud read Answer 23; expected 24.",
+        "Q3 1/1 AI read: “144 ÷ 12 = 12” Cloud Marked by code Cloud read Answer 12 matches the marking scheme.",
+        "Q4 1/1 AI read: “3/4 + 1/4 = 1” Cloud Marked by code Cloud read Answer 1 matches the marking scheme.",
+        "Q5 0/1 AI read: “25% of 80 = 25” Cloud Marked by code Cloud read Answer 25; expected 20.",
+        "Q6 1/1 AI read: “6 crates x 4,500 = ₦27,000” Cloud Marked by code Cloud read Answer 27000 matches the marking scheme."
+      ]
+    },
+    {
+      "run": 5,
+      "total": "Total: 4/6",
+      "keyQuestions": 18,
+      "seconds": 12,
+      "rows": [
+        "Q1 1/1 AI read: “7x8 = 56” Cloud Marked by code Cloud read Answer 56 matches the marking scheme.",
+        "Q2 0/1 AI read: “15 + 9 = 23” Cloud Marked by code Cloud read Answer 23; expected 24.",
+        "Q3 1/1 AI read: “144 ÷ 12 = 12” Cloud Marked by code Cloud read Answer 12 matches the marking scheme.",
+        "Q4 1/1 AI read: “3/4 + 1/4 = 1” Cloud Marked by code Cloud read Answer 1 matches the marking scheme.",
+        "Q5 0/1 AI read: “25% of 80 = 25” Cloud Marked by code Cloud read Answer 25; expected 20.",
+        "Q6 1/1 AI read: “6 crates x 4,500 = ₦ 27,000 Answer = 27,000” Cloud Marked by code Cloud read Answer 27000 matches the marking scheme."
+      ]
+    }
+  ],
+  "ownScheme": [
+    {
+      "kind": "typed",
+      "saved": false,
+      "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea').last()\u001b[22m\n\u001b[2m    - locator resolved to <textarea id=\"g-recaptcha-re",
+      "alert": []
+    },
+    {
+      "kind": "typed",
+      "saved": false,
+      "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea').last()\u001b[22m\n\u001b[2m    - locator resolved to <textarea id=\"g-recaptcha-re",
+      "alert": []
+    },
+    {
+      "kind": "photo",
+      "saved": true,
+      "url": "https://redpen-hybrid.web.app/a/NfZihk71UWlT1PoTZJB4/print"
+    },
+    {
+      "kind": "photo",
+      "saved": true,
+      "url": "https://redpen-hybrid.web.app/a/MUOgcvQFUncwMD6GeJCE/print"
+    }
+  ]
+}
