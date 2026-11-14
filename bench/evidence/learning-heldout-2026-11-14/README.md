@@ -29,3 +29,21 @@ second sighting" does not remove that risk. Holding does.
 
 Files: `learning-heldout.json` (every reading), `learning-heldout.log`, `learning-heldout.mp4` (screen recording),
 `heldout-*-review.png` (Review tab after each condition's cloud check), `sheets/`.
+
+## Live check of the shipped design (`live-held-run/`)
+
+The same condition B, run again on the live site after the holding design was deployed (service-worker cache cleared
+first so the new build is used). The training sheet's cloud check found 2 misreads ("A" for "D", "raned" for "runned").
+Then the five unseen students were read on-device, offline:
+
+| | Count |
+|---|---|
+| Device readings exactly right | 18/25 |
+| Device misreads | 7 |
+| Misreads shown as **Check this** before reconnecting | **7/7** — 4 held by the learned misread, 3 already flagged by the engine ("raned" is close to "ran") |
+| Correct readings also held for a look | 5 |
+| Readings changed by REDPEN | 0 |
+
+One held misread would otherwise have been false credit: Femi wrote "D" on Q3, Nano read "A", and "A" is the correct
+answer. Since this run, engine-flagged readings also get the learned reason ("Gemini Nano has read “runned” as “raned”
+before"), so the teacher knows what was probably written.

@@ -249,6 +249,15 @@ class HybridTest {
         assertTrue(held.reasons.last().contains("read “D” as “A” before"))
     }
 
+    @Test fun aReadingTheEngineAlreadyFlaggedAlsoGetsTheKnownMisreadReason() {
+        val shortRun = Question.Short(5, "Past tense of 'run'", 1, listOf("ran"), reject = listOf("runned"), spellingTolerant = true)
+        val unsure = markShort(shortRun, "raned", ReadSource.ON_DEVICE)
+        assertEquals(MarkStatus.FLAGGED, unsure.status)
+        val held = holdIfKnownMisread(unsure, learned, "short")
+        assertTrue(held.reasons.last().contains("read “runned” as “raned” before"))
+        assertSame(held, holdIfKnownMisread(held, learned, "short"))
+    }
+
     @Test fun otherReadingsOtherTypesAndCloudReadsAreNotHeld() {
         assertEquals(MarkStatus.PROVISIONAL, holdIfKnownMisread(markObjective(objQ, "B", ReadSource.ON_DEVICE), learned, "objective").status)
         assertEquals(MarkStatus.VERIFIED, holdIfKnownMisread(markObjective(objQ, "A", ReadSource.IN_CLOUD), learned, "objective").status)

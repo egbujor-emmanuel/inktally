@@ -65,9 +65,12 @@ export function knownMisread(hints: ReadingHint[] | undefined, type: QuestionTyp
 /** Marks a held reading. Detected by isHeld(); used by reconcile() so the cloud check still compares both readings. */
 export const HELD_PREFIX = 'Held for checking:';
 
-/** An on-device mark whose reading matches a known misread becomes "Check this", with the reason. The reading is never changed. */
+/**
+ * An on-device mark whose reading matches a known misread becomes "Check this", with the reason (also added when the
+ * engine already flagged it, because it tells the teacher what was probably written). The reading is never changed.
+ */
 export function holdIfKnownMisread(mark: Mark, hints: ReadingHint[] | undefined, type: QuestionType): Mark {
-  if (mark.readSource !== 'on_device' || mark.status !== 'provisional') return mark;
+  if (mark.readSource !== 'on_device' || (mark.status !== 'provisional' && mark.status !== 'flagged') || isHeld(mark)) return mark;
   const h = knownMisread(hints, type, mark.read);
   if (!h) return mark;
   const times = seen(h) > 1 ? ` (${seen(h)} times)` : '';

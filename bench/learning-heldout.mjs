@@ -114,6 +114,8 @@ async function onlineCheck(label) {
 
 const result = { at: new Date().toISOString(), site: SITE, conditions: {} };
 try {
+  // Always test the build that is live now: drop any service worker / cached app from an earlier run (Nano itself is kept).
+  await cdp.send('Storage.clearDataForOrigin', { origin: new URL(SITE).origin, storageTypes: 'service_workers,cache_storage' });
   await page.goto(SITE, { waitUntil: 'load' });
   if (await page.locator('text=REDPEN preview').count()) { await page.fill('input', CODE); await page.click('button[type=submit]'); }
   await page.getByText('Try it with a sample').waitFor({ timeout: 60_000 });

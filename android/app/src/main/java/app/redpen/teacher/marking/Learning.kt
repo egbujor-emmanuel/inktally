@@ -69,9 +69,12 @@ fun knownMisread(hints: List<ReadingHint>?, type: String, read: String): Reading
 /** Marks a held reading (same text as web). Detected by [isHeld]; reconcile() still compares both readings. */
 const val HELD_PREFIX = "Held for checking:"
 
-/** An on-device mark whose reading matches a known misread becomes "Check this", with the reason. The reading is never changed. */
+/**
+ * An on-device mark whose reading matches a known misread becomes "Check this", with the reason (also added when the
+ * engine already flagged it, because it tells the teacher what was probably written). The reading is never changed.
+ */
 fun holdIfKnownMisread(mark: Mark, hints: List<ReadingHint>?, type: String): Mark {
-    if (mark.readSource != ReadSource.ON_DEVICE || mark.status != MarkStatus.PROVISIONAL) return mark
+    if (mark.readSource != ReadSource.ON_DEVICE || (mark.status != MarkStatus.PROVISIONAL && mark.status != MarkStatus.FLAGGED) || isHeld(mark)) return mark
     val h = knownMisread(hints, type, mark.read) ?: return mark
     val times = if (h.n > 1) " (${h.n} times)" else ""
     return mark.copy(status = MarkStatus.FLAGGED, reasons = mark.reasons +

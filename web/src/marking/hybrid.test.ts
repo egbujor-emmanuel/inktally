@@ -167,6 +167,15 @@ describe('learned misreads hold matching on-device readings for checking', () =>
     expect(held.reasons.at(-1)).toContain('read “D” as “A” before');
   });
 
+  test('a reading the engine already flagged also gets the known-misread reason (it tells the teacher what was probably written)', () => {
+    const shortRun: Question = { q: 5, type: 'short', prompt: "Past tense of 'run'", max: 1, accept: ['ran'], reject: ['runned'], spellingTolerant: true };
+    const unsure = markShort(shortRun as never, 'raned', 'on_device');
+    expect(unsure.status).toBe('flagged');
+    const held = holdIfKnownMisread(unsure, learned, 'short');
+    expect(held.reasons.at(-1)).toContain('read “runned” as “raned” before');
+    expect(holdIfKnownMisread(held, learned, 'short')).toBe(held); // never added twice
+  });
+
   test('other readings, other question types and cloud reads are not held', () => {
     expect(holdIfKnownMisread(markObjective(objQ as never, 'B', 'on_device'), learned, 'objective').status).toBe('provisional');
     expect(holdIfKnownMisread(markObjective(objQ as never, 'A', 'in_cloud'), learned, 'objective').status).toBe('verified');
