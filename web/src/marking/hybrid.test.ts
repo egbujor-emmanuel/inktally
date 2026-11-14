@@ -8,11 +8,11 @@ vi.mock('firebase/remote-config', () => ({ getValue: () => ({ asString: () => ''
 
 const { reconcile, sameReading } = await import('./markAnswer');
 const { keepReviewed, summarise, needsCheck } = await import('./cloudCheck');
-const { learnFromCheck, mergeHints, learnedHint, countNewHints, usableHint, HINT_LIMIT } = await import('./learning');
+const { learnFromCheck, mergeHints, countNewHints, knownMisread, holdIfKnownMisread, isHeld, HINT_LIMIT } = await import('./learning');
 const { parsePresent } = await import('../ai/points');
 const { regradeAll, regradeMark } = await import('./regrade');
 const { statusLabel } = await import('./statusLabel');
-const { markNumeric, markShort } = await import('./engine');
+const { markNumeric, markShort, markObjective } = await import('./engine');
 
 const numericQ: Question = { q: 1, type: 'numeric', prompt: '7 x 8', max: 1, accept: [56] };
 const shortQ: Question = { q: 2, type: 'short', prompt: 'Capital of Nigeria', max: 1, accept: ['Abuja'], spellingTolerant: true };
@@ -86,14 +86,12 @@ describe('the cloud teaches the device', () => {
     expect(new Set(merged.map((h) => h.device)).size).toBe(HINT_LIMIT);
   });
 
-  test('the on-device prompt hint only uses hints for the same question type, newest first', () => {
-    const hints = [{ type: 'numeric' as const, device: '7', cloud: '1', n: 2 }, { type: 'short' as const, device: 'Abuya', cloud: 'Abuja' }, { type: 'numeric' as const, device: '5', cloud: 'S', n: 2 }];
-    const text = learnedHint(hints, 'numeric');
-    expect(text).toContain('"5" was really "S"');
-    expect(text.indexOf('"5"')).toBeLessThan(text.indexOf('"7"'));
-    expect(text).not.toContain('Abuya');
-    expect(learnedHint(hints, 'objective')).toBe('');
-    expect(learnedHint(undefined, 'numeric')).toBe('');
+  test('a known misread is matched by question type, case and spacing aside', () => {
+    const hints = [{ type: 'numeric' as const, device: '7', cloud: '1' }, { type: 'short' as const, device: 'Abuya', cloud: 'Abuja' }];
+    expect(knownMisread(hints, 'short', ' abuya ')?.cloud).toBe('Abuja');
+    expect(knownMisread(hints, 'numeric', 'Abuya')).toBeUndefined();
+    expect(knownMisread(hints, 'short', '')).toBeUndefined();
+    expect(knownMisread(undefined, 'numeric', '7')).toBeUndefined();
   });
 
   test('hint text cannot break out of the prompt (quotes and tags stripped, length capped)', () => {
@@ -154,15 +152,51 @@ describe('reviewer B2 findings: "confirmed" needs two real, agreeing readings', 
   });
 });
 
-describe('learning guard rails', () => {
-  test('a one-letter confusion is only used once it has been seen twice', () => {
-    const once = mergeHints([], [{ type: 'objective', device: 'A', cloud: 'D' }]);
-    expect(usableHint(once[0])).toBe(false);
-    expect(learnedHint(once, 'objective')).toBe('');
-    const twice = mergeHints(once, [{ type: 'objective', device: 'A', cloud: 'D' }]);
-    expect(twice).toEqual([{ type: 'objective', device: 'A', cloud: 'D', n: 2 }]);
-    expect(learnedHint(twice, 'objective')).toContain('"A" was really "D"');
-    expect(usableHint({ type: 'short', device: 'raned', cloud: 'runned' })).toBe(true);
+describe('learned misreads hold matching on-device readings for checking', () => {
+  const objQ: Question = { q: 2, type: 'objective', prompt: 'Pick one', max: 1, correct: ['D'] };
+  const learned = [{ type: 'objective' as const, device: 'A', cloud: 'D' }, { type: 'short' as const, device: 'raned', cloud: 'runned' }];
+
+  test('a reading that matches a known misread is held as "Check this" — the reading and score are never changed', () => {
+    const read = markObjective(objQ as never, 'A', 'on_device');
+    const held = holdIfKnownMisread(read, learned, 'objective');
+    expect(held.status).toBe('flagged');
+    expect(statusLabel(held)).toBe('Check this');
+    expect(held.read).toBe('A');
+    expect(held.awarded).toBe(read.awarded);
+    expect(isHeld(held)).toBe(true);
+    expect(held.reasons.at(-1)).toContain('read “D” as “A” before');
+  });
+
+  test('other readings, other question types and cloud reads are not held', () => {
+    expect(holdIfKnownMisread(markObjective(objQ as never, 'B', 'on_device'), learned, 'objective').status).toBe('provisional');
+    expect(holdIfKnownMisread(markObjective(objQ as never, 'A', 'in_cloud'), learned, 'objective').status).toBe('verified');
+    expect(holdIfKnownMisread(markShort(shortQ as never, 'A', 'on_device'), learned, 'short').status).not.toBe('flagged');
+  });
+
+  test('the cloud check still compares a held reading with its own', () => {
+    const held = holdIfKnownMisread(markObjective(objQ as never, 'A', 'on_device'), learned, 'objective');
+    const disagree = reconcile(held, markObjective(objQ as never, 'D', 'in_cloud'));
+    expect(disagree.status).toBe('flagged');
+    expect(disagree.reasons[0]).toContain('Device read "A"');
+    const agree = reconcile(held, markObjective(objQ as never, 'A', 'in_cloud'));
+    expect(statusLabel(agree)).toBe('Verified');
+  });
+
+  test('replaying the held-out run on real Gemini Nano: every misread on unseen students is held', () => {
+    // Condition B of bench/evidence/learning-heldout-2026-11-14: misreads learned from the training sheet only, then
+    // five other students read on-device offline. [type, what the student wrote, what the device read]
+    const B: [Question['type'], string, string][] = [
+      ['objective', 'D', 'D'], ['objective', 'D', 'A'], ['objective', 'A', 'A'], ['short', 'Abuja', 'Abuja'], ['short', 'ran', 'ran'],
+      ['objective', 'A', 'A'], ['objective', 'D', 'A'], ['objective', 'A', 'A'], ['short', 'FCT', 'FCT'], ['short', 'runned', 'raned'],
+      ['objective', 'B', 'B'], ['objective', 'A', 'A'], ['objective', 'A', 'A'], ['short', 'Abuja', 'Abuja'], ['short', 'runned', 'runned'],
+      ['objective', 'C', 'C'], ['objective', 'D', 'D'], ['objective', 'B', 'B'], ['short', 'Abuja', 'Abuja'], ['short', 'ran', 'ran'],
+      ['objective', 'D', 'D'], ['objective', 'D', 'A'], ['objective', 'D', 'A'], ['short', 'Lagos', 'Lagos'], ['short', 'runned', 'raned'],
+    ];
+    const misreads = B.filter(([, wrote, read]) => wrote !== read);
+    const held = B.filter(([type, , read]) => knownMisread(learned, type, read));
+    expect(misreads).toHaveLength(6);
+    expect(misreads.every(([type, , read]) => knownMisread(learned, type, read))).toBe(true); // all 6 caught
+    expect(held.length - misreads.length).toBe(5); // correct reads also held for a look
   });
 
   test('only new confusions are counted as learned', () => {

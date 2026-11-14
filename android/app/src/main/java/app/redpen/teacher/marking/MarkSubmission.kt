@@ -46,7 +46,10 @@ object MarkSubmission {
         if (mode == PAGE) {
             withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PAGE_KEY, photo) }
             onProgress(Progress(emptyList(), a.scheme.questions.size))
-            val marks = Marker.markPage(a.scheme.questions, photo)
+            val read = Marker.markPage(a.scheme.questions, photo)
+            val marks = if (!Ai.deviceLearning()) read else read.map { m ->
+                a.scheme.questions.firstOrNull { it.q == m.q }?.let { holdIfKnownMisread(m, a.readingHints, it.wireType) } ?: m
+            }
             onProgress(Progress(marks, marks.size))
             Repo.saveMarks(a.id, sid, marks)
             return Outcome.Ok(marks, saveCopy(ctx, sid) { Render.pageCopy(ctx, photo, marks, label) })
@@ -71,9 +74,9 @@ object MarkSubmission {
                 }
                 for ((q, crop) in scan.crops) {
                     val question = a.scheme.questions.firstOrNull { it.q == q } ?: continue
-                    // What the cloud check taught the device about this class's handwriting (on-device reads only).
-                    val learned = if (Ai.deviceLearning()) learnedHint(a.readingHints, question.wireType) else ""
-                    collected += try { Marker.mark(question, crop, learned = learned) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { if (failFast) throw e; failedMark(q, question.max, e) }
+                    val mark = try { Marker.mark(question, crop) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { if (failFast) throw e; failedMark(q, question.max, e) }
+                    // A reading that matches a misread the cloud check found earlier on this assignment waits for the teacher.
+                    collected += if (Ai.deviceLearning()) holdIfKnownMisread(mark, a.readingHints, question.wireType) else mark
                     onProgress(Progress(collected.toList(), scan.crops.size, scan.crops))
                     Repo.saveMarks(a.id, sid, collected)
                 }

@@ -9,6 +9,7 @@ import { checkPointsBatch, readAnswersBatch, type CropToRead } from '../ai/batch
 import type { ReadMode } from '../ai/models';
 import { markNumeric, markObjective, markPoints, markShort } from './engine';
 import { textSimilarity } from './normalize';
+import { isHeld } from './learning';
 
 async function markFromRead(question: Question, read: string, source: ReadSource, mode?: ReadMode): Promise<Mark> {
   switch (question.type) {
@@ -67,8 +68,8 @@ export async function verifyMarksBatch(questions: Question[], crops: CropToRead[
   return previous.map((p) => { const c = cloud.find((m) => m.q === p.q); return c ? reconcile(p, c) : p; });
 }
 
-export async function markAnswer(question: Question, crop: Blob, mode?: ReadMode, learned = ''): Promise<Mark> {
-  const { text, source } = await readAnswer(crop, question.type, mode, learned);
+export async function markAnswer(question: Question, crop: Blob, mode?: ReadMode): Promise<Mark> {
+  const { text, source } = await readAnswer(crop, question.type, mode);
   return markFromRead(question, text, source, mode);
 }
 
@@ -128,11 +129,13 @@ export function sameReading(a: string, b: string): boolean {
 export function reconcile(previous: Mark, cloud: Mark): Mark {
   if (previous.status === 'reviewed') return previous;
   const sameScore = cloud.awarded === previous.awarded;
-  const realFirstRead = previous.status === 'provisional' || previous.status === 'verified';
+  // A reading held because it matched a known misread is still a real reading: the cloud check compares it as usual.
+  const deviceRead = previous.readSource === 'on_device' && (previous.status === 'provisional' || isHeld(previous));
+  const realFirstRead = deviceRead || previous.status === 'verified';
   if (realFirstRead && sameScore && cloud.status !== 'flagged' && sameReading(previous.read, cloud.read)) {
     return { ...cloud, reasons: [...cloud.reasons, previous.readSource === 'on_device' ? CONFIRMED_ON_DEVICE : CONFIRMED_CLOUD] };
   }
-  if (previous.readSource === 'on_device' && previous.status === 'provisional') {
+  if (deviceRead) {
     if (!sameScore) {
       return {
         ...cloud, status: 'flagged',

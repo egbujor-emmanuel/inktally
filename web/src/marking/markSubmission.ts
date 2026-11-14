@@ -4,7 +4,7 @@ import type { Assignment } from '../data/store';
 import { MARKED_KEY, PAGE_KEY, saveCrop, saveMarks } from '../data/store';
 import type { Mark } from '../domain/types';
 import { markAnswer, markAnswersBatch, markPage } from './markAnswer';
-import { learnedHint } from './learning';
+import { holdIfKnownMisread } from './learning';
 import { config } from '../ai/models';
 import { batchingEnabled } from '../ai/batch';
 import { cloudWillRead } from '../ai/models';
@@ -25,6 +25,9 @@ export interface MarkProgress {
 export type MarkOutcome =
   | { ok: true; marks: Mark[]; copy: Blob | null }
   | { ok: false; reason: string };
+
+/** Remote Config switch: use what cloud checks taught REDPEN about the device's misreads on this assignment. */
+const learning = (): boolean => config('device_learning') === 'true';
 
 export function failedMark(q: number, max: number, error: unknown): Mark {
   // Teachers see a short, plain reason — never a raw API error dump.
@@ -74,8 +77,8 @@ export async function markSheetSubmission(
     const question = assignment.scheme.questions.find((q) => q.q === crop.q);
     if (!question) continue;
     let mark: Mark;
-    const learned = config('device_learning') === 'true' ? learnedHint(assignment.readingHints, question.type) : '';
-    try { mark = await markAnswer(question, crop.blob, undefined, learned); } catch (e: unknown) { if (failFast) throw e; mark = failedMark(question.q, question.max, e); }
+    try { mark = await markAnswer(question, crop.blob); } catch (e: unknown) { if (failFast) throw e; mark = failedMark(question.q, question.max, e); }
+    if (learning()) mark = holdIfKnownMisread(mark, assignment.readingHints, question.type);
     collected.push(mark);
     onProgress?.({ marks: [...collected], total: scan.crops.length, crops });
     await saveMarks(assignment.id, submissionId, collected);
@@ -91,7 +94,10 @@ export async function markPageSubmission(
 ): Promise<MarkOutcome> {
   await saveCrop(submissionId, PAGE_KEY, photo);
   onProgress?.({ marks: [], total: assignment.scheme.questions.length });
-  const collected = await markPage(assignment.scheme.questions, photo);
+  const read = await markPage(assignment.scheme.questions, photo);
+  const typeOf = (q: number) => assignment.scheme.questions.find((x) => x.q === q)?.type;
+  const collected = learning()
+    ? read.map((m) => { const t = typeOf(m.q); return t ? holdIfKnownMisread(m, assignment.readingHints, t) : m; }) : read;
   onProgress?.({ marks: collected, total: collected.length });
   await saveMarks(assignment.id, submissionId, collected);
   const copy = await buildCopy(submissionId, () => markedPageCopy(photo, collected, label));

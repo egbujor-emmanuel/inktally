@@ -43,11 +43,13 @@ fun sameReading(a: String, b: String): Boolean {
 fun reconcile(previous: Mark, cloud: Mark): Mark {
     if (previous.status == MarkStatus.REVIEWED) return previous
     val sameScore = cloud.awarded == previous.awarded
-    val realFirstRead = previous.status == MarkStatus.PROVISIONAL || previous.status == MarkStatus.VERIFIED
+    // A reading held because it matched a known misread is still a real reading: the cloud check compares it as usual.
+    val deviceRead = previous.readSource == ReadSource.ON_DEVICE && (previous.status == MarkStatus.PROVISIONAL || isHeld(previous))
+    val realFirstRead = deviceRead || previous.status == MarkStatus.VERIFIED
     if (realFirstRead && sameScore && cloud.status != MarkStatus.FLAGGED && sameReading(previous.read, cloud.read)) {
         return cloud.copy(reasons = cloud.reasons + if (previous.readSource == ReadSource.ON_DEVICE) CONFIRMED_ON_DEVICE else CONFIRMED_CLOUD)
     }
-    if (previous.readSource == ReadSource.ON_DEVICE && previous.status == MarkStatus.PROVISIONAL) {
+    if (deviceRead) {
         if (!sameScore) return cloud.copy(status = MarkStatus.FLAGGED, reasons = listOf(
             "Device read \"${previous.read}\" (${previous.awarded}/${previous.max}); cloud read \"${cloud.read}\" (${cloud.awarded}/${cloud.max}). Which is right?"))
         if (!sameReading(previous.read, cloud.read)) return cloud.copy(reasons = cloud.reasons +
@@ -77,7 +79,7 @@ fun summarise(before: List<Mark>, after: List<Mark>): CheckSummary {
 fun checkSummaryLead(s: CheckSummary) = "Cloud check: ${s.confirmed} on-device mark${if (s.confirmed == 1) "" else "s"} confirmed"
 fun checkSummaryNeedYou(s: CheckSummary) = "${s.needTeacher} need${if (s.needTeacher == 1) "s" else ""} you"
 fun checkSummaryLearned(s: CheckSummary) =
-    if (s.learned > 0) " The device learned ${s.learned} thing${if (s.learned == 1) "" else "s"} about these students’ handwriting." else ""
+    if (s.learned > 0) " REDPEN learned ${s.learned} device misread${if (s.learned == 1) "" else "s"} to hold for checking." else ""
 
 /** The full status line as plain text (the app renders the "needs you" part as a link to the Review tab). */
 fun checkSummaryText(s: CheckSummary) =

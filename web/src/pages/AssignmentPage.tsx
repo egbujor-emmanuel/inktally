@@ -107,7 +107,7 @@ function CheckStatus({ check, reviewHref }: { check: CloudCheckState; reviewHref
         : summary && <span>
             Cloud check: {summary.confirmed} on-device mark{summary.confirmed === 1 ? '' : 's'} confirmed
             {summary.needTeacher > 0 && <>, <NavLink to={reviewHref} className="font-semibold text-pen underline">{summary.needTeacher} need{summary.needTeacher === 1 ? 's' : ''} you</NavLink></>}.
-            {summary.learned ? ` The device learned ${summary.learned} thing${summary.learned === 1 ? '' : 's'} about this class’s handwriting.` : ''}
+            {summary.learned ? ` REDPEN learned ${summary.learned} device misread${summary.learned === 1 ? '' : 's'} to hold for checking.` : ''}
           </span>}
     </p>
   );

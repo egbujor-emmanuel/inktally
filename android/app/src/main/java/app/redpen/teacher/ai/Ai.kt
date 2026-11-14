@@ -211,7 +211,7 @@ object Ai {
         }
     }
 
-    /** Remote Config switch for the learning loop (cloud corrections -> on-device read hints). */
+    /** Remote Config switch for the learning loop (cloud corrections -> hold matching on-device reads for checking). */
     fun deviceLearning() = cfg("device_learning").trim() == "true"
 
     private fun stripFence(raw: String) = raw.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
@@ -247,13 +247,9 @@ object Ai {
 
     data class Read(val text: String, val source: ReadSource)
 
-    /**
-     * Transcribes ONE cropped answer box; the question is never shown, so the model cannot auto-correct.
-     * [learned] is what the cloud check taught the device about this class's handwriting; it is never sent on
-     * cloud-only (verification) reads, so the checker stays independent of what it checks.
-     */
-    suspend fun readAnswer(crop: Bitmap, question: Question, force: InferenceMode? = null, learned: String = ""): Read {
-        val hint = (HINTS[question::class] ?: "") + if (force == InferenceMode.ONLY_IN_CLOUD) "" else learned
+    /** Transcribes ONE cropped answer box; the question is never shown, so the model cannot auto-correct. [force] = ONLY_IN_CLOUD for verification passes. */
+    suspend fun readAnswer(crop: Bitmap, question: Question, force: InferenceMode? = null): Read {
+        val hint = HINTS[question::class] ?: ""
         val prompt = fill(cfg("prompt_read_crop"), mapOf("hint" to hint))
         val started = System.currentTimeMillis()
         val response = retry { m -> model(Schema.obj(mapOf("text" to Schema.string())), force, m).generateContent(content { image(crop); text(prompt) }) }

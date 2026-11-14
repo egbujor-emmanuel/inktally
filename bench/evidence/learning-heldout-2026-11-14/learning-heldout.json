@@ -1,0 +1,516 @@
+{
+  "at": "2026-11-14T19:06:19.695Z",
+  "site": "https://redpen-hybrid.web.app",
+  "conditions": {
+    "A": {
+      "training": [],
+      "learned": "none (no training sheet)",
+      "heldOut": [
+        {
+          "name": "Amaka Eze",
+          "truth": [
+            "D",
+            "D",
+            "A",
+            "Abuja",
+            "ran"
+          ],
+          "device": [
+            "D",
+            "A",
+            "A",
+            "Abuja",
+            "ran"
+          ],
+          "total": "Total: 3/5",
+          "rows": [
+            "Q1 0/1 AI read: “D” On-device Marked by code Provisional Chose D; correct is B.",
+            "Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+            "Q5 1/1 AI read: “ran” On-device Marked by code Provisional \"ran\" matches an accepted answer."
+          ]
+        },
+        {
+          "name": "Tunde Bello",
+          "truth": [
+            "A",
+            "D",
+            "A",
+            "FCT",
+            "runned"
+          ],
+          "device": [
+            "A",
+            "D",
+            "A",
+            "FCT",
+            "raned"
+          ],
+          "total": "Total: 2/5",
+          "rows": [
+            "Q1 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is B.",
+            "Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 0/1 AI read: “FCT” On-device Marked by code Provisional \"FCT\" does not match: expected Abuja.",
+            "Q5 0/1 AI read: “raned” On-device Marked by code Check this \"raned\" is close to \"ran\" — accept it?"
+          ]
+        },
+        {
+          "name": "Ngozi Obi",
+          "truth": [
+            "B",
+            "A",
+            "A",
+            "Abuja",
+            "runned"
+          ],
+          "device": [
+            "B",
+            "A",
+            "A",
+            "Abuja",
+            "raned"
+          ],
+          "total": "Total: 3/5",
+          "rows": [
+            "Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.",
+            "Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+            "Q5 0/1 AI read: “raned” On-device Marked by code Check this \"raned\" is close to \"ran\" — accept it?"
+          ]
+        },
+        {
+          "name": "Musa Danjuma",
+          "truth": [
+            "C",
+            "D",
+            "B",
+            "Abuja",
+            "ran"
+          ],
+          "device": [
+            "C",
+            "D",
+            "B",
+            "Abuja",
+            "ran"
+          ],
+          "total": "Total: 3/5",
+          "rows": [
+            "Q1 0/1 AI read: “C” On-device Marked by code Provisional Chose C; correct is B.",
+            "Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.",
+            "Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.",
+            "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+            "Q5 1/1 AI read: “ran” On-device Marked by code Provisional \"ran\" matches an accepted answer."
+          ]
+        },
+        {
+          "name": "Femi Adeyemi",
+          "truth": [
+            "D",
+            "D",
+            "D",
+            "Lagos",
+            "runned"
+          ],
+          "device": [
+            "A",
+            "A",
+            "A",
+            "Lagos",
+            "runned"
+          ],
+          "total": "Total: 1/5",
+          "rows": [
+            "Q1 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is B.",
+            "Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 0/1 AI read: “Lagos” On-device Marked by code Provisional \"Lagos\" does not match: expected Abuja.",
+            "Q5 0/1 AI read: “runned” On-device Marked by code Provisional \"runned\" is listed as not acceptable."
+          ]
+        }
+      ],
+      "afterCheck": "Cloud check: 19 on-device marks confirmed, 3 need you. The device learned 2 things about this class’s handwriting.",
+      "score": {
+        "exact": 19,
+        "total": 25,
+        "misreads": [
+          "Amaka Eze Q2: wrote \"D\", device read \"A\"",
+          "Tunde Bello Q5: wrote \"runned\", device read \"raned\"",
+          "Ngozi Obi Q5: wrote \"runned\", device read \"raned\"",
+          "Femi Adeyemi Q1: wrote \"D\", device read \"A\"",
+          "Femi Adeyemi Q2: wrote \"D\", device read \"A\"",
+          "Femi Adeyemi Q3: wrote \"D\", device read \"A\""
+        ]
+      }
+    },
+    "B": {
+      "training": [
+        {
+          "name": "Chidi Okafor (training)",
+          "truth": [
+            "B",
+            "D",
+            "B",
+            "Abuja",
+            "runned"
+          ],
+          "device": [
+            "B",
+            "A",
+            "B",
+            "Abuja",
+            "raned"
+          ],
+          "total": "Total: 2/5",
+          "rows": [
+            "Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.",
+            "Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.",
+            "Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.",
+            "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+            "Q5 0/1 AI read: “raned” On-device Marked by code Check this \"raned\" is close to \"ran\" — accept it?"
+          ]
+        }
+      ],
+      "learned": "What on-device AI learned about these students When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. A one-letter mix-up is only used after it has been seen twice, so one correction can never push other students' answers towards the key. Cloud checks never see the hints, so they stay independent. Looked like “raned” → was “runned” (short) Looked like “A” → was “D” (objective, waiting for a second sighting) Forget these",
+      "trainingCheck": "Cloud check: 3 on-device marks confirmed, 1 needs you. The device learned 2 things about this class’s handwriting.",
+      "heldOut": [
+        {
+          "name": "Amaka Eze",
+          "truth": [
+            "D",
+            "D",
+            "A",
+            "Abuja",
+            "ran"
+          ],
+          "device": [
+            "D",
+            "A",
+            "A",
+            "Abuja",
+            "ran"
+          ],
+          "total": "Total: 3/5",
+          "rows": [
+            "Q1 0/1 AI read: “D” On-device Marked by code Provisional Chose D; correct is B.",
+            "Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+            "Q5 1/1 AI read: “ran” On-device Marked by code Provisional \"ran\" matches an accepted answer."
+          ]
+        },
+        {
+          "name": "Tunde Bello",
+          "truth": [
+            "A",
+            "D",
+            "A",
+            "FCT",
+            "runned"
+          ],
+          "device": [
+            "A",
+            "A",
+            "A",
+            "FCT",
+            "raned"
+          ],
+          "total": "Total: 1/5",
+          "rows": [
+            "Q1 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is B.",
+            "Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 0/1 AI read: “FCT” On-device Marked by code Provisional \"FCT\" does not match: expected Abuja.",
+            "Q5 0/1 AI read: “raned” On-device Marked by code Check this \"raned\" is close to \"ran\" — accept it?"
+          ]
+        },
+        {
+          "name": "Ngozi Obi",
+          "truth": [
+            "B",
+            "A",
+            "A",
+            "Abuja",
+            "runned"
+          ],
+          "device": [
+            "B",
+            "A",
+            "A",
+            "Abuja",
+            "runned"
+          ],
+          "total": "Total: 3/5",
+          "rows": [
+            "Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.",
+            "Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+            "Q5 0/1 AI read: “runned” On-device Marked by code Provisional \"runned\" is listed as not acceptable."
+          ]
+        },
+        {
+          "name": "Musa Danjuma",
+          "truth": [
+            "C",
+            "D",
+            "B",
+            "Abuja",
+            "ran"
+          ],
+          "device": [
+            "C",
+            "D",
+            "B",
+            "Abuja",
+            "ran"
+          ],
+          "total": "Total: 3/5",
+          "rows": [
+            "Q1 0/1 AI read: “C” On-device Marked by code Provisional Chose C; correct is B.",
+            "Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.",
+            "Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.",
+            "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+            "Q5 1/1 AI read: “ran” On-device Marked by code Provisional \"ran\" matches an accepted answer."
+          ]
+        },
+        {
+          "name": "Femi Adeyemi",
+          "truth": [
+            "D",
+            "D",
+            "D",
+            "Lagos",
+            "runned"
+          ],
+          "device": [
+            "D",
+            "A",
+            "A",
+            "Lagos",
+            "raned"
+          ],
+          "total": "Total: 1/5",
+          "rows": [
+            "Q1 0/1 AI read: “D” On-device Marked by code Provisional Chose D; correct is B.",
+            "Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 0/1 AI read: “Lagos” On-device Marked by code Provisional \"Lagos\" does not match: expected Abuja.",
+            "Q5 0/1 AI read: “raned” On-device Marked by code Check this \"raned\" is close to \"ran\" — accept it?"
+          ]
+        }
+      ],
+      "afterCheck": "Cloud check: 19 on-device marks confirmed, 4 need you.",
+      "score": {
+        "exact": 19,
+        "total": 25,
+        "misreads": [
+          "Amaka Eze Q2: wrote \"D\", device read \"A\"",
+          "Tunde Bello Q2: wrote \"D\", device read \"A\"",
+          "Tunde Bello Q5: wrote \"runned\", device read \"raned\"",
+          "Femi Adeyemi Q2: wrote \"D\", device read \"A\"",
+          "Femi Adeyemi Q3: wrote \"D\", device read \"A\"",
+          "Femi Adeyemi Q5: wrote \"runned\", device read \"raned\""
+        ]
+      }
+    },
+    "C": {
+      "training": [
+        {
+          "name": "Chidi Okafor (training)",
+          "truth": [
+            "B",
+            "D",
+            "B",
+            "Abuja",
+            "runned"
+          ],
+          "device": [
+            "B",
+            "D",
+            "B",
+            "",
+            "raned"
+          ],
+          "total": "Total: 2/5",
+          "rows": [
+            "Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.",
+            "Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.",
+            "Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.",
+            "Q4 0/1 AI read: “—” On-device Marked by code Check this Could not read this answer (UnknownError An unknown error occurred: kErrorUnknown). Check it by hand or retry when online.",
+            "Q5 0/1 AI read: “raned” On-device Marked by code Check this \"raned\" is close to \"ran\" — accept it?"
+          ]
+        },
+        {
+          "name": "Chidi Okafor (training, 2nd copy)",
+          "truth": [
+            "B",
+            "D",
+            "B",
+            "Abuja",
+            "runned"
+          ],
+          "device": [
+            "B",
+            "D",
+            "B",
+            "Abuja",
+            "rannd"
+          ],
+          "total": "Total: 3/5",
+          "rows": [
+            "Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.",
+            "Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.",
+            "Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.",
+            "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+            "Q5 0/1 AI read: “rannd” On-device Marked by code Check this \"rannd\" is close to \"ran\" — accept it?"
+          ]
+        }
+      ],
+      "learned": "What on-device AI learned about these students When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. A one-letter mix-up is only used after it has been seen twice, so one correction can never push other students' answers towards the key. Cloud checks never see the hints, so they stay independent. Looked like “rannd” → was “runned” (short) Looked like “raned” → was “runned” (short) Forget these",
+      "trainingCheck": "Cloud check: 7 on-device marks confirmed. The device learned 2 things about this class’s handwriting.",
+      "heldOut": [
+        {
+          "name": "Amaka Eze",
+          "truth": [
+            "D",
+            "D",
+            "A",
+            "Abuja",
+            "ran"
+          ],
+          "device": [
+            "D",
+            "A",
+            "A",
+            "Abuja",
+            "ran"
+          ],
+          "total": "Total: 3/5",
+          "rows": [
+            "Q1 0/1 AI read: “D” On-device Marked by code Provisional Chose D; correct is B.",
+            "Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+            "Q5 1/1 AI read: “ran” On-device Marked by code Provisional \"ran\" matches an accepted answer."
+          ]
+        },
+        {
+          "name": "Tunde Bello",
+          "truth": [
+            "A",
+            "D",
+            "A",
+            "FCT",
+            "runned"
+          ],
+          "device": [
+            "A",
+            "D",
+            "A",
+            "FCT",
+            "rannd"
+          ],
+          "total": "Total: 2/5",
+          "rows": [
+            "Q1 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is B.",
+            "Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 0/1 AI read: “FCT” On-device Marked by code Provisional \"FCT\" does not match: expected Abuja.",
+            "Q5 0/1 AI read: “rannd” On-device Marked by code Check this \"rannd\" is close to \"ran\" — accept it?"
+          ]
+        },
+        {
+          "name": "Ngozi Obi",
+          "truth": [
+            "B",
+            "A",
+            "A",
+            "Abuja",
+            "runned"
+          ],
+          "device": [
+            "B",
+            "A",
+            "A",
+            "Abuja",
+            "rannd"
+          ],
+          "total": "Total: 3/5",
+          "rows": [
+            "Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.",
+            "Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+            "Q5 0/1 AI read: “rannd” On-device Marked by code Check this \"rannd\" is close to \"ran\" — accept it?"
+          ]
+        },
+        {
+          "name": "Musa Danjuma",
+          "truth": [
+            "C",
+            "D",
+            "B",
+            "Abuja",
+            "ran"
+          ],
+          "device": [
+            "C",
+            "D",
+            "B",
+            "Abuja",
+            "ran"
+          ],
+          "total": "Total: 3/5",
+          "rows": [
+            "Q1 0/1 AI read: “C” On-device Marked by code Provisional Chose C; correct is B.",
+            "Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.",
+            "Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.",
+            "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+            "Q5 1/1 AI read: “ran” On-device Marked by code Provisional \"ran\" matches an accepted answer."
+          ]
+        },
+        {
+          "name": "Femi Adeyemi",
+          "truth": [
+            "D",
+            "D",
+            "D",
+            "Lagos",
+            "runned"
+          ],
+          "device": [
+            "A",
+            "D",
+            "A",
+            "Lagos",
+            "runned"
+          ],
+          "total": "Total: 2/5",
+          "rows": [
+            "Q1 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is B.",
+            "Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.",
+            "Q3 1/1 AI read: “A” On-device Marked by code Provisional Chose A — correct.",
+            "Q4 0/1 AI read: “Lagos” On-device Marked by code Provisional \"Lagos\" does not match: expected Abuja.",
+            "Q5 0/1 AI read: “runned” On-device Marked by code Provisional \"runned\" is listed as not acceptable."
+          ]
+        }
+      ],
+      "afterCheck": "Cloud check: 20 on-device marks confirmed, 2 need you. The device learned 1 thing about this class’s handwriting.",
+      "score": {
+        "exact": 20,
+        "total": 25,
+        "misreads": [
+          "Amaka Eze Q2: wrote \"D\", device read \"A\"",
+          "Tunde Bello Q5: wrote \"runned\", device read \"rannd\"",
+          "Ngozi Obi Q5: wrote \"runned\", device read \"rannd\"",
+          "Femi Adeyemi Q1: wrote \"D\", device read \"A\"",
+          "Femi Adeyemi Q3: wrote \"D\", device read \"A\""
+        ]
+      }
+    }
+  }
+}

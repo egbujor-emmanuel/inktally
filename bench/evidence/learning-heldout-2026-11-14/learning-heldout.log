@@ -1,0 +1,56 @@
+[19:06:25] downloading Gemini Nano…
+[19:26:07] Gemini Nano ready
+[19:26:14] [A-control] new assignment https://redpen-hybrid.web.app/a/3L7CSXAr68an74ik37kN/print
+[19:26:59]   Amaka Eze: Total: 3/5 | device read "D" "A" "A" "Abuja" "ran"
+[19:27:36]   Tunde Bello: Total: 2/5 | device read "A" "D" "A" "FCT" "raned"
+[19:28:12]   Ngozi Obi: Total: 3/5 | device read "B" "A" "A" "Abuja" "raned"
+[19:28:50]   Musa Danjuma: Total: 3/5 | device read "C" "D" "B" "Abuja" "ran"
+[19:29:26]   Femi Adeyemi: Total: 1/5 | device read "A" "A" "A" "Lagos" "runned"
+[19:29:44] [A-control] Cloud check: 19 on-device marks confirmed, 3 need you. The device learned 2 things about this class’s handwriting.
+[19:29:44] [A-control] learned: What on-device AI learned about these students When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. A one-letter mix-up is only used after it has been seen twice, so one correction can never push other students' answers towards the key. Cloud checks never see the hi
+[19:29:45] [B-guard] new assignment https://redpen-hybrid.web.app/a/WMeYrBJWCOQzjSmiXHwc/print
+[19:30:23]   Chidi Okafor (training): Total: 2/5 | device read "B" "A" "B" "Abuja" "raned"
+[19:30:27] [B-guard-training] Cloud check: 3 on-device marks confirmed, 1 needs you. The device learned 2 things about this class’s handwriting.
+[19:30:27] [B-guard-training] learned: What on-device AI learned about these students When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. A one-letter mix-up is only used after it has been seen twice, so one correction can never push other students' answers towards the key. Cloud checks never see the hi
+[19:31:09]   Amaka Eze: Total: 3/5 | device read "D" "A" "A" "Abuja" "ran"
+[19:31:49]   Tunde Bello: Total: 1/5 | device read "A" "A" "A" "FCT" "raned"
+[19:32:29]   Ngozi Obi: Total: 3/5 | device read "B" "A" "A" "Abuja" "runned"
+[19:33:08]   Musa Danjuma: Total: 3/5 | device read "C" "D" "B" "Abuja" "ran"
+[19:33:48]   Femi Adeyemi: Total: 1/5 | device read "D" "A" "A" "Lagos" "raned"
+[19:33:59] [B-guard] Cloud check: 19 on-device marks confirmed, 4 need you.
+[19:33:59] [B-guard] learned: What on-device AI learned about these students When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. A one-letter mix-up is only used after it has been seen twice, so one correction can never push other students' answers towards the key. Cloud checks never see the hi
+[19:34:00] [C-noguard] new assignment https://redpen-hybrid.web.app/a/AiGHQk5FvHtV2pjoFJXi/print
+[19:34:39]   Chidi Okafor (training): Total: 2/5 | device read "B" "D" "B" "" "raned"
+[19:35:16]   Chidi Okafor (training, 2nd copy): Total: 3/5 | device read "B" "D" "B" "Abuja" "rannd"
+[19:35:22] [C-noguard-training] Cloud check: 7 on-device marks confirmed. The device learned 2 things about this class’s handwriting.
+[19:35:22] [C-noguard-training] learned: What on-device AI learned about these students When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. A one-letter mix-up is only used after it has been seen twice, so one correction can never push other students' answers towards the key. Cloud checks never see the hi
+[19:36:03]   Amaka Eze: Total: 3/5 | device read "D" "A" "A" "Abuja" "ran"
+[19:36:43]   Tunde Bello: Total: 2/5 | device read "A" "D" "A" "FCT" "rannd"
+[19:37:23]   Ngozi Obi: Total: 3/5 | device read "B" "A" "A" "Abuja" "rannd"
+[19:38:03]   Musa Danjuma: Total: 3/5 | device read "C" "D" "B" "Abuja" "ran"
+[19:38:43]   Femi Adeyemi: Total: 2/5 | device read "A" "D" "A" "Lagos" "runned"
+[19:38:56] [C-noguard] Cloud check: 20 on-device marks confirmed, 2 need you. The device learned 1 thing about this class’s handwriting.
+[19:38:56] [C-noguard] learned: What on-device AI learned about these students When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. A one-letter mix-up is only used after it has been seen twice, so one correction can never push other students' answers towards the key. Cloud checks never see the hi
+[19:38:56] A: held-out device reads exactly right 19/25
+   Amaka Eze Q2: wrote "D", device read "A"
+   Tunde Bello Q5: wrote "runned", device read "raned"
+   Ngozi Obi Q5: wrote "runned", device read "raned"
+   Femi Adeyemi Q1: wrote "D", device read "A"
+   Femi Adeyemi Q2: wrote "D", device read "A"
+   Femi Adeyemi Q3: wrote "D", device read "A"
+[19:38:56] B: held-out device reads exactly right 19/25
+   Amaka Eze Q2: wrote "D", device read "A"
+   Tunde Bello Q2: wrote "D", device read "A"
+   Tunde Bello Q5: wrote "runned", device read "raned"
+   Femi Adeyemi Q2: wrote "D", device read "A"
+   Femi Adeyemi Q3: wrote "D", device read "A"
+   Femi Adeyemi Q5: wrote "runned", device read "raned"
+[19:38:56] C: held-out device reads exactly right 20/25
+   Amaka Eze Q2: wrote "D", device read "A"
+   Tunde Bello Q5: wrote "runned", device read "rannd"
+   Ngozi Obi Q5: wrote "runned", device read "rannd"
+   Femi Adeyemi Q1: wrote "D", device read "A"
+   Femi Adeyemi Q3: wrote "D", device read "A"
+[19:38:56] HELDOUT DONE
+EXIT=0
+FINISHED

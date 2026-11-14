@@ -101,7 +101,7 @@ async function onlineCheck(label) {
   const summary = await page.getByText(/^Cloud check:/).innerText();
   await tab('Review');
   await sleep(2000);
-  const card = page.locator('section', { hasText: 'What on-device AI learned' });
+  const card = page.locator('section', { hasText: 'What REDPEN learned' });
   const learned = (await card.count()) ? (await card.innerText()).replace(/\s+/g, ' ') : 'none';
   log(`[${label}] ${summary}`);
   log(`[${label}] learned: ${learned.slice(0, 400)}`);

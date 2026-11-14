@@ -16,8 +16,8 @@ object Marker {
     private const val PAGE_ON_DEVICE_WARNING = "Read offline from the whole page — on-device page reading can auto-correct mistakes, so this waits for the cloud check."
 
     /** [learned]: what the cloud check taught the device about this class's handwriting (never used on cloud checks). */
-    suspend fun mark(question: Question, crop: Bitmap, force: InferenceMode? = null, learned: String = ""): Mark {
-        val read = Ai.readAnswer(crop, question, force, learned)
+    suspend fun mark(question: Question, crop: Bitmap, force: InferenceMode? = null): Mark {
+        val read = Ai.readAnswer(crop, question, force)
         return markFromRead(question, read.text, read.source, force)
     }
 

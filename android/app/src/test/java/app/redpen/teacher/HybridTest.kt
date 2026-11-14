@@ -18,13 +18,15 @@ import app.redpen.teacher.marking.checkSummaryText
 import app.redpen.teacher.marking.countNewHints
 import app.redpen.teacher.marking.keepReviewed
 import app.redpen.teacher.marking.learnFromCheck
-import app.redpen.teacher.marking.learnedHint
+import app.redpen.teacher.marking.holdIfKnownMisread
+import app.redpen.teacher.marking.isHeld
+import app.redpen.teacher.marking.knownMisread
+import app.redpen.teacher.marking.markObjective
 import app.redpen.teacher.marking.markNumeric
 import app.redpen.teacher.marking.markShort
 import app.redpen.teacher.marking.mergeHints
 import app.redpen.teacher.marking.reconcile
 import app.redpen.teacher.marking.sameReading
-import app.redpen.teacher.marking.usableHint
 import app.redpen.teacher.marking.regradeAll
 import app.redpen.teacher.marking.regradeMark
 import app.redpen.teacher.marking.statusLabel
@@ -106,9 +108,9 @@ class HybridTest {
 
     @Test fun statusLineUsesTheWebWording() {
         assertEquals("Cloud check: 1 on-device mark confirmed, 1 needs you.", checkSummaryText(CheckSummary(2, 1, 1)))
-        assertEquals("Cloud check: 2 on-device marks confirmed, 2 need you. The device learned 1 thing about these students’ handwriting.",
+        assertEquals("Cloud check: 2 on-device marks confirmed, 2 need you. REDPEN learned 1 device misread to hold for checking.",
             checkSummaryText(CheckSummary(4, 2, 2, 1)))
-        assertEquals("Cloud check: 0 on-device marks confirmed. The device learned 3 things about these students’ handwriting.",
+        assertEquals("Cloud check: 0 on-device marks confirmed. REDPEN learned 3 device misreads to hold for checking.",
             checkSummaryText(CheckSummary(1, 0, 0, 3)))
     }
 
@@ -146,21 +148,12 @@ class HybridTest {
         assertEquals(listOf(ReadingHint("numeric", "7", "1"), ReadingHint("short", "ABUYA", "abuja", n = 2)), merged)
     }
 
-    @Test fun theOnDevicePromptHintOnlyUsesHintsForTheSameQuestionTypeNewestFirst() {
-        val hints = listOf(ReadingHint("numeric", "7", "1", n = 2), ReadingHint("short", "Abuya", "Abuja"), ReadingHint("numeric", "5", "S", n = 2))
-        val text = learnedHint(hints, "numeric")
-        assertTrue(text.contains("\"5\" was really \"S\""))
-        assertTrue(text.indexOf("\"5\"") < text.indexOf("\"7\""))
-        assertFalse(text.contains("Abuya"))
-        assertEquals("", learnedHint(hints, "objective"))
-        assertEquals("", learnedHint(null, "numeric"))
-    }
-
-    @Test fun thePromptHintShowsAtMostSixHints() {
-        val hints = (0 until 10).map { ReadingHint("numeric", "d$it", "c$it") }
-        val text = learnedHint(hints, "numeric")
-        assertEquals(6, Regex("was really").findAll(text).count())
-        assertTrue(text.contains("\"d9\"")); assertFalse(text.contains("\"d3\""))
+    @Test fun aKnownMisreadIsMatchedByQuestionTypeCaseAndSpacingAside() {
+        val hints = listOf(ReadingHint("numeric", "7", "1"), ReadingHint("short", "Abuya", "Abuja"))
+        assertEquals("Abuja", knownMisread(hints, "short", " abuya ")?.cloud)
+        assertEquals(null, knownMisread(hints, "numeric", "Abuya"))
+        assertEquals(null, knownMisread(hints, "short", ""))
+        assertEquals(null, knownMisread(null, "numeric", "7"))
     }
 
     @Test fun hintTextCannotBreakOutOfThePrompt() {
@@ -171,11 +164,9 @@ class HybridTest {
         assertTrue(h.device.length <= 40)
     }
 
-    @Test fun learnedHintGoesIntoTheReadPromptAndLearningIsOnByDefault() {
+    @Test fun learningIsOnByDefaultAndNoHintIsAddedToTheReadPrompt() {
         assertEquals("true", REMOTE_DEFAULTS["device_learning"])
-        val prompt = fill(REMOTE_DEFAULTS["prompt_read_crop"] as String, mapOf("hint" to "It is a number." + learnedHint(listOf(ReadingHint("numeric", "7", "1", n = 2)), "numeric")))
-        assertTrue(prompt.contains("It is a number. In these students' handwriting, earlier readings were corrected: what looked like \"7\" was really \"1\"."))
-        assertFalse(prompt.contains("{hint}"))
+        assertFalse((REMOTE_DEFAULTS["prompt_read_crop"] as String).contains("corrected"))
     }
 
     // ---- accept for everyone re-marks students already marked
@@ -244,14 +235,47 @@ class HybridTest {
         assertEquals("Verified", statusLabel(reconcile(markShort(shortQ, "abuja", ReadSource.ON_DEVICE), markShort(shortQ, "Abuja", ReadSource.IN_CLOUD))))
     }
 
-    @Test fun aOneLetterConfusionIsOnlyUsedOnceSeenTwice() {
-        val once = mergeHints(emptyList(), listOf(ReadingHint("objective", "A", "D")))
-        assertFalse(usableHint(once.single()))
-        assertEquals("", learnedHint(once, "objective"))
-        val twice = mergeHints(once, listOf(ReadingHint("objective", "A", "D")))
-        assertEquals(2, twice.single().n)
-        assertTrue(learnedHint(twice, "objective").contains("\"A\" was really \"D\""))
-        assertTrue(usableHint(ReadingHint("short", "raned", "runned")))
+    private val objQ = Question.Objective(2, "Pick one", 1, listOf("D"))
+    private val learned = listOf(ReadingHint("objective", "A", "D"), ReadingHint("short", "raned", "runned"))
+
+    @Test fun aReadingThatMatchesAKnownMisreadIsHeldNeverChanged() {
+        val read = markObjective(objQ, "A", ReadSource.ON_DEVICE)
+        val held = holdIfKnownMisread(read, learned, "objective")
+        assertEquals(MarkStatus.FLAGGED, held.status)
+        assertEquals("Check this", statusLabel(held))
+        assertEquals("A", held.read)
+        assertEquals(read.awarded, held.awarded)
+        assertTrue(isHeld(held))
+        assertTrue(held.reasons.last().contains("read “D” as “A” before"))
+    }
+
+    @Test fun otherReadingsOtherTypesAndCloudReadsAreNotHeld() {
+        assertEquals(MarkStatus.PROVISIONAL, holdIfKnownMisread(markObjective(objQ, "B", ReadSource.ON_DEVICE), learned, "objective").status)
+        assertEquals(MarkStatus.VERIFIED, holdIfKnownMisread(markObjective(objQ, "A", ReadSource.IN_CLOUD), learned, "objective").status)
+    }
+
+    @Test fun theCloudCheckStillComparesAHeldReading() {
+        val held = holdIfKnownMisread(markObjective(objQ, "A", ReadSource.ON_DEVICE), learned, "objective")
+        val disagree = reconcile(held, markObjective(objQ, "D", ReadSource.IN_CLOUD))
+        assertEquals(MarkStatus.FLAGGED, disagree.status)
+        assertTrue(disagree.reasons[0].contains("Device read \"A\""))
+        assertEquals("Verified", statusLabel(reconcile(held, markObjective(objQ, "A", ReadSource.IN_CLOUD))))
+    }
+
+    @Test fun replayingTheHeldOutNanoRunEveryMisreadOnUnseenStudentsIsHeld() {
+        // Condition B of bench/evidence/learning-heldout-2026-11-14 (same data as the web test): type, wrote, device read.
+        val b = listOf(
+            Triple("objective", "D", "D"), Triple("objective", "D", "A"), Triple("objective", "A", "A"), Triple("short", "Abuja", "Abuja"), Triple("short", "ran", "ran"),
+            Triple("objective", "A", "A"), Triple("objective", "D", "A"), Triple("objective", "A", "A"), Triple("short", "FCT", "FCT"), Triple("short", "runned", "raned"),
+            Triple("objective", "B", "B"), Triple("objective", "A", "A"), Triple("objective", "A", "A"), Triple("short", "Abuja", "Abuja"), Triple("short", "runned", "runned"),
+            Triple("objective", "C", "C"), Triple("objective", "D", "D"), Triple("objective", "B", "B"), Triple("short", "Abuja", "Abuja"), Triple("short", "ran", "ran"),
+            Triple("objective", "D", "D"), Triple("objective", "D", "A"), Triple("objective", "D", "A"), Triple("short", "Lagos", "Lagos"), Triple("short", "runned", "raned"),
+        )
+        val misreads = b.filter { it.second != it.third }
+        val held = b.filter { knownMisread(learned, it.first, it.third) != null }
+        assertEquals(6, misreads.size)
+        assertTrue(misreads.all { knownMisread(learned, it.first, it.third) != null })
+        assertEquals(5, held.size - misreads.size)
     }
 
     @Test fun onlyNewConfusionsAreCountedAsLearned() {

@@ -1,25 +1,24 @@
-// The cloud teaches the device. When the cloud check reads an answer differently from Gemini Nano, the pair
-// ("looked like 7" -> "was 1") is saved on the assignment as a handwriting hint. Later on-device reads for that
-// assignment get the hints in their prompt, so the small model learns these students' handwriting during marking.
-// Cloud reads never get hints: the checker must stay independent of what it is checking.
-// Guard rail: a one-character confusion ("A" was "D") could push a student who really wrote A towards D, so it is only
-// used once the same confusion has been seen on at least two answers.
+// The cloud teaches REDPEN where the device goes wrong. When the cloud check reads an answer differently from Gemini
+// Nano, the pair ("the device read A" -> "it was D") is saved on the assignment. From then on, an offline on-device
+// reading that matches a known misread is HELD for the teacher ("Check this") instead of counting as a normal mark.
+//
+// Why holding, not hinting: a held-out test on real Gemini Nano (bench/evidence/learning-heldout-2026-11-14/) showed
+// that adding the corrections to the read prompt made no measurable difference on unseen students (19/25, 19/25,
+// 20/25 exact reads), while a letter hint such as "A was really D" could turn a student who truly wrote A into D.
+// The same corrections, used to hold matching readings, flagged every one of the device's misreads on those unseen
+// students. REDPEN never changes what the device read, so it cannot push an answer towards the key.
 import type { Mark, Question, QuestionType } from '../domain/types';
 
 export interface ReadingHint {
   type: QuestionType; device: string; cloud: string;
-  /** How many answers showed this confusion (absent = 1, for hints saved before counting). */
+  /** How many answers showed this misread (absent = 1, for records saved before counting). */
   n?: number;
 }
 
-/** Most recent hints kept per assignment (also enforced by the Firestore rules). */
+/** Most recent misreads kept per assignment (also enforced by the Firestore rules). */
 export const HINT_LIMIT = 12;
-/** Hints shown to the model per question type, newest first. */
-const HINTS_PER_PROMPT = 6;
 const MAX_HINT_CHARS = 40;
 const LEARNABLE: QuestionType[] = ['objective', 'numeric', 'short'];
-/** Sightings needed before a one-character confusion is trusted. */
-export const SINGLE_CHAR_MIN_SEEN = 2;
 
 const clean = (text: string): string => text.replace(/[<>"]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, MAX_HINT_CHARS);
 const same = (a: string, b: string): boolean => clean(a).toLowerCase() === clean(b).toLowerCase();
@@ -41,7 +40,7 @@ export function learnFromCheck(questions: Question[], before: Mark[], after: Mar
 const key = (h: ReadingHint): string => `${h.type}|${h.device.toLowerCase()}|${h.cloud.toLowerCase()}`;
 const seen = (h: ReadingHint): number => h.n ?? 1;
 
-/** Adds new hints: a confusion seen again is counted (and moved to newest), others appended; the newest HINT_LIMIT are kept. */
+/** Adds new misreads: one seen again is counted (and moved to newest), others appended; the newest HINT_LIMIT are kept. */
 export function mergeHints(existing: ReadingHint[], fresh: ReadingHint[]): ReadingHint[] {
   let merged = [...existing];
   for (const h of fresh) {
@@ -51,22 +50,31 @@ export function mergeHints(existing: ReadingHint[], fresh: ReadingHint[]): Readi
   return merged.slice(-HINT_LIMIT);
 }
 
-/** How many of the fresh hints are confusions this assignment had not seen before. */
+/** How many of the fresh misreads this assignment had not seen before. */
 export function countNewHints(existing: ReadingHint[], fresh: ReadingHint[]): number {
   const known = new Set(existing.map(key));
   return new Set(fresh.map(key).filter((k) => !known.has(k))).size;
 }
 
-/** Whether a hint is trusted enough to go into an on-device prompt. */
-export function usableHint(h: ReadingHint): boolean {
-  const singleChar = h.device.length === 1 && h.cloud.length === 1;
-  return !singleChar || seen(h) >= SINGLE_CHAR_MIN_SEEN;
+/** The known misread that an on-device reading matches, if any (same question type, case and spacing aside). */
+export function knownMisread(hints: ReadingHint[] | undefined, type: QuestionType, read: string): ReadingHint | undefined {
+  if (!clean(read)) return undefined;
+  return (hints ?? []).filter((h) => h.type === type && same(h.device, read)).at(-1);
 }
 
-/** The sentence added to an on-device read prompt for this question type ('' when nothing usable was learned). */
-export function learnedHint(hints: ReadingHint[] | undefined, type: QuestionType): string {
-  const relevant = (hints ?? []).filter((h) => h.type === type && usableHint(h)).slice(-HINTS_PER_PROMPT).reverse();
-  if (!relevant.length) return '';
-  const pairs = relevant.map((h) => `what looked like "${h.device}" was really "${h.cloud}"`).join('; ');
-  return ` In these students' handwriting, earlier readings were corrected: ${pairs}. Use this only to recognise how these students form their characters; still copy exactly what is written.`;
+/** Marks a held reading. Detected by isHeld(); used by reconcile() so the cloud check still compares both readings. */
+export const HELD_PREFIX = 'Held for checking:';
+
+/** An on-device mark whose reading matches a known misread becomes "Check this", with the reason. The reading is never changed. */
+export function holdIfKnownMisread(mark: Mark, hints: ReadingHint[] | undefined, type: QuestionType): Mark {
+  if (mark.readSource !== 'on_device' || mark.status !== 'provisional') return mark;
+  const h = knownMisread(hints, type, mark.read);
+  if (!h) return mark;
+  const times = seen(h) > 1 ? ` (${seen(h)} times)` : '';
+  return {
+    ...mark, status: 'flagged',
+    reasons: [...mark.reasons, `${HELD_PREFIX} on this assignment Gemini Nano has read “${h.cloud}” as “${h.device}” before${times}, so check this one.`],
+  };
 }
+
+export const isHeld = (mark: Mark): boolean => mark.reasons.some((r) => r.startsWith(HELD_PREFIX));
