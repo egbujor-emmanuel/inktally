@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Mark, Question } from '../../domain/types';
 import { loadCrop, saveMarks, saveReadingHints, updateQuestion, type Assignment, type Submission } from '../../data/store';
+import { usableHint } from '../../marking/learning';
 import { PAGE_KEY } from './MarkTab';
 import { parseNumericAnswer } from '../../marking/normalize';
 import { needsCheck } from '../../marking/cloudCheck';
@@ -82,11 +83,11 @@ export function ReviewTab({ assignment, submissions, check }: Props) {
       {notice && <p className="px-4 text-sm font-semibold" role="status">{notice}</p>}
       {(assignment.readingHints?.length ?? 0) > 0 && (
         <Card labelledBy="learned-title">
-          <h2 id="learned-title" className="font-display text-lg font-bold">What on-device AI learned about this class</h2>
-          <p className="text-sm text-ink-soft">When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. Cloud checks never see them, so they stay independent.</p>
+          <h2 id="learned-title" className="font-display text-lg font-bold">What on-device AI learned about these students</h2>
+          <p className="text-sm text-ink-soft">When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. A one-letter mix-up is only used after it has been seen twice, so one correction can never push other students' answers towards the key. Cloud checks never see the hints, so they stay independent.</p>
           <ul className="grid gap-1 text-sm">
             {assignment.readingHints?.slice().reverse().map((h, i) => (
-              <li key={`${h.type}-${h.device}-${h.cloud}-${i}`}>Looked like <b>“{h.device}”</b> → was <b>“{h.cloud}”</b> <span className="text-ink-soft">({h.type})</span></li>
+              <li key={`${h.type}-${h.device}-${h.cloud}-${i}`}>Looked like <b>“{h.device}”</b> → was <b>“{h.cloud}”</b> <span className="text-ink-soft">({h.type}{(h.n ?? 1) > 1 ? `, seen ${h.n} times` : ''}{usableHint(h) ? '' : ', waiting for a second sighting'})</span></li>
             ))}
           </ul>
           <button type="button" className="btn-text justify-self-start" onClick={() => saveReadingHints(assignment.id, [])}>Forget these</button>

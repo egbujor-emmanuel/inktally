@@ -24,7 +24,7 @@ export function useCloudCheck(assignment: Assignment | null | undefined, submiss
   const running = useRef(false);
   const tried = useRef(new Set<string>());
   const latest = useRef(submissions);
-  latest.current = submissions;
+  useEffect(() => { latest.current = submissions; }, [submissions]);
 
   const run = useCallback(async () => {
     if (!assignment || running.current) return;
@@ -47,13 +47,11 @@ export function useCloudCheck(assignment: Assignment | null | undefined, submiss
 
   useEffect(() => { if (!isOnline) tried.current.clear(); }, [isOnline]);
 
-  const untried = submissions.flatMap((s) => (s.queued ? [] : s.marks
-    .filter((m) => m.status === 'provisional' && !tried.current.has(`${s.id}:${m.q}`))
-    .map((m) => `${s.id}:${m.q}`)));
-  const key = untried.join(',');
   useEffect(() => {
-    if (isOnline && key && !running.current) void run();
-  }, [isOnline, key, run, runs]);
+    if (!isOnline || running.current) return;
+    const untried = submissions.some((s) => !s.queued && s.marks.some((m) => m.status === 'provisional' && !tried.current.has(`${s.id}:${m.q}`)));
+    if (untried) void run();
+  }, [isOnline, submissions, run, runs]);
 
   return { progress, error, summary, run };
 }

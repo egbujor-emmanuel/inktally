@@ -19,9 +19,28 @@ async function askPresent(prompt: string, mode: ReadMode | undefined, sources: R
   const source: ReadSource = response.response.inferenceSource === 'on_device' ? 'on_device' : 'in_cloud';
   recordInference({ kind: 'points', source, ms: Math.round(performance.now() - started) });
   sources.push(source);
-  const raw = response.response.text().replace(/^```(?:json)?\s*/m, '').replace(/```\s*$/m, '').trim();
-  const parsed = YesNo.safeParse(JSON.parse(raw));
-  return parsed.success && parsed.data.present;
+  return parsePresent(response.response.text());
+}
+
+const NOT_YES_NO = 'The marking-point check did not give a yes/no answer.';
+
+/**
+ * The yes/no answer of one marking-point check: {"present": true|false}, or a bare true/false/yes/no (an on-device model
+ * may ignore the schema). Anything else throws, so the answer is flagged for the teacher instead of being given or
+ * denied credit by guesswork. Same rule as Android parsePresent().
+ */
+export function parsePresent(reply: string): boolean {
+  const raw = reply.replace(/^```(?:json)?\s*/m, '').replace(/```\s*$/m, '').trim();
+  if (raw.startsWith('{')) {
+    let json: unknown;
+    try { json = JSON.parse(raw); } catch { throw new Error(NOT_YES_NO); }
+    const parsed = YesNo.safeParse(json);
+    if (!parsed.success) throw new Error(NOT_YES_NO);
+    return parsed.data.present;
+  }
+  if (/^(true|yes)\b/i.test(raw)) return true;
+  if (/^(false|no)\b/i.test(raw)) return false;
+  throw new Error(NOT_YES_NO);
 }
 
 /**

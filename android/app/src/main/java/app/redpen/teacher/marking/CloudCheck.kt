@@ -21,17 +21,39 @@ data class CheckSummary(
     operator fun plus(o: CheckSummary) = CheckSummary(checked + o.checked, confirmed + o.confirmed, needTeacher + o.needTeacher, learned + o.learned)
 }
 
-/** Cloud re-read of a provisional/flagged mark. Agreement verifies; disagreement goes to the teacher with both readings. */
+const val CONFIRMED_ON_DEVICE = "On-device mark confirmed by the cloud check."
+const val CONFIRMED_CLOUD = "Confirmed by the cloud check."
+/** At or above this similarity two readings of a written answer are the same reading. */
+private const val SAME_READING = 0.8
+private val SQUASH = Regex("[\\s,.;:'\"`]")
+private fun squash(text: String) = text.lowercase().replace(SQUASH, "")
+
+/** True when two models read the same thing (case, spacing and punctuation aside; small slips allowed in longer text). */
+fun sameReading(a: String, b: String): Boolean {
+    val x = squash(a); val y = squash(b)
+    if (x == y) return true
+    return x.length > 1 && y.length > 1 && textSimilarity(a, b) >= SAME_READING
+}
+
+/**
+ * Second opinion (same rules as web reconcile). A mark is "confirmed" only when there were two real readings that
+ * agree on what is written AND on the score. An answer the device failed or was unsure about has no first reading, so
+ * the cloud's read stands on its own ("Cloud read"); a real device reading with a different score goes to the teacher.
+ */
 fun reconcile(previous: Mark, cloud: Mark): Mark {
     if (previous.status == MarkStatus.REVIEWED) return previous
-    val same = cloud.awarded == previous.awarded
-    return when {
-        same && cloud.status != MarkStatus.FLAGGED -> cloud.copy(reasons = cloud.reasons +
-            if (previous.readSource == ReadSource.ON_DEVICE) "On-device mark confirmed by the cloud check." else "Confirmed by the cloud check.")
-        previous.readSource == ReadSource.ON_DEVICE && !same -> cloud.copy(status = MarkStatus.FLAGGED, reasons = listOf(
-            "Device read \"${previous.read}\" (${previous.awarded}/${previous.max}); cloud read \"${cloud.read}\" (${cloud.awarded}/${cloud.max}). Which is right?"))
-        else -> cloud
+    val sameScore = cloud.awarded == previous.awarded
+    val realFirstRead = previous.status == MarkStatus.PROVISIONAL || previous.status == MarkStatus.VERIFIED
+    if (realFirstRead && sameScore && cloud.status != MarkStatus.FLAGGED && sameReading(previous.read, cloud.read)) {
+        return cloud.copy(reasons = cloud.reasons + if (previous.readSource == ReadSource.ON_DEVICE) CONFIRMED_ON_DEVICE else CONFIRMED_CLOUD)
     }
+    if (previous.readSource == ReadSource.ON_DEVICE && previous.status == MarkStatus.PROVISIONAL) {
+        if (!sameScore) return cloud.copy(status = MarkStatus.FLAGGED, reasons = listOf(
+            "Device read \"${previous.read}\" (${previous.awarded}/${previous.max}); cloud read \"${cloud.read}\" (${cloud.awarded}/${cloud.max}). Which is right?"))
+        if (!sameReading(previous.read, cloud.read)) return cloud.copy(reasons = cloud.reasons +
+            "The device read \"${previous.read}\"; the cloud's reading is used (same mark).")
+    }
+    return cloud
 }
 
 /** Keeps any mark the teacher reviewed while the check was running. */
@@ -46,7 +68,7 @@ fun summarise(before: List<Mark>, after: List<Mark>): CheckSummary {
         if (a == null || a === b) continue
         checked += 1
         if (a.status == MarkStatus.FLAGGED) needTeacher += 1
-        else if (b.readSource == ReadSource.ON_DEVICE && a.status == MarkStatus.VERIFIED) confirmed += 1
+        else if (b.readSource == ReadSource.ON_DEVICE && isCrossChecked(a)) confirmed += 1
     }
     return CheckSummary(checked, confirmed, needTeacher)
 }
@@ -55,7 +77,7 @@ fun summarise(before: List<Mark>, after: List<Mark>): CheckSummary {
 fun checkSummaryLead(s: CheckSummary) = "Cloud check: ${s.confirmed} on-device mark${if (s.confirmed == 1) "" else "s"} confirmed"
 fun checkSummaryNeedYou(s: CheckSummary) = "${s.needTeacher} need${if (s.needTeacher == 1) "s" else ""} you"
 fun checkSummaryLearned(s: CheckSummary) =
-    if (s.learned > 0) " The device learned ${s.learned} thing${if (s.learned == 1) "" else "s"} about this class’s handwriting." else ""
+    if (s.learned > 0) " The device learned ${s.learned} thing${if (s.learned == 1) "" else "s"} about these students’ handwriting." else ""
 
 /** The full status line as plain text (the app renders the "needs you" part as a link to the Review tab). */
 fun checkSummaryText(s: CheckSummary) =

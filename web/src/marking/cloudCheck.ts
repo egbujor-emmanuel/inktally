@@ -4,11 +4,12 @@ import type { Mark, Question } from '../domain/types';
 import { loadCrop, saveMarks, PAGE_KEY, type Assignment, type Submission } from '../data/store';
 import { batchingEnabled } from '../ai/batch';
 import { friendlyCloudError } from '../ai/errors';
-import { verifyMark, verifyMarksBatch, verifyPage } from './markAnswer';
-import { learnFromCheck, mergeHints, type ReadingHint } from './learning';
-import { saveReadingHints } from '../data/store';
+import { awaitsCheck, verifyMark, verifyMarksBatch, verifyPage } from './markAnswer';
+import { isCrossChecked } from './statusLabel';
+import { learnFromCheck, type ReadingHint } from './learning';
+import { addReadingHints } from '../data/store';
 
-export const needsCheck = (m: Mark): boolean => m.status === 'provisional' || m.status === 'flagged';
+export const needsCheck = awaitsCheck;
 
 export interface CheckSummary {
   /** Answers sent to the cloud. */
@@ -41,7 +42,7 @@ export function summarise(before: Mark[], after: Mark[]): CheckSummary {
     if (!a || a === b) continue;
     checked += 1;
     if (a.status === 'flagged') needTeacher += 1;
-    else if (b.readSource === 'on_device' && a.status === 'verified') confirmed += 1;
+    else if (b.readSource === 'on_device' && isCrossChecked(a)) confirmed += 1;
   }
   return { checked, confirmed, needTeacher };
 }
@@ -95,8 +96,7 @@ export async function cloudCheck(assignment: Assignment, submissions: Submission
     hooks.onProgress?.(done, total);
   }
   if (learned.length) {
-    saveReadingHints(assignment.id, mergeHints(assignment.readingHints ?? [], learned));
-    summary.learned = learned.length;
+    try { summary.learned = await addReadingHints(assignment.id, learned); } catch (e: unknown) { hooks.onError?.(friendlyCloudError(e).message); }
   }
   return summary;
 }

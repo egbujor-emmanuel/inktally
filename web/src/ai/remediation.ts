@@ -3,7 +3,7 @@
 import { Schema } from 'firebase/ai';
 import { z } from 'zod';
 import type { Question } from '../domain/types';
-import { fillTemplate } from './config';
+import { asPromptData, fillTemplate } from './config';
 import { authorGenerate, config } from './models';
 import { recordInference } from './telemetry';
 
@@ -25,7 +25,7 @@ export async function makeCatchUp(question: Question, mistakes: string[], subjec
   const unique = [...new Set(mistakes.map((m) => m.trim()).filter(Boolean))].slice(0, MAX_MISTAKES_SENT);
   if (!unique.length) throw new Error('No mistakes to work from yet.');
   const prompt = fillTemplate(config('prompt_remediation'), {
-    level, subject, q: question.q, prompt: question.prompt, mistakes: unique.map((m) => `"${m}"`).join(', '),
+    level, subject, q: question.q, prompt: question.prompt, mistakes: unique.map((m) => `<student_answer>${asPromptData(m)}</student_answer>`).join('\n'),
   });
   const started = performance.now();
   const { text } = await authorGenerate(CATCH_UP_SCHEMA, prompt);

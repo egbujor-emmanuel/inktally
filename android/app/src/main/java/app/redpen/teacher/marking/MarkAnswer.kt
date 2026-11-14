@@ -6,6 +6,7 @@ import app.redpen.teacher.domain.Mark
 import app.redpen.teacher.domain.MarkStatus
 import app.redpen.teacher.domain.Question
 import app.redpen.teacher.domain.ReadSource
+import app.redpen.teacher.domain.needsCheck
 import com.google.firebase.ai.InferenceMode
 import com.google.firebase.ai.type.PublicPreviewAPI
 
@@ -74,10 +75,11 @@ object Marker {
         return reconcile(previous, mark(question, crop, InferenceMode.ONLY_IN_CLOUD))
     }
 
-    /** Re-marks a whole exercise-book page in the cloud and reconciles each previous mark. */
+    /** Re-marks a whole exercise-book page in the cloud and reconciles the marks that were waiting for it. */
     suspend fun verifyPage(questions: List<Question>, photo: Bitmap, previous: List<Mark>): List<Mark> {
         val cloud = markPage(questions, photo, InferenceMode.ONLY_IN_CLOUD)
-        return previous.map { p -> cloud.firstOrNull { it.q == p.q }?.let { reconcile(p, it) } ?: p }
+        // Marks that are already final (a cloud read, or one the teacher set) are never changed by a re-read of the page.
+        return previous.map { p -> if (!p.needsCheck()) p else cloud.firstOrNull { it.q == p.q }?.let { reconcile(p, it) } ?: p }
     }
 
     /** Re-checks several answers of one student in ONE cloud request and reconciles each (same as web verifyMarksBatch). */

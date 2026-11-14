@@ -78,8 +78,13 @@ object CloudCheckRun {
             onProgress(done, total)
         }
         if (learned.isNotEmpty()) {
-            Repo.saveReadingHints(a.id, mergeHints(a.readingHints, learned))
-            summary = summary.copy(learned = learned.size)
+            try {
+                summary = summary.copy(learned = Repo.addReadingHints(a.id, learned))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                onError(Repo.friendly(e))
+            }
         }
         return summary
     }

@@ -64,6 +64,7 @@ import app.redpen.teacher.domain.total
 import app.redpen.teacher.marking.MarkSubmission
 import app.redpen.teacher.marking.acceptNotice
 import app.redpen.teacher.marking.regradeAll
+import app.redpen.teacher.marking.usableHint
 import app.redpen.teacher.DeviceModel
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -372,8 +373,8 @@ fun ReviewTab(a: Assignment, submissions: List<Submission>, check: CloudCheckSta
 @Composable
 private fun LearnedCard(a: Assignment) {
     Paper {
-        Text("What on-device AI learned about this class", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Text("When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. Cloud checks never see them, so they stay independent.",
+        Text("What on-device AI learned about these students", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text("When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. A one-letter mix-up is only used after it has been seen twice, so one correction can never push other students' answers towards the key. Cloud checks never see the hints, so they stay independent.",
             color = RP.InkSoft, fontSize = 14.sp)
         a.readingHints.reversed().forEach { h ->
             Text(buildAnnotatedString {
@@ -382,7 +383,7 @@ private fun LearnedCard(a: Assignment) {
                 append(" → was ")
                 withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("“${h.cloud}”") }
                 append(" ")
-                withStyle(SpanStyle(color = RP.InkSoft)) { append("(${h.type})") }
+                withStyle(SpanStyle(color = RP.InkSoft)) { append("(${h.type}${if (h.n > 1) ", seen ${h.n} times" else ""}${if (usableHint(h)) "" else ", waiting for a second sighting"})") }
             }, fontSize = 14.sp)
         }
         TextButton(onClick = { Repo.saveReadingHints(a.id, emptyList()) }) { Text("Forget these") }

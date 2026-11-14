@@ -1,13 +1,13 @@
 // Persistence. Assignments + marks live in Firestore (offline-first cache, per-teacher security rules).
 // Answer-box images stay ONLY on this device in IndexedDB — they are never uploaded to Firebase.
 import {
-  collection, deleteDoc, deleteField, getDocs, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where,
+  collection, deleteDoc, deleteField, getDocs, doc, getDoc, onSnapshot, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { openDB, type IDBPDatabase } from 'idb';
 import { auth, db } from '../firebase/app';
 import type { Mark, MarkingScheme, Question } from '../domain/types';
-import type { ReadingHint } from '../marking/learning';
+import { countNewHints, mergeHints, type ReadingHint } from '../marking/learning';
 import { friendlyCloudError } from '../ai/errors';
 
 export interface Assignment {
@@ -116,6 +116,21 @@ export async function updateQuestion(assignment: Assignment, updated: Question):
 }
 
 /** Saves what the cloud check taught the device about this class's handwriting ([] forgets it). */
+/**
+ * Merges freshly learned hints into the assignment's newest saved hints (in a transaction, so hints saved meanwhile
+ * by another tab or device are kept). Resolves to how many confusions were new. Only runs online (after a cloud check).
+ */
+export async function addReadingHints(assignmentId: string, fresh: ReadingHint[]): Promise<number> {
+  const ref = doc(db, 'assignments', assignmentId);
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const existing = (snap.data()?.readingHints ?? []) as ReadingHint[];
+    tx.update(ref, { readingHints: mergeHints(existing, fresh) });
+    return countNewHints(existing, fresh);
+  });
+}
+
+/** Replaces the hints (the teacher's "Forget these"). */
 export function saveReadingHints(assignmentId: string, hints: ReadingHint[]): void {
   queueWrite(updateDoc(doc(db, 'assignments', assignmentId), { readingHints: hints }), 'the handwriting hints');
 }

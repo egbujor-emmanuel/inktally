@@ -12,6 +12,8 @@ import app.redpen.teacher.domain.Profile
 import app.redpen.teacher.domain.Question
 import app.redpen.teacher.domain.ReadSource
 import app.redpen.teacher.marking.ReadingHint
+import app.redpen.teacher.marking.countNewHints
+import app.redpen.teacher.marking.mergeHints
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.DocumentSnapshot
@@ -144,7 +146,7 @@ object Repo {
         val type = m["type"] as? String ?: return null
         val device = m["device"] as? String ?: return null
         val cloud = m["cloud"] as? String ?: return null
-        return ReadingHint(type, device, cloud)
+        return ReadingHint(type, device, cloud, (m["n"] as? Number)?.toInt() ?: 1)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -211,9 +213,24 @@ object Repo {
         queue("the edited question", db.collection("assignments").document(a.id).update("scheme.questions", questions.map { it.toMap() }))
     }
 
-    /** Saves what the cloud check taught the device about this class's handwriting (an empty list forgets it). */
+    private fun hintMap(h: ReadingHint) = mapOf("type" to h.type, "device" to h.device, "cloud" to h.cloud, "n" to h.n)
+
+    /** Replaces the handwriting hints (the teacher's "Forget these" saves an empty list). */
     fun saveReadingHints(assignmentId: String, hints: List<ReadingHint>) = queue("the handwriting hints",
-        db.collection("assignments").document(assignmentId).update("readingHints", hints.map { mapOf("type" to it.type, "device" to it.device, "cloud" to it.cloud) }))
+        db.collection("assignments").document(assignmentId).update("readingHints", hints.map(::hintMap)))
+
+    /**
+     * Merges freshly learned hints into the assignment's newest saved hints in a transaction (hints saved meanwhile by
+     * another device are kept; same as web addReadingHints). Returns how many confusions were new. Online only.
+     */
+    suspend fun addReadingHints(assignmentId: String, fresh: List<ReadingHint>): Int {
+        val ref = db.collection("assignments").document(assignmentId)
+        return db.runTransaction { tx ->
+            val existing = ((tx.get(ref).get("readingHints") as? List<*>) ?: emptyList<Any>()).mapNotNull { (it as? Map<*, *>)?.let(::hintOf) }
+            tx.update(ref, "readingHints", mergeHints(existing, fresh).map(::hintMap))
+            countNewHints(existing, fresh)
+        }.await()
+    }
 
     /** Permanently deletes an assignment, every student's marks for it, and this device's photos for it. */
     suspend fun deleteAssignment(ctx: Context, id: String) {

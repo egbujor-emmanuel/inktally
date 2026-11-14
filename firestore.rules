@@ -7,13 +7,38 @@ service cloud.firestore {
     function owns(data) { return signedIn() && data.ownerUid == request.auth.uid; }
     function shortText(v, n) { return v is string && v.size() <= n; }
 
+    // One handwriting hint (fed into on-device read prompts): exactly these fields, short strings, a whole-number count.
+    function validHint(h) {
+      return h is map && h.keys().hasOnly(['type', 'device', 'cloud', 'n']) && h.keys().hasAll(['type', 'device', 'cloud'])
+        && h.type in ['objective', 'numeric', 'short']
+        && shortText(h.device, 40) && shortText(h.cloud, 40)
+        && (!('n' in h) || (h.n is int && h.n >= 1 && h.n <= 100000));
+    }
+    // Rules have no loops, so each of the (at most 12) positions is checked.
+    function hintAt(l, i) { return l.size() <= i || validHint(l[i]); }
+    function validHints(l) {
+      return l is list && l.size() <= 12
+        && hintAt(l, 0)
+        && hintAt(l, 1)
+        && hintAt(l, 2)
+        && hintAt(l, 3)
+        && hintAt(l, 4)
+        && hintAt(l, 5)
+        && hintAt(l, 6)
+        && hintAt(l, 7)
+        && hintAt(l, 8)
+        && hintAt(l, 9)
+        && hintAt(l, 10)
+        && hintAt(l, 11);
+    }
+
     // Assignment: title, class, marking scheme (<= 100 questions), status.
     function validAssignment(d) {
       return d.keys().hasOnly(['title', 'className', 'scheme', 'status', 'readingHints', 'ownerUid', 'createdAt'])
         && shortText(d.title, 200) && shortText(d.className, 120)
         && d.scheme is map && d.scheme.questions is list && d.scheme.questions.size() <= 100
         && (!('status' in d) || d.status in ['active', 'finished'])
-        && (!('readingHints' in d) || (d.readingHints is list && d.readingHints.size() <= 12));
+        && (!('readingHints' in d) || validHints(d.readingHints));
     }
 
     // Student record: name, marks (<= 100), optional teacher comment and offline-queue marker.
@@ -44,14 +69,29 @@ service cloud.firestore {
       }
     }
 
-    // One counter document per day: where inference ran (on-device / cloud) and how long it took.
+    // One counter document per day: where inference ran (on-device / cloud) and how long it took. Counters are numbers.
+    function counter(d, k) { return !(k in d) || d[k] is number; }
+    function validTelemetry(d) {
+      return true
+        && counter(d, 'on_device_read')
+        && counter(d, 'on_device_verify')
+        && counter(d, 'on_device_points')
+        && counter(d, 'on_device_author')
+        && counter(d, 'on_device_ms')
+        && counter(d, 'in_cloud_read')
+        && counter(d, 'in_cloud_verify')
+        && counter(d, 'in_cloud_points')
+        && counter(d, 'in_cloud_author')
+        && counter(d, 'in_cloud_ms');
+    }
     match /users/{userId}/telemetry/{day} {
       allow read: if signedIn() && request.auth.uid == userId;
       allow write: if signedIn() && request.auth.uid == userId
         && day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && request.resource.data.keys().hasOnly([
           'on_device_read', 'on_device_verify', 'on_device_points', 'on_device_author', 'on_device_ms',
-          'in_cloud_read', 'in_cloud_verify', 'in_cloud_points', 'in_cloud_author', 'in_cloud_ms', 'updatedAt']);
+          'in_cloud_read', 'in_cloud_verify', 'in_cloud_points', 'in_cloud_author', 'in_cloud_ms', 'updatedAt'])
+        && validTelemetry(request.resource.data);
     }
 
     // Institution details shown on sheets, marked copies and the register.

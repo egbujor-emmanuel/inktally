@@ -8,6 +8,7 @@ import { readPage } from '../ai/readPage';
 import { checkPointsBatch, readAnswersBatch, type CropToRead } from '../ai/batch';
 import type { ReadMode } from '../ai/models';
 import { markNumeric, markObjective, markPoints, markShort } from './engine';
+import { textSimilarity } from './normalize';
 
 async function markFromRead(question: Question, read: string, source: ReadSource, mode?: ReadMode): Promise<Mark> {
   switch (question.type) {
@@ -86,10 +87,12 @@ export async function markPage(questions: Question[], photo: Blob, mode?: ReadMo
   return marks;
 }
 
-/** Re-marks a whole exercise-book page in the cloud and reconciles each previous mark. */
+/** Re-marks a whole exercise-book page in the cloud and reconciles the marks that were waiting for it. */
 export async function verifyPage(questions: Question[], photo: Blob, previous: Mark[]): Promise<Mark[]> {
   const cloud = await markPage(questions, photo, InferenceMode.ONLY_IN_CLOUD);
   return previous.map((p) => {
+    // Marks that are already final (a cloud read, or one the teacher set) are never changed by a re-read of the page.
+    if (!awaitsCheck(p)) return p;
     const c = cloud.find((m) => m.q === p.q);
     return c ? reconcile(p, c) : p;
   });
@@ -101,17 +104,44 @@ export async function verifyMark(question: Question, crop: Blob, previous: Mark)
   return reconcile(previous, await markAnswer(question, crop, InferenceMode.ONLY_IN_CLOUD));
 }
 
+/** A mark the cloud check still has to look at: an on-device read, or an answer that could not be read with confidence. */
+export const awaitsCheck = (m: Mark): boolean => m.status === 'provisional' || m.status === 'flagged';
+
+export const CONFIRMED_ON_DEVICE = 'On-device mark confirmed by the cloud check.';
+export const CONFIRMED_CLOUD = 'Confirmed by the cloud check.';
+/** At or above this similarity two readings of a written answer are the same reading. */
+const SAME_READING = 0.8;
+const squash = (text: string): string => text.toLowerCase().replace(/[\s,.;:'"`]/g, '');
+
+/** True when two models read the same thing (case, spacing and punctuation aside; small slips allowed in longer text). */
+export function sameReading(a: string, b: string): boolean {
+  const x = squash(a), y = squash(b);
+  if (x === y) return true;
+  return x.length > 1 && y.length > 1 && textSimilarity(a, b) >= SAME_READING;
+}
+
+/**
+ * Second opinion. A mark is "confirmed" only when there were two real readings that agree on what is written AND on the
+ * score. An answer the device failed or was unsure about has no first reading, so the cloud's read stands on its own
+ * (shown as "Cloud read"); a real device reading with a different score goes to the teacher with both readings.
+ */
 export function reconcile(previous: Mark, cloud: Mark): Mark {
   if (previous.status === 'reviewed') return previous;
   const sameScore = cloud.awarded === previous.awarded;
-  if (sameScore && cloud.status !== 'flagged') {
-    return { ...cloud, reasons: [...cloud.reasons, previous.readSource === 'on_device' ? 'On-device mark confirmed by the cloud check.' : 'Confirmed by the cloud check.'] };
+  const realFirstRead = previous.status === 'provisional' || previous.status === 'verified';
+  if (realFirstRead && sameScore && cloud.status !== 'flagged' && sameReading(previous.read, cloud.read)) {
+    return { ...cloud, reasons: [...cloud.reasons, previous.readSource === 'on_device' ? CONFIRMED_ON_DEVICE : CONFIRMED_CLOUD] };
   }
-  if (previous.readSource === 'on_device' && !sameScore) {
-    return {
-      ...cloud, status: 'flagged',
-      reasons: [`Device read "${previous.read}" (${previous.awarded}/${previous.max}); cloud read "${cloud.read}" (${cloud.awarded}/${cloud.max}). Which is right?`],
-    };
+  if (previous.readSource === 'on_device' && previous.status === 'provisional') {
+    if (!sameScore) {
+      return {
+        ...cloud, status: 'flagged',
+        reasons: [`Device read "${previous.read}" (${previous.awarded}/${previous.max}); cloud read "${cloud.read}" (${cloud.awarded}/${cloud.max}). Which is right?`],
+      };
+    }
+    if (!sameReading(previous.read, cloud.read)) {
+      return { ...cloud, reasons: [...cloud.reasons, `The device read "${previous.read}"; the cloud's reading is used (same mark).`] };
+    }
   }
   return cloud;
 }

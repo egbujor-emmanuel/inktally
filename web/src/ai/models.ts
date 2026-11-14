@@ -89,10 +89,15 @@ export async function refreshDeviceCapability(): Promise<DeviceAvailability> {
   return status;
 }
 
-/** True when a read with this mode will go to the cloud (so it can be batched). */
+/**
+ * True when a read with this mode will go to the cloud (so it can be batched). Same rule as Android's
+ * Ai.cloudWillRead(deviceReady): unless reads are forced on-device, they go to the cloud whenever Gemini Nano is not
+ * downloaded and ready (a "downloadable" model is fetched in the background; this read still goes to the cloud).
+ */
 export function cloudWillRead(override?: ReadMode): boolean {
   const mode = readMode(override);
-  return mode === InferenceMode.ONLY_IN_CLOUD || mode === InferenceMode.PREFER_IN_CLOUD;
+  if (mode === InferenceMode.ONLY_ON_DEVICE) return false;
+  return mode === InferenceMode.ONLY_IN_CLOUD || mode === InferenceMode.PREFER_IN_CLOUD || !deviceReadyOffline;
 }
 
 function readMode(override?: ReadMode): ReadMode {

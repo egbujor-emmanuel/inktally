@@ -2,6 +2,7 @@ package app.redpen.teacher
 
 import app.redpen.teacher.ai.REMOTE_DEFAULTS
 import app.redpen.teacher.ai.fill
+import app.redpen.teacher.ai.parsePresent
 import app.redpen.teacher.data.Submission
 import app.redpen.teacher.domain.Mark
 import app.redpen.teacher.domain.MarkEngine
@@ -14,6 +15,7 @@ import app.redpen.teacher.marking.HINT_LIMIT
 import app.redpen.teacher.marking.ReadingHint
 import app.redpen.teacher.marking.acceptNotice
 import app.redpen.teacher.marking.checkSummaryText
+import app.redpen.teacher.marking.countNewHints
 import app.redpen.teacher.marking.keepReviewed
 import app.redpen.teacher.marking.learnFromCheck
 import app.redpen.teacher.marking.learnedHint
@@ -21,6 +23,8 @@ import app.redpen.teacher.marking.markNumeric
 import app.redpen.teacher.marking.markShort
 import app.redpen.teacher.marking.mergeHints
 import app.redpen.teacher.marking.reconcile
+import app.redpen.teacher.marking.sameReading
+import app.redpen.teacher.marking.usableHint
 import app.redpen.teacher.marking.regradeAll
 import app.redpen.teacher.marking.regradeMark
 import app.redpen.teacher.marking.statusLabel
@@ -28,6 +32,7 @@ import app.redpen.teacher.marking.summarise
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -101,9 +106,9 @@ class HybridTest {
 
     @Test fun statusLineUsesTheWebWording() {
         assertEquals("Cloud check: 1 on-device mark confirmed, 1 needs you.", checkSummaryText(CheckSummary(2, 1, 1)))
-        assertEquals("Cloud check: 2 on-device marks confirmed, 2 need you. The device learned 1 thing about this class’s handwriting.",
+        assertEquals("Cloud check: 2 on-device marks confirmed, 2 need you. The device learned 1 thing about these students’ handwriting.",
             checkSummaryText(CheckSummary(4, 2, 2, 1)))
-        assertEquals("Cloud check: 0 on-device marks confirmed. The device learned 3 things about this class’s handwriting.",
+        assertEquals("Cloud check: 0 on-device marks confirmed. The device learned 3 things about these students’ handwriting.",
             checkSummaryText(CheckSummary(1, 0, 0, 3)))
     }
 
@@ -138,11 +143,11 @@ class HybridTest {
 
     @Test fun mergeHintsDeduplicatesCaseInsensitivelyAndKeepsTheNewest() {
         val merged = mergeHints(listOf(ReadingHint("short", "abuya", "Abuja"), ReadingHint("numeric", "7", "1")), listOf(ReadingHint("short", "ABUYA", "abuja")))
-        assertEquals(listOf(ReadingHint("numeric", "7", "1"), ReadingHint("short", "ABUYA", "abuja")), merged)
+        assertEquals(listOf(ReadingHint("numeric", "7", "1"), ReadingHint("short", "ABUYA", "abuja", n = 2)), merged)
     }
 
     @Test fun theOnDevicePromptHintOnlyUsesHintsForTheSameQuestionTypeNewestFirst() {
-        val hints = listOf(ReadingHint("numeric", "7", "1"), ReadingHint("short", "Abuya", "Abuja"), ReadingHint("numeric", "5", "S"))
+        val hints = listOf(ReadingHint("numeric", "7", "1", n = 2), ReadingHint("short", "Abuya", "Abuja"), ReadingHint("numeric", "5", "S", n = 2))
         val text = learnedHint(hints, "numeric")
         assertTrue(text.contains("\"5\" was really \"S\""))
         assertTrue(text.indexOf("\"5\"") < text.indexOf("\"7\""))
@@ -168,8 +173,8 @@ class HybridTest {
 
     @Test fun learnedHintGoesIntoTheReadPromptAndLearningIsOnByDefault() {
         assertEquals("true", REMOTE_DEFAULTS["device_learning"])
-        val prompt = fill(REMOTE_DEFAULTS["prompt_read_crop"] as String, mapOf("hint" to "It is a number." + learnedHint(listOf(ReadingHint("numeric", "7", "1")), "numeric")))
-        assertTrue(prompt.contains("It is a number. In this class's handwriting, earlier readings were corrected: what looked like \"7\" was really \"1\"."))
+        val prompt = fill(REMOTE_DEFAULTS["prompt_read_crop"] as String, mapOf("hint" to "It is a number." + learnedHint(listOf(ReadingHint("numeric", "7", "1", n = 2)), "numeric")))
+        assertTrue(prompt.contains("It is a number. In these students' handwriting, earlier readings were corrected: what looked like \"7\" was really \"1\"."))
         assertFalse(prompt.contains("{hint}"))
     }
 
@@ -204,6 +209,65 @@ class HybridTest {
         assertEquals("Accepted “FCT”. 2 other students’ marks went up too.", acceptNotice("FCT", 2))
         assertEquals("Accepted “FCT”. 1 other student’ marks went up too.", acceptNotice("FCT", 1))
         assertEquals("Accepted “FCT”. Every student who writes it from now on gets the mark.", acceptNotice("FCT", 0))
+    }
+
+    // ---- reviewer B2 findings: "confirmed" needs two real, agreeing readings (F3); hint guard rail (F5/F9); strict yes/no (F4)
+
+    private val failed = Mark(1, "", ReadSource.ON_DEVICE, 0, 1, MarkEngine.CODE, MarkStatus.FLAGGED, listOf("Could not read this answer (quota). Check it by hand or retry when online."))
+
+    @Test fun aFailedReadIsNeverConfirmedTheCloudReadingStandsAlone() {
+        val result = reconcile(failed, cloud("54"))
+        assertEquals(MarkStatus.VERIFIED, result.status)
+        assertEquals("Cloud read", statusLabel(result))
+        assertEquals(CheckSummary(checked = 1), summarise(listOf(failed), listOf(result)))
+    }
+
+    @Test fun anAnswerTheDeviceWasUnsureAboutIsNotConfirmedByAnEqualCloudScore() {
+        val unsure = markShort(shortQ, "Abu", ReadSource.ON_DEVICE).copy(status = MarkStatus.FLAGGED, awarded = 0)
+        val result = reconcile(unsure, markShort(shortQ, "Lagos", ReadSource.IN_CLOUD))
+        assertEquals("Cloud read", statusLabel(result))
+    }
+
+    @Test fun differentReadingsWithTheSameScoreAreACloudReadNotAConfirmation() {
+        val before = device("58")
+        val result = reconcile(before, cloud("54"))
+        assertEquals(MarkStatus.VERIFIED, result.status)
+        assertEquals("Cloud read", statusLabel(result))
+        assertTrue(result.reasons.last().contains("The device read \"58\""))
+        assertEquals(CheckSummary(checked = 1), summarise(listOf(before), listOf(result)))
+    }
+
+    @Test fun readingsThatDifferOnlyInFormattingAgree() {
+        assertTrue(sameReading("27,000", "27000"))
+        assertTrue(sameReading("Abuja ", "abuja"))
+        assertFalse(sameReading("A", "D"))
+        assertEquals("Verified", statusLabel(reconcile(markShort(shortQ, "abuja", ReadSource.ON_DEVICE), markShort(shortQ, "Abuja", ReadSource.IN_CLOUD))))
+    }
+
+    @Test fun aOneLetterConfusionIsOnlyUsedOnceSeenTwice() {
+        val once = mergeHints(emptyList(), listOf(ReadingHint("objective", "A", "D")))
+        assertFalse(usableHint(once.single()))
+        assertEquals("", learnedHint(once, "objective"))
+        val twice = mergeHints(once, listOf(ReadingHint("objective", "A", "D")))
+        assertEquals(2, twice.single().n)
+        assertTrue(learnedHint(twice, "objective").contains("\"A\" was really \"D\""))
+        assertTrue(usableHint(ReadingHint("short", "raned", "runned")))
+    }
+
+    @Test fun onlyNewConfusionsAreCountedAsLearned() {
+        val existing = listOf(ReadingHint("short", "raned", "runned"))
+        val fresh = listOf(ReadingHint("short", "RANED", "runned"), ReadingHint("objective", "A", "D"), ReadingHint("objective", "a", "d"))
+        assertEquals(1, countNewHints(existing, fresh))
+    }
+
+    @Test fun pointChecksAcceptOnlyAClearYesOrNo() {
+        assertTrue(parsePresent("{\"present\": true}"))
+        assertFalse(parsePresent("```json\n{\"present\":false}\n```"))
+        assertTrue(parsePresent("Yes"))
+        assertFalse(parsePresent("no."))
+        assertThrows(IllegalStateException::class.java) { parsePresent("The student does not state that blood carries oxygen.") }
+        assertThrows(IllegalStateException::class.java) { parsePresent("There is no mention of germs.") }
+        assertThrows(IllegalStateException::class.java) { parsePresent("{\"present\": \"maybe\"}") }
     }
 
     // ---- status labels
