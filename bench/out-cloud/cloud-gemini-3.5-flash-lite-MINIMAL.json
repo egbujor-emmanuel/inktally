@@ -1,13 +1,18 @@
 {
   "done": true,
   "log": [
-    "   retry 1/3 after: AI: Error fetching from https://firebasevertexai.googleapis.com/v1beta/projects/redpen-hyb",
-    "   retry 2/3 after: AI: Error fetching from https://firebasevertexai.googleapis.com/v1beta/projects/redpen-hyb",
-    "   retry 3/3 after: AI: Error fetching from https://firebasevertexai.googleapis.com/v1beta/projects/redpen-hyb",
-    "ERROR FirebaseError: AI: Error fetching from https://firebasevertexai.googleapis.com/v1beta/projects/redpen-hybrid/models/gemini-3.5-flash-lite:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.5-flash-lite, description: Generate content requests per day limit exceeded on Free Tier. See https://aistudio.google.com/docs/rate-limits.\nPlease retry in 7h58m11.552273509s. [{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://aistudio.google.com/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"description\":\"Generate content requests per day limit exceeded on Free Tier. See https://aistudio.google.com/docs/rate-limits.\",\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"model\":\"gemini-3.5-flash-lite\",\"location\":\"global\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"28691s\"}] (AI/fetch-error)",
+    "[D Q1 blood] 3895 ms awarded 2/2 expected 2 OK (points [true,true,false,false,false])",
+    "[D Q2 liver] 943 ms awarded 2/3 expected 2 OK (points [true,true,false,false,false])",
+    "[D Q4 red cell] 927 ms awarded 0/1 expected 0 OK (points [false], rejected)",
+    "[D Q5 injection] 1347 ms awarded 0/2 expected 0 OK (points [false,false])",
+    "SUMMARY {\"mathsCropsReadCorrectly\":\"0/6\",\"batchMathsCropsReadCorrectly\":\"0/6\",\"batchPointChecksExact\":\"4/4\"}",
     "DONE"
   ],
   "results": [],
-  "error": "FirebaseError: AI: Error fetching from https://firebasevertexai.googleapis.com/v1beta/projects/redpen-hybrid/models/gemini-3.5-flash-lite:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.5-flash-lite, description: Generate content requests per day limit exceeded on Free Tier. See https://aistudio.google.com/docs/rate-limits.\nPlease retry in 7h58m11.552273509s. [{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://aistudio.google.com/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"description\":\"Generate content requests per day limit exceeded on Free Tier. See https://aistudio.google.com/docs/rate-limits.\",\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"model\":\"gemini-3.5-flash-lite\",\"location\":\"global\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"28691s\"}] (AI/fetch-error)",
-  "summary": null
+  "error": null,
+  "summary": {
+    "mathsCropsReadCorrectly": "0/6",
+    "batchMathsCropsReadCorrectly": "0/6",
+    "batchPointChecksExact": "4/4"
+  }
 }

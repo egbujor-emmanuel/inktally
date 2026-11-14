@@ -86,7 +86,7 @@
     },
     "batch_cloud_reads": {
       "defaultValue": {
-        "value": "false"
+        "value": "true"
       },
       "description": "Batch cloud reads: one request per sheet / theory answer (true|false)",
       "valueType": "STRING"
