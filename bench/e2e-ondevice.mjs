@@ -47,7 +47,7 @@ try {
   await page.waitForSelector('text=Try it with a sample', { timeout: 60_000 });
   log('home loaded:', await page.locator('[role=status]').innerText());
 
-  const enable = page.locator('button:has-text("Enable on-device AI")');
+  const enable = page.locator('button:has-text("Download on-device AI")');
   if (await enable.count()) {
     log('enabling on-device AI (model download)…');
     await enable.click();
@@ -59,14 +59,15 @@ try {
   await page.click('#samples button:has-text("English")');
   await page.waitForURL(/\/print$/, { timeout: 30_000 });
   const base = page.url().replace(/\/print$/, '');
-  await page.goto(`${base}/mark`, { waitUntil: 'load' });
+  // In-app navigation only (no reload): proves the download is picked up in the same session.
+  await page.getByRole('link', { name: 'Mark', exact: true }).click();
   await page.waitForSelector('text=Photograph answer sheet', { timeout: 60_000 });
 
   log('GOING OFFLINE');
   await setOffline(true);
   await sleep(1500);
   await page.fill('input[placeholder^="e.g."]', 'Chidi Okafor');
-  await page.setInputFiles('input[type=file]', PHOTO);
+  await page.locator('input[aria-label^="Choose photo"]').setInputFiles(PHOTO);
   await page.waitForSelector('text=Total:', { timeout: 10 * 60_000 });
   const offlineRows = await rows();
   log('OFFLINE MARKS:\n' + offlineRows.join('\n'));
@@ -75,18 +76,16 @@ try {
 
   log('BACK ONLINE');
   await setOffline(false);
-  await sleep(2000);
-  await page.goto(`${base}/review`, { waitUntil: 'load' });
-  // Wait until the automatic cloud check has started AND finished (no "Checking n/m" button, no provisional marks).
-  await page.waitForFunction(() => /Checking \d+\/\d+/.test(document.body.innerText), null, { timeout: 60_000 }).catch(() => {});
-  await page.waitForFunction(() => !/Checking \d+\/\d+/.test(document.body.innerText)
-    && !document.body.innerText.includes('awaiting the cloud check'), null, { timeout: 5 * 60_000, polling: 1000 });
+  // The cloud check starts by itself on reconnect, on the Mark tab, with no visit to Review needed.
+  await page.getByText(/^Cloud check: \d+ on-device mark/).waitFor({ timeout: 5 * 60_000 });
+  log('AUTOMATIC CLOUD CHECK:', await page.getByText(/^Cloud check:/).innerText());
+  await page.getByRole('link', { name: 'Review', exact: true }).click();
   await sleep(1500);
   const reviewText = await page.locator('main').innerText();
   log('REVIEW AFTER CLOUD CHECK:\n' + reviewText.slice(0, 1500));
   await shot('3-review-after-online');
 
-  await page.goto(`${base}/insights`, { waitUntil: 'load' });
+  await page.getByRole('link', { name: 'Insights', exact: true }).click();
   await sleep(2500);
   await shot('4-insights');
   writeFileSync(`${OUT}/e2e-result.json`, JSON.stringify({ offlineRows, reviewText }, null, 2));

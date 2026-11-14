@@ -1,0 +1,42 @@
+{
+  "url": "https://redpen-hybrid.web.app",
+  "at": "2026-11-14T07:19:20.773Z",
+  "results": [
+    {
+      "name": "first visit online: app installs its offline copy",
+      "ok": true,
+      "ms": 33331,
+      "detail": "service worker ready: true; sample assignment FtbBexieuHwwfXTJltwu/mark"
+    },
+    {
+      "name": "close the tab, go offline, open REDPEN again (cold start)",
+      "ok": true,
+      "ms": 2358,
+      "detail": "home loaded with no connection; status: Offline — marked when back online Cloud AI (no on-device model) School details"
+    },
+    {
+      "name": "offline: open the assignment from the cache",
+      "ok": true,
+      "ms": 831,
+      "detail": "assignment and Mark tab shown offline"
+    },
+    {
+      "name": "offline: add a stack of 3 scripts at once",
+      "ok": true,
+      "ms": 456,
+      "detail": "saved on this device as Student 1-3, waiting for a connection"
+    },
+    {
+      "name": "back online: the queue marks the whole stack automatically",
+      "ok": true,
+      "ms": 45454,
+      "detail": "3/3 scripts marked 3/5 after reconnect"
+    },
+    {
+      "name": "clean up: delete the test assignment",
+      "ok": true,
+      "ms": 2613,
+      "detail": "deleted"
+    }
+  ]
+}

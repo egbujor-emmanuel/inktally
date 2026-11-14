@@ -37,7 +37,11 @@ await page.click('#go');
 await page.waitForFunction(() => window.__bench.done, null, { timeout: 10 * 60 * 1000, polling: 2000 });
 const bench = await page.evaluate(() => window.__bench);
 mkdirSync('out-cloud', { recursive: true });
-writeFileSync(`out-cloud/cloud-${MODEL}${process.env.THINKING ? '-' + process.env.THINKING : ''}.json`, JSON.stringify(bench, null, 2));
+// One file per run (model, thinking, sections, time) so a partial run never overwrites a full one.
+const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+const file = `out-cloud/cloud-${MODEL}-${process.env.THINKING || 'default'}-${process.argv[3] || 'all'}-${stamp}.json`;
+writeFileSync(file, JSON.stringify({ ...bench, run: { model: MODEL, thinking: process.env.THINKING || 'default', sections: process.argv[3] || 'all', at: new Date().toISOString() } }, null, 2));
+console.log(`saved ${file}`);
 console.log(bench.log.join('\n'));
 await browser.close();
 server.close();

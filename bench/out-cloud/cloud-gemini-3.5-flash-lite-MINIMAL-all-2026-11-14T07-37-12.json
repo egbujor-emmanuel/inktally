@@ -1,0 +1,299 @@
+{
+  "done": true,
+  "log": [
+    "[A maths] 7743 ms src=in_cloud exact 6/6 total 5/5\n   Q1 read \"7 x 8 = 56\" 1/1\n   Q2 read \"15 + 9 = 23\" 0/0\n   Q3 read \"144 ÷ 12 = 12\" 1/1\n   Q4 read \"3/4 + 1/4 = 1\" 1/1\n   Q5 read \"25% of 80 = 25\" 0/0\n   Q6 read \"6 crates x 4,500 = ₦27,000 Answer = 27,000\" 2/2",
+    "[A bio-good] 6226 ms src=in_cloud exact 4/4 total 5/5\n   Q1 read \"Blood carries oxygen round the body and it fight germs\" 2/2\n   Q2 read \"It makes bile and stores sugar\" 2/2\n   Q3 read \"Photosynthesis\" 1/1\n   Q4 read \"To fight diseases\" 0/0",
+    "[A bio-dim] 5302 ms src=in_cloud exact 4/4 total 5/5\n   Q1 read \"Blood carries oxygen round the body and it figt germs\" 2/2\n   Q2 read \"It maes bile and stores sugar\" 2/2\n   Q3 read \"Photosynthesis\" 1/1\n   Q4 read \"To fight diseases\" 0/0",
+    "[B m1] 3178 ms read \"= 56\" | truth \"56\"",
+    "[B m2] 2776 ms read \"= 2 3\" | truth \"23\"",
+    "[B m3] 3967 ms read \"12\" | truth \"12\"",
+    "[B m4] 4794 ms read \"=-1\" | truth \"1\"",
+    "[B m5] 4023 ms read \"=25\" | truth \"25\"",
+    "[B m6b] 4470 ms read \"= 27,000\" | truth \"27,000\"",
+    "[B b1] 4231 ms read \"Blood caries oxygen wound the body and it figt germs\" | truth \"Blood carries oxygen round the body and it fights germs\"",
+    "[B b2] 3965 ms read \"It makes bile and stores sugar\" | truth \"It makes bile and stores sugar\"",
+    "[B b3] 4643 ms read \"Photosynthesis\" | truth \"Photosynthesis\"",
+    "[B b4] 4127 ms read \"2. To fight diseases -\" | truth \"To fight diseases\"",
+    "[C batch m1,m2,m3,m4,m5,m6b] 4513 ms, ONE request for 6 answers",
+    "   [C m1] read \"= 56\" | truth \"56\"",
+    "   [C m2] read \"= 23\" | truth \"23\"",
+    "   [C m3] read \"12\" | truth \"12\"",
+    "   [C m4] read \"= 1\" | truth \"1\"",
+    "   [C m5] read \"= 25\" | truth \"25\"",
+    "   [C m6b] read \"= 27,000\" | truth \"27,000\"",
+    "[C batch b1,b2,b3,b4] 6313 ms, ONE request for 4 answers",
+    "   [C b1] read \"Blood carries oxygen round the body and it figt germs\" | truth \"Blood carries oxygen round the body and it fights germs\"",
+    "   [C b2] read \"It makes bile and stores sugar\" | truth \"It makes bile and stores sugar\"",
+    "   [C b3] read \"Photosynthesis\" | truth \"Photosynthesis\"",
+    "   [C b4] read \"To fight diseases\" | truth \"To fight diseases\"",
+    "[D Q1 blood] 1932 ms awarded 2/2 expected 2 OK (points [true,true,false,false,false])",
+    "[D Q2 liver] 3783 ms awarded 2/3 expected 2 OK (points [true,true,false,false,false])",
+    "[D Q4 red cell] 4668 ms awarded 0/1 expected 0 OK (points [false], rejected)",
+    "[D Q5 injection] 4437 ms awarded 0/2 expected 0 OK (points [false,false])",
+    "SUMMARY {\"wholePageMarksExact\":\"14/14\",\"singleCropMathsReadCorrectly\":\"5/6\",\"batchMathsCropsReadCorrectly\":\"6/6\",\"batchPointChecksExact\":\"4/4\"}",
+    "DONE"
+  ],
+  "results": [
+    {
+      "design": "A-page",
+      "id": "maths",
+      "ms": 7743,
+      "source": "in_cloud",
+      "perQ": [
+        {
+          "q": 1,
+          "exp": 1,
+          "got": 1,
+          "read": "7 x 8 = 56"
+        },
+        {
+          "q": 2,
+          "exp": 0,
+          "got": 0,
+          "read": "15 + 9 = 23"
+        },
+        {
+          "q": 3,
+          "exp": 1,
+          "got": 1,
+          "read": "144 ÷ 12 = 12"
+        },
+        {
+          "q": 4,
+          "exp": 1,
+          "got": 1,
+          "read": "3/4 + 1/4 = 1"
+        },
+        {
+          "q": 5,
+          "exp": 0,
+          "got": 0,
+          "read": "25% of 80 = 25"
+        },
+        {
+          "q": 6,
+          "exp": 2,
+          "got": 2,
+          "read": "6 crates x 4,500 = ₦27,000 Answer = 27,000"
+        }
+      ]
+    },
+    {
+      "design": "A-page",
+      "id": "bio-good",
+      "ms": 6226,
+      "source": "in_cloud",
+      "perQ": [
+        {
+          "q": 1,
+          "exp": 2,
+          "got": 2,
+          "read": "Blood carries oxygen round the body and it fight germs"
+        },
+        {
+          "q": 2,
+          "exp": 2,
+          "got": 2,
+          "read": "It makes bile and stores sugar"
+        },
+        {
+          "q": 3,
+          "exp": 1,
+          "got": 1,
+          "read": "Photosynthesis"
+        },
+        {
+          "q": 4,
+          "exp": 0,
+          "got": 0,
+          "read": "To fight diseases"
+        }
+      ]
+    },
+    {
+      "design": "A-page",
+      "id": "bio-dim",
+      "ms": 5302,
+      "source": "in_cloud",
+      "perQ": [
+        {
+          "q": 1,
+          "exp": 2,
+          "got": 2,
+          "read": "Blood carries oxygen round the body and it figt germs"
+        },
+        {
+          "q": 2,
+          "exp": 2,
+          "got": 2,
+          "read": "It maes bile and stores sugar"
+        },
+        {
+          "q": 3,
+          "exp": 1,
+          "got": 1,
+          "read": "Photosynthesis"
+        },
+        {
+          "q": 4,
+          "exp": 0,
+          "got": 0,
+          "read": "To fight diseases"
+        }
+      ]
+    },
+    {
+      "design": "B-crop",
+      "id": "m1",
+      "ms": 3178,
+      "text": "= 56",
+      "truth": "56"
+    },
+    {
+      "design": "B-crop",
+      "id": "m2",
+      "ms": 2776,
+      "text": "= 2 3",
+      "truth": "23"
+    },
+    {
+      "design": "B-crop",
+      "id": "m3",
+      "ms": 3967,
+      "text": "12",
+      "truth": "12"
+    },
+    {
+      "design": "B-crop",
+      "id": "m4",
+      "ms": 4794,
+      "text": "=-1",
+      "truth": "1"
+    },
+    {
+      "design": "B-crop",
+      "id": "m5",
+      "ms": 4023,
+      "text": "=25",
+      "truth": "25"
+    },
+    {
+      "design": "B-crop",
+      "id": "m6b",
+      "ms": 4470,
+      "text": "= 27,000",
+      "truth": "27,000"
+    },
+    {
+      "design": "B-crop",
+      "id": "b1",
+      "ms": 4231,
+      "text": "Blood caries oxygen wound the body and it figt germs",
+      "truth": "Blood carries oxygen round the body and it fights germs"
+    },
+    {
+      "design": "B-crop",
+      "id": "b2",
+      "ms": 3965,
+      "text": "It makes bile and stores sugar",
+      "truth": "It makes bile and stores sugar"
+    },
+    {
+      "design": "B-crop",
+      "id": "b3",
+      "ms": 4643,
+      "text": "Photosynthesis",
+      "truth": "Photosynthesis"
+    },
+    {
+      "design": "B-crop",
+      "id": "b4",
+      "ms": 4127,
+      "text": "2. To fight diseases -",
+      "truth": "To fight diseases"
+    },
+    {
+      "design": "C-batch",
+      "id": "m1",
+      "ms": 4513,
+      "text": "= 56",
+      "truth": "56"
+    },
+    {
+      "design": "C-batch",
+      "id": "m2",
+      "ms": 4513,
+      "text": "= 23",
+      "truth": "23"
+    },
+    {
+      "design": "C-batch",
+      "id": "m3",
+      "ms": 4513,
+      "text": "12",
+      "truth": "12"
+    },
+    {
+      "design": "C-batch",
+      "id": "m4",
+      "ms": 4513,
+      "text": "= 1",
+      "truth": "1"
+    },
+    {
+      "design": "C-batch",
+      "id": "m5",
+      "ms": 4513,
+      "text": "= 25",
+      "truth": "25"
+    },
+    {
+      "design": "C-batch",
+      "id": "m6b",
+      "ms": 4513,
+      "text": "= 27,000",
+      "truth": "27,000"
+    },
+    {
+      "design": "C-batch",
+      "id": "b1",
+      "ms": 6313,
+      "text": "Blood carries oxygen round the body and it figt germs",
+      "truth": "Blood carries oxygen round the body and it fights germs"
+    },
+    {
+      "design": "C-batch",
+      "id": "b2",
+      "ms": 6313,
+      "text": "It makes bile and stores sugar",
+      "truth": "It makes bile and stores sugar"
+    },
+    {
+      "design": "C-batch",
+      "id": "b3",
+      "ms": 6313,
+      "text": "Photosynthesis",
+      "truth": "Photosynthesis"
+    },
+    {
+      "design": "C-batch",
+      "id": "b4",
+      "ms": 6313,
+      "text": "To fight diseases",
+      "truth": "To fight diseases"
+    }
+  ],
+  "error": null,
+  "summary": {
+    "wholePageMarksExact": "14/14",
+    "singleCropMathsReadCorrectly": "5/6",
+    "batchMathsCropsReadCorrectly": "6/6",
+    "batchPointChecksExact": "4/4"
+  },
+  "run": {
+    "model": "gemini-3.5-flash-lite",
+    "thinking": "MINIMAL",
+    "sections": "all",
+    "at": "2026-11-14T07:37:12.155Z"
+  }
+}

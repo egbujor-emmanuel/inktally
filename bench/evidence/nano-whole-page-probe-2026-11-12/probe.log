@@ -1,0 +1,26 @@
+[chrome] 
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/9a50d76a-bab6-4e7f-91e2-cc977401c181
+Chrome version: 157.0.8103.78
+[0s] phase=checking progress=0.0%
+[chrome] Created TensorFlow Lite XNNPACK delegate for CPU.
+[15s] phase=downloading progress=33.1%
+[30s] phase=downloading progress=64.4%
+[45s] phase=downloading progress=89.8%
+[chrome] [6006:6006:1112/072701.729404:ERROR:components/optimization_guide/core/model_execution/manifest_broker/manifest_solution_factory.cc:846] Model recipe nano_v3_cpu_model has 0 max_tokens, using fallback value 10240
+[60s] phase=downloading progress=90.0%
+[chrome] INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+[chrome] INFO: [environment.cc:36] Creating LiteRT environment with options
+INFO: [accelerator_registry.cc:54] RegisterAccelerator: ptr=0x2a98073f7cc0, name=GPU WebGPU
+INFO: [chrome] [gpu_registry.cc:116] Statically linked GPU accelerator registered.
+INFO: [accelerator_registry.cc:54] RegisterAccelerator: ptr=0x2a98073f7d80, name=CpuAccelerator
+INFO: [cpu_registry.cc:73] XNNPACK CPU accelerator registered.
+INFO: [environment.cc:36] Creating LiteRT environment with options
+INFO: [accelerator_registry.cc:54] RegisterAccelerator: ptr=0x2a98000505a0, name=GPU WebGPU
+INFO: [gpu_registry.cc:116] Statically linked GPU accelerator registered.
+INFO: [accelerator_registry.cc:54] RegisterAccelerator: ptr=0x2a98073f7ba0, name=CpuAccelerator
+INFO: [cpu_registry.cc:73] XNNPACK CPU accelerator registered.
+[75s] phase=prompting progress=100.0%
+[90s] phase=done progress=100.0%
+RESULT {"availability":"downloadable","createMs":64716,"textMs":5509,"text":"Offline AI is crucial for teachers in low-connectivity schools because it allows them to deliver personalized learning experiences and automate tasks even when internet access is unreliable or unavailable, ensuring students can continue learning effectively. \n","imageMs":10270,"image":"```json\n{\"read\": \"7 x 8 = 54\", \"correct\": false, \"expected\": \"56\"}\n```"} error= null
+EXIT=0
+FINISHED

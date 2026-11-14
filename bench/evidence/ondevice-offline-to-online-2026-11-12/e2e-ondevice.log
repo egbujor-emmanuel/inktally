@@ -1,0 +1,48 @@
+[12:38:37] home loaded: Online
+On-device AI ready
+[12:38:37] device status: Online
+On-device AI ready
+[12:38:39] GOING OFFLINE
+[12:39:18] OFFLINE MARKS:
+Q1 AI read: “B” On-device Marked by code Provisional Chose B — correct. 1/1
+Q2 AI read: “A” On-device Marked by code Provisional Chose A; correct is D. 0/1
+Q3 AI read: “B” On-device Marked by code Provisional Chose B; correct is A. 0/1
+Q4 AI read: “Abuja” On-device Marked by code Provisional "Abuja" matches an accepted answer. 1/1
+Q5 AI read: “ran ned” On-device Marked by code Provisional "ran ned" does not match: expected ran. 0/1
+[12:39:18] status: Offline — marking on this device, cloud checks will run later
+On-device AI ready
+5 on-device · 0 cloud (100% free & private)
+[12:39:18] BACK ONLINE
+[12:39:29] REVIEW AFTER CLOUD CHECK:
+JSS 1A · English Language
+
+English — Grammar Check
+
+1 pupil marked · 1 to check
+
+Print sheets
+Mark
+Review
+Insights
+
+1 answer to check
+
+Check all with the cloud
+Q2
+
+AI read: “D”
+
+Cloud
+Marked by code
+Check this
+
+Device read "A" (0/1); cloud read "D" (1/1). Which is right?
+
+Chidi Okafor
+Set score:
+0
+1
+1/1
+[12:39:33] E2E DONE
+EXIT=0
+FINISHED

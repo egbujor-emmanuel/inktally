@@ -47,13 +47,25 @@
   }
   const MAX_ATTEMPTS = 4;
   const BACKOFF_MS = 5_000;
+  // Free tier: 15 requests per minute per model. Pace requests so a full run never trips it.
+  const MIN_GAP_MS = 4_300;
+  let lastRequest = 0;
+  async function paced(fn) {
+    const wait = lastRequest + MIN_GAP_MS - performance.now();
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    lastRequest = performance.now();
+    return fn();
+  }
   async function withRetry(fn) {
     for (let attempt = 1; ; attempt++) {
-      try { return await fn(); } catch (err) {
-        const transient = /high demand|\b50[0-3]\b|Timeout|overloaded|UNAVAILABLE/i.test(`${err.message}`);
+      try { return await paced(fn); } catch (err) {
+        const msg = `${err.message}`;
+        const rateLimited = /\b429\b|RESOURCE_EXHAUSTED|quota/i.test(msg) && !/PerDay/i.test(msg);
+        const transient = rateLimited || /high demand|\b50[0-3]\b|Timeout|overloaded|UNAVAILABLE/i.test(msg);
         if (!transient || attempt >= MAX_ATTEMPTS) throw err;
-        log(`   retry ${attempt}/${MAX_ATTEMPTS - 1} after: ${String(err.message).slice(0, 90)}`);
-        await new Promise((r) => setTimeout(r, BACKOFF_MS * 2 ** (attempt - 1)));
+        const retryIn = Number(msg.match(/retry in ([\d.]+)s/i)?.[1] ?? 0) * 1000;
+        log(`   retry ${attempt}/${MAX_ATTEMPTS - 1} after: ${msg.slice(0, 90)}`);
+        await new Promise((r) => setTimeout(r, rateLimited ? Math.max(retryIn + 1000, 20_000) : BACKOFF_MS * 2 ** (attempt - 1)));
       }
     }
   }
@@ -65,6 +77,8 @@
     try {
       const cases = await (await fetch('cases.json')).json();
       const byId = Object.fromEntries(cases.map((c) => [c.id, c]));
+      let pageExact = 0, pageTotal = 0;
+      const ran = (section) => !ONLY || ONLY.split(',').includes(section);
       // A) Whole page + marking scheme (the design that failed on-device).
       for (const c of cases) {
         if (ONLY && !ONLY.split(',').includes(c.id)) continue;
@@ -77,6 +91,7 @@
         const marks = JSON.parse(r.v.response.text()).marks;
         const perQ = Object.entries(base.truthMarks).map(([q, exp]) => { const m = marks.find((x) => String(x.q) === q); return { q: +q, exp, got: m?.awarded ?? null, read: m?.read }; });
         const exact = perQ.filter((p) => p.got === p.exp).length;
+        pageExact += exact; pageTotal += perQ.length;
         bench.results.push({ design: 'A-page', id: c.id, ms: r.ms, source: r.v.response.inferenceSource, perQ });
         log(`[A ${c.id}] ${r.ms} ms src=${r.v.response.inferenceSource} exact ${exact}/${perQ.length} total ${perQ.reduce((a, p) => a + (p.got ?? 0), 0)}/${perQ.reduce((a, p) => a + p.exp, 0)}\n   ${perQ.map((p) => `Q${p.q} read "${p.read}" ${p.got}/${p.exp}`).join('\n   ')}`);
       }
@@ -138,7 +153,13 @@
           log(`[D ${it.id}] ${r.ms} ms awarded ${awarded}/${it.max} expected ${it.expected} ${awarded === it.expected ? 'OK' : 'WRONG'} (points ${JSON.stringify(j.points)}${rejected ? ', rejected' : ''})`);
         }
       }
-      bench.summary = { mathsCropsReadCorrectly: `${mathsOk}/6`, batchMathsCropsReadCorrectly: `${batchMathsOk}/6`, batchPointChecksExact: `${pointsExact}/4` };
+      // Only sections that actually ran are reported, so a partial run can never read as a failure.
+      bench.summary = {
+        wholePageMarksExact: pageTotal ? `${pageExact}/${pageTotal}` : 'not run',
+        singleCropMathsReadCorrectly: ran('crops') ? `${mathsOk}/6` : 'not run',
+        batchMathsCropsReadCorrectly: ran('batch') ? `${batchMathsOk}/6` : 'not run',
+        batchPointChecksExact: ran('points') ? `${pointsExact}/4` : 'not run',
+      };
       log(`SUMMARY ${JSON.stringify(bench.summary)}`);
     } catch (err) { bench.error = `${err.name}: ${err.message}`; log(`ERROR ${bench.error}`); }
     bench.done = true; log('DONE');

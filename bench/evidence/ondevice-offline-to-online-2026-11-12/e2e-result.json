@@ -1,0 +1,10 @@
+{
+  "offlineRows": [
+    "Q1 AI read: “B” On-device Marked by code Provisional Chose B — correct. 1/1",
+    "Q2 AI read: “A” On-device Marked by code Provisional Chose A; correct is D. 0/1",
+    "Q3 AI read: “B” On-device Marked by code Provisional Chose B; correct is A. 0/1",
+    "Q4 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer. 1/1",
+    "Q5 AI read: “ran ned” On-device Marked by code Provisional \"ran ned\" does not match: expected ran. 0/1"
+  ],
+  "reviewText": "JSS 1A · English Language\n\nEnglish — Grammar Check\n\n1 pupil marked · 1 to check\n\nPrint sheets\nMark\nReview\nInsights\n\n1 answer to check\n\nCheck all with the cloud\nQ2\n\nAI read: “D”\n\nCloud\nMarked by code\nCheck this\n\nDevice read \"A\" (0/1); cloud read \"D\" (1/1). Which is right?\n\nChidi Okafor\nSet score:\n0\n1\n1/1"
+}
