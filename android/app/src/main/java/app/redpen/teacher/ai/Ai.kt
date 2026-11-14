@@ -301,7 +301,8 @@ object Ai {
     // ---- authoring ----
 
     private const val STUDENT_PAGE_NOTE = "IMPORTANT: this photo shows a student's exercise page — the questions AND the student's own handwritten answers. " +
-        "Work out the correct answers yourself from the QUESTIONS only. The student's answers may be wrong: never copy them into the marking scheme."
+        "Work out the correct answers yourself from the QUESTIONS only. The student's answers may be wrong: never copy them into the marking scheme. " +
+        "Each numbered item is ONE question: lines under it such as \"Answer = ...\" or working are part of that same question, never a new one."
 
     private val DRAFT_SCHEMA = Schema.obj(mapOf("questions" to Schema.array(Schema.obj(
         mapOf(

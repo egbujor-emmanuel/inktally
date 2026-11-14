@@ -84,9 +84,9 @@ export function PhotoButtons({ takeLabel, onPhoto, disabled, multiple = false }:
   return (
     <div className="grid grid-cols-[1.3fr_1fr] gap-2">
       <button type="button" className="btn-pen" disabled={disabled} onClick={() => take.current?.click()}>{takeLabel}</button>
-      <button type="button" className="btn-ghost" disabled={disabled} onClick={() => choose.current?.click()}>Choose photo</button>
+      <button type="button" className="btn-ghost" disabled={disabled} onClick={() => choose.current?.click()}>{multiple ? 'Choose photos' : 'Choose photo'}</button>
       <input ref={take} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} aria-hidden onChange={handle} />
-      <input ref={choose} type="file" accept="image/*" multiple={multiple} className="sr-only" tabIndex={-1} aria-label="Choose photo from gallery" onChange={handle} />
+      <input ref={choose} type="file" accept="image/*" multiple={multiple} className="sr-only" tabIndex={-1} aria-label={multiple ? 'Choose photos from gallery' : 'Choose photo from gallery'} onChange={handle} />
     </div>
   );
 }

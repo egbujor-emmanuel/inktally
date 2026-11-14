@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { onDeviceAvailability, warmUpOnDevice, type DeviceAvailability } from '../ai/models';
+import { refreshDeviceCapability, warmUpOnDevice, type DeviceAvailability } from '../ai/models';
 import { onInference } from '../ai/telemetry';
 import type { ReadSource } from '../domain/types';
 
@@ -39,10 +39,14 @@ export function useDeviceAI(): DeviceAI {
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Re-check on start-up and whenever the connection changes, so "mark offline on-device" is always current.
   useEffect(() => {
     let alive = true;
-    void onDeviceAvailability().then((a) => { if (alive) setAvailability(a); });
-    return () => { alive = false; };
+    const check = () => { void refreshDeviceCapability().then((a) => { if (alive) setAvailability(a); }); };
+    check();
+    window.addEventListener('online', check);
+    window.addEventListener('offline', check);
+    return () => { alive = false; window.removeEventListener('online', check); window.removeEventListener('offline', check); };
   }, []);
 
   const enable = useCallback(async () => {
@@ -50,7 +54,8 @@ export function useDeviceAI(): DeviceAI {
     setProgress(0);
     try {
       await warmUpOnDevice((fraction) => setProgress(fraction));
-      setAvailability(await onDeviceAvailability());
+      // Refresh the shared capability too: marking offline in this same session must use the new model at once.
+      setAvailability(await refreshDeviceCapability());
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Could not start the on-device model');
     } finally {

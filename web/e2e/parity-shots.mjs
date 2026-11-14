@@ -22,7 +22,7 @@ await page.goto(U); await page.locator('#samples button', { hasText: 'English' }
 await shot('06-print');
 const base = page.url().replace(/\/print$/, '');
 await page.goto(`${base}/mark`); await page.getByText('Photograph answer sheet').waitFor(); await shot('07-mark');
-await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles('../samples/english-sheet-photo.jpg');
+await page.locator('input[aria-label^="Choose photo"]').setInputFiles('../samples/english-sheet-photo.jpg');
 await page.getByText(/^Total:/).waitFor({ timeout: 180000 }); await page.waitForTimeout(1500); await shot('08-marked');
 await page.getByText('Marked copy for').scrollIntoViewIfNeeded(); await shot('09-marked-copy');
 await page.goto(`${base}/review`); await page.waitForTimeout(1500); await shot('10-review');

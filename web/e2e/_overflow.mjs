@@ -9,7 +9,7 @@ await page.locator('#samples button', { hasText: 'English' }).click(); await pag
 const base = page.url().replace(/\/print$/, '');
 await page.goto(`${base}/mark`); await page.getByText('Photograph answer sheet').waitFor();
 await page.getByLabel('Student name or number').fill('Walkthrough Pupil');
-await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles('../samples/english-sheet-photo.jpg');
+await page.locator('input[aria-label^="Choose photo"]').setInputFiles('../samples/english-sheet-photo.jpg');
 await page.getByText(/^Total:/).waitFor({ timeout: 180000 });
 await page.getByText('Marked copy for').waitFor({ timeout: 30000 }); await page.getByLabel('Teacher’s comment').fill('A long comment that keeps going to test wrapping inside the register table on a small phone screen.');
 console.log('after fill:', await page.getByLabel('Teacher’s comment').evaluateAll((els) => els.map((e) => e.tagName + ':' + e.value.slice(0, 20))), await page.getByRole('button', { name: 'Save comment' }).evaluateAll((b) => b.map((x) => x.disabled))); await page.screenshot({ path: 'e2e/out/parity/dbg-comment.png', fullPage: true }); await page.getByRole('button', { name: 'Save comment' }).click({ timeout: 5000 }); await page.waitForTimeout(800);

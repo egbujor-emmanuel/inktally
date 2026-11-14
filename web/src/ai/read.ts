@@ -25,9 +25,12 @@ function parseJson(raw: string): unknown {
   return JSON.parse(cleaned);
 }
 
-/** Transcribes one cropped answer box. `mode` forces cloud for verification passes. */
-export async function readAnswer(crop: Blob, type: QuestionType, mode?: ReadMode): Promise<ReadResult> {
-  const prompt = fillTemplate(config('prompt_read_crop'), { hint: HINTS[type] });
+/**
+ * Transcribes one cropped answer box. `mode` forces cloud for verification passes.
+ * `learned` is what the cloud check taught the device about this class's handwriting (never sent on cloud checks).
+ */
+export async function readAnswer(crop: Blob, type: QuestionType, mode?: ReadMode, learned = ''): Promise<ReadResult> {
+  const prompt = fillTemplate(config('prompt_read_crop'), { hint: HINTS[type] + (mode === InferenceMode.ONLY_IN_CLOUD ? '' : learned) });
   const image = await blobToPart(crop);
   const started = performance.now();
   const response = await withRetry(() => readerModel(READ_SCHEMA, mode).generateContent([prompt, image]));

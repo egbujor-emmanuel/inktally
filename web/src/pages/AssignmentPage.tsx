@@ -11,6 +11,7 @@ import { useProfile, type Profile } from '../data/profile';
 import { Dialog, ErrorText, GhostButton, PenButton } from '../ui/Kit';
 import { sheetsToPdf, shareOrDownload } from '../scan/sheetPdf';
 import { useMarkingQueue } from '../hooks/useMarkingQueue';
+import { useCloudCheck, type CloudCheckState } from '../hooks/useCloudCheck';
 
 const TABS = [
   { to: 'print', label: 'Print sheets' },
@@ -29,6 +30,7 @@ export function AssignmentPage() {
   const navigate = useNavigate();
   const profile = useProfile();
   const queue = useMarkingQueue(assignment, submissions);
+  const check = useCloudCheck(assignment, submissions);
 
   useEffect(() => watchAssignment(id, setAssignment, (e) => setError(e.message)), [id]);
   useEffect(() => watchSubmissions(id, setSubmissions, (e) => setError(e.message)), [id]);
@@ -71,6 +73,7 @@ export function AssignmentPage() {
           </button>
           <button type="button" className="btn-text !text-[13px]" onClick={() => setConfirmDelete(true)}>Delete</button>
         </div>
+        <CheckStatus check={check} reviewHref={`/a/${id}/review`} />
         <ErrorText message={error} />
       </header>
       <nav className="tabs px-3" aria-label="Assignment sections">
@@ -83,12 +86,30 @@ export function AssignmentPage() {
           <Route index element={<Navigate to="mark" replace />} />
           <Route path="print" element={<PrintTab assignment={assignment} profile={profile} />} />
           <Route path="mark" element={<MarkTab assignment={assignment} submissions={submissions} queue={queue} />} />
-          <Route path="review" element={<ReviewTab assignment={assignment} submissions={submissions} />} />
+          <Route path="review" element={<ReviewTab assignment={assignment} submissions={submissions} check={check} />} />
           <Route path="register" element={<RegisterTab assignment={assignment} submissions={submissions} />} />
           <Route path="insights" element={<InsightsTab assignment={assignment} submissions={submissions} />} />
         </Routes>
       </div>
     </div>
+  );
+}
+
+/** The automatic cloud check, visible on every tab: "Cloud check: 8 on-device marks confirmed, 1 needs you." */
+function CheckStatus({ check, reviewHref }: { check: CloudCheckState; reviewHref: string }) {
+  const { progress, summary } = check;
+  if (!progress && !summary) return null;
+  return (
+    <p className="mt-1 flex flex-wrap items-center gap-x-2 rounded-lg bg-white px-3 py-1.5 text-[13px]" role="status" aria-live="polite">
+      <span aria-hidden className={`size-2 rounded-full ${progress ? 'animate-pulse bg-pen' : 'bg-[var(--color-ok,#2e7d32)]'}`} />
+      {progress
+        ? <span>Back online — the cloud is checking on-device marks ({progress.done}/{progress.total})…</span>
+        : summary && <span>
+            Cloud check: {summary.confirmed} on-device mark{summary.confirmed === 1 ? '' : 's'} confirmed
+            {summary.needTeacher > 0 && <>, <NavLink to={reviewHref} className="font-semibold text-pen underline">{summary.needTeacher} need{summary.needTeacher === 1 ? 's' : ''} you</NavLink></>}.
+            {summary.learned ? ` The device learned ${summary.learned} thing${summary.learned === 1 ? '' : 's'} about this class’s handwriting.` : ''}
+          </span>}
+    </p>
   );
 }
 

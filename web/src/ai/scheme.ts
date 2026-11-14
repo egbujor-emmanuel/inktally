@@ -73,8 +73,9 @@ export interface SchemeSource {
 export const hasGuide = (s: SchemeSource): boolean => Boolean(s.guideImages?.length || s.guidePdf || s.guideText?.trim());
 export const hasPaper = (s: SchemeSource): boolean => Boolean(s.images?.length || s.pdf || s.text?.trim());
 
-const PUPIL_PAGE_NOTE = "IMPORTANT: this photo shows a pupil's exercise page — the questions AND the pupil's own handwritten answers. "
-  + "Work out the correct answers yourself from the QUESTIONS only. The pupil's answers may be wrong: never copy them into the marking scheme.";
+const PUPIL_PAGE_NOTE = "IMPORTANT: this photo shows a student's exercise page — the questions AND the student's own handwritten answers. "
+  + "Work out the correct answers yourself from the QUESTIONS only. The student's answers may be wrong: never copy them into the marking scheme. "
+  + 'Each numbered item is ONE question: lines under it such as "Answer = ..." or working are part of that same question, never a new one.';
 
 export async function draftScheme(source: SchemeSource, subject: string, level: string): Promise<MarkingScheme> {
   if (!hasPaper(source) && !hasGuide(source)) throw new Error('Add the question paper or your marking scheme (photo, PDF or typed) first.');

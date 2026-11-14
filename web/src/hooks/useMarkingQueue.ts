@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PHOTO_KEY, deleteCrop, finishQueued, loadCrop, type Assignment, type Submission } from '../data/store';
 import { markSubmission } from '../marking/markSubmission';
 import { useOnline } from './useStatus';
+import { canReadOffline } from '../ai/models';
 
 export interface QueueState {
   /** Students saved offline and still waiting to be marked. */
@@ -24,8 +25,8 @@ async function withStudentLock(id: string, fn: () => Promise<void>): Promise<voi
 }
 
 /**
- * The offline queue: on a device without on-device AI, photos taken offline are saved (photo stays on this device)
- * and marked here automatically once the connection is back. Runs while the assignment is open (any tab).
+ * The marking queue: photos taken offline on a device without on-device AI, and whole stacks chosen at once, are saved
+ * (the photo stays on this device) and marked here one by one: on-device when Gemini Nano is ready, else once online. Runs while the assignment is open (any tab).
  * Always works from the latest waiting list, keeps going until it is empty, and leaves a student queued if
  * marking fails (e.g. the connection drops again) so it is retried later.
  */
@@ -42,7 +43,8 @@ export function useMarkingQueue(assignment: Assignment | null | undefined, submi
   assignmentRef.current = assignment;
 
   useEffect(() => {
-    if (!assignment || !isOnline || running.current || !waiting.length) return;
+    // Online, or offline with Gemini Nano ready on this device (then the queue marks on-device).
+    if (!assignment || (!isOnline && !canReadOffline()) || running.current || !waiting.length) return;
     running.current = true;
     const done = new Set<string>();
     let failed = false;
@@ -51,7 +53,7 @@ export function useMarkingQueue(assignment: Assignment | null | undefined, submi
       try {
         for (;;) {
           const a = assignmentRef.current;
-          if (!a || !navigator.onLine) break;
+          if (!a || (!navigator.onLine && !canReadOffline())) break;
           // Re-read the newest list every time: students finished by us (or another device) drop out.
           const next = latest.current.find((s) => s.queued && !done.has(s.id) && !finishedHere.has(s.id));
           if (!next?.queued) break;

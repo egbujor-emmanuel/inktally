@@ -21,7 +21,21 @@ const exhausted = new Map<string, number>();
 const isExhausted = (m: string) => (exhausted.get(m) ?? 0) > Date.now();
 const noThinking = new Set<string>();
 const errorText = (e: unknown) => (e instanceof Error ? `${e.name} ${e.message}` : String(e));
-let lastModel = '';
+/** Which cloud model each failed request used, so concurrent requests never blame the wrong model. */
+const modelOfError = new WeakMap<object, string>();
+export const failedModel = (error: unknown): string | undefined => (error !== null && typeof error === 'object' ? modelOfError.get(error) : undefined);
+
+/** Tags any error from this model instance with its cloud model name (per request, no shared state). */
+function attributed(model: GenerativeModel, name: string): GenerativeModel {
+  const generate = model.generateContent.bind(model);
+  model.generateContent = async (request) => {
+    try { return await generate(request); } catch (error: unknown) {
+      if (error !== null && typeof error === 'object') modelOfError.set(error, name);
+      throw error;
+    }
+  };
+  return model;
+}
 
 /** Primary cloud model, then the Remote Config fallbacks, skipping any whose quota is used up this session. */
 export function activeCloudModel(primary = config('cloud_read_model')): string {
@@ -29,16 +43,26 @@ export function activeCloudModel(primary = config('cloud_read_model')): string {
   return chain.find((m) => !isExhausted(m)) ?? primary;
 }
 
-setModelErrorHandler((error) => {
+/** Decides whether a failed request should be retried on another model. Exported for tests. */
+export function handleModelError(error: unknown): boolean {
+  const model = failedModel(error);
+  if (!model) return false;
   const text = errorText(error);
-  if (UNSUPPORTED_THINKING.test(text) && lastModel && !noThinking.has(lastModel)) { noThinking.add(lastModel); return true; }
-  if (QUOTA.test(text) && lastModel && !isExhausted(lastModel)) {
-    const daily = /per ?day|PerDay|daily/i.test(text);
-    exhausted.set(lastModel, Date.now() + (daily ? 12 * 3_600_000 : 60_000));
-    return activeCloudModel() !== lastModel; // only retry if there is somewhere else to go
+  if (UNSUPPORTED_THINKING.test(text) && !noThinking.has(model)) { noThinking.add(model); return true; }
+  if (QUOTA.test(text)) {
+    if (!isExhausted(model)) {
+      const daily = /per ?day|PerDay|daily/i.test(text);
+      exhausted.set(model, Date.now() + (daily ? 12 * 3_600_000 : 60_000));
+    }
+    const next = activeCloudModel();
+    return next !== model && !isExhausted(next); // only retry if a model with quota left remains
   }
   return false;
-});
+}
+setModelErrorHandler(handleModelError);
+
+/** Test hook: forget every exhausted / no-thinking model. */
+export function resetModelRouting(): void { exhausted.clear(); noThinking.clear(); }
 
 /** Thinking level from Remote Config; anything unrecognised (or unsupported by the model) uses the model's default. */
 function thinking(key: 'read_thinking' | 'author_thinking', model: string): { thinkingConfig?: ThinkingConfig } {
@@ -57,10 +81,12 @@ let deviceUsable: boolean | null = null;
 /** True only when Gemini Nano is downloaded and ready, i.e. reading works with no connection at all. */
 let deviceReadyOffline = false;
 export const canReadOffline = (): boolean => deviceReadyOffline;
-export async function refreshDeviceCapability(): Promise<void> {
+/** Re-checks Gemini Nano. Called at start-up, after a download finishes, and whenever the connection changes. */
+export async function refreshDeviceCapability(): Promise<DeviceAvailability> {
   const status = await onDeviceAvailability();
   deviceUsable = status === 'available' || status === 'downloadable' || status === 'downloading';
   deviceReadyOffline = status === 'available';
+  return status;
 }
 
 /** True when a read with this mode will go to the cloud (so it can be batched). */
@@ -82,44 +108,46 @@ function readMode(override?: ReadMode): ReadMode {
  * The same JSON schema constrains both, so callers get one shape regardless of where it ran.
  */
 export function readerModel(schema: ObjectSchema, mode?: ReadMode): GenerativeModel {
-  return getGenerativeModel(ai, {
+  const cloudModel = activeCloudModel();
+  return attributed(getGenerativeModel(ai, {
     mode: readMode(mode),
     inCloudParams: {
-      model: (lastModel = activeCloudModel()),
-      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...thinking('read_thinking', lastModel) },
+      model: cloudModel,
+      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...thinking('read_thinking', cloudModel) },
     },
     onDeviceParams: {
       createOptions: { expectedInputs: [{ type: 'text', languages: ['en'] }, { type: 'image' }], expectedOutputs: [{ type: 'text', languages: ['en'] }] },
       promptOptions: { responseConstraint: plainJsonSchema(schema) },
     },
-  }, { timeout: REQUEST_TIMEOUT_MS });
+  }, { timeout: REQUEST_TIMEOUT_MS }), cloudModel);
 }
 
 /** Text-only yes/no style checks (marking points). Small enough to run on-device. */
 export function judgeModel(schema: ObjectSchema, mode?: ReadMode): GenerativeModel {
-  return getGenerativeModel(ai, {
+  const cloudModel = activeCloudModel();
+  return attributed(getGenerativeModel(ai, {
     mode: readMode(mode),
     inCloudParams: {
-      model: (lastModel = activeCloudModel()),
-      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...thinking('read_thinking', lastModel) },
+      model: cloudModel,
+      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...thinking('read_thinking', cloudModel) },
     },
     onDeviceParams: {
       createOptions: { expectedInputs: [{ type: 'text', languages: ['en'] }], expectedOutputs: [{ type: 'text', languages: ['en'] }] },
       promptOptions: { responseConstraint: plainJsonSchema(schema) },
     },
-  }, { timeout: REQUEST_TIMEOUT_MS });
+  }, { timeout: REQUEST_TIMEOUT_MS }), cloudModel);
 }
 
 /** Long-form authoring (marking schemes, catch-up worksheets): cloud only, needs PDFs and long output. */
 export function authorModel(schema: ObjectSchema, modelName = config('cloud_author_model'), timeout = AUTHOR_TIMEOUT_MS): GenerativeModel {
-  const model = (lastModel = activeCloudModel(modelName));
-  return getGenerativeModel(ai, {
+  const model = activeCloudModel(modelName);
+  return attributed(getGenerativeModel(ai, {
     mode: InferenceMode.ONLY_IN_CLOUD,
     inCloudParams: {
       model,
       generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.2, ...thinking('author_thinking', model) },
     },
-  }, { timeout });
+  }, { timeout }), model);
 }
 
 /** A full question-paper photo took 10-45 s in testing; give the first attempt room before retrying. */
@@ -137,7 +165,9 @@ export async function authorGenerate(schema: ObjectSchema, request: string | (st
     const r = await withRetry(() => authorModel(schema, primary).generateContent(request), AUTHOR_ATTEMPTS);
     return { text: r.response.text(), model: primary };
   } catch (primaryError: unknown) {
-    const fallback = config('cloud_read_model');
+    // A stalled or overloaded model: move to a different one rather than waiting on the same model again.
+    const chain = [config('cloud_read_model'), ...config('cloud_fallback_models').split(',').map((m) => m.trim())].filter(Boolean);
+    const fallback = chain.find((m) => m !== primary && !isExhausted(m)) ?? primary;
     if (fallback === primary || !isTransient(primaryError)) {
       // Same model, or a non-transient failure (App Check, permission, bad request): retrying cannot help.
       if (fallback === primary && isTransient(primaryError)) {

@@ -66,8 +66,8 @@ export async function verifyMarksBatch(questions: Question[], crops: CropToRead[
   return previous.map((p) => { const c = cloud.find((m) => m.q === p.q); return c ? reconcile(p, c) : p; });
 }
 
-export async function markAnswer(question: Question, crop: Blob, mode?: ReadMode): Promise<Mark> {
-  const { text, source } = await readAnswer(crop, question.type, mode);
+export async function markAnswer(question: Question, crop: Blob, mode?: ReadMode, learned = ''): Promise<Mark> {
+  const { text, source } = await readAnswer(crop, question.type, mode, learned);
   return markFromRead(question, text, source, mode);
 }
 
@@ -101,7 +101,7 @@ export async function verifyMark(question: Question, crop: Blob, previous: Mark)
   return reconcile(previous, await markAnswer(question, crop, InferenceMode.ONLY_IN_CLOUD));
 }
 
-function reconcile(previous: Mark, cloud: Mark): Mark {
+export function reconcile(previous: Mark, cloud: Mark): Mark {
   if (previous.status === 'reviewed') return previous;
   const sameScore = cloud.awarded === previous.awarded;
   if (sameScore && cloud.status !== 'flagged') {

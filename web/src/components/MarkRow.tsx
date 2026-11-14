@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Mark } from '../domain/types';
 import { MarkGlyph, type GlyphKind } from './MarkGlyph';
+import { statusLabel } from '../marking/statusLabel';
 import { Pill } from '../ui/Kit';
 
 type Props = { mark: Mark; cropUrl?: string; index?: number; actions?: ReactNode };
@@ -24,7 +25,8 @@ const ENGINE = (e: Mark['engine']) => (e === 'code' ? 'Marked by code' : e === '
 export function MarkRow({ mark, cropUrl, index = 0, actions }: Props) {
   const glyph = glyphFor(mark);
   const [sourceLabel, sourceColor] = SOURCE[mark.readSource];
-  const [statusLabel, statusColor] = STATUS[mark.status];
+  const [, statusColor] = STATUS[mark.status];
+  const label = statusLabel(mark);
   return (
     <li className="grid list-none gap-2 rounded-[12px] border border-border bg-paper p-3.5">
       <div className="flex items-center">
@@ -38,7 +40,7 @@ export function MarkRow({ mark, cropUrl, index = 0, actions }: Props) {
       <div className="flex flex-wrap gap-1.5">
         <Pill color={sourceColor}>{sourceLabel}</Pill>
         <Pill color="var(--color-ink-soft)">{ENGINE(mark.engine)}</Pill>
-        <Pill color={statusColor}>{statusLabel}</Pill>
+        <Pill color={statusColor}>{label}</Pill>
       </div>
       <p className="text-sm">{mark.reasons.join(' ')}</p>
       {actions}

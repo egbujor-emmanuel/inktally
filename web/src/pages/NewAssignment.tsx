@@ -132,6 +132,7 @@ export function NewAssignment() {
       </Card>
       <div className="px-4">
         <PenButton className="w-full" disabled={!isOnline || drafting || (!hasPaper && !hasGuide)} onClick={() => void handleDraft()}>{draftLabel}</PenButton>
+        {isOnline && !drafting && !hasPaper && !hasGuide && <p className="pt-1.5 text-center text-[13px] text-ink-soft">Add the question paper or your marking scheme above first.</p>}
       </div>
       <ErrorText message={error} />
       {drafting && <Busy>Reading the questions and writing the answer key…</Busy>}

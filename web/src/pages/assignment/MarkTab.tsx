@@ -22,6 +22,7 @@ type Phase =
   | { kind: 'marking'; done: number; total: number }
   | { kind: 'done'; total: number; max: number }
   | { kind: 'queued'; pupil: string }
+  | { kind: 'batch'; count: number }
   | { kind: 'error'; message: string };
 
 export function MarkTab({ assignment, submissions, queue }: Props) {
@@ -37,12 +38,32 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
   const pageUrl = crops[PAGE_KEY];
   useEffect(() => () => { if (pageUrl) URL.revokeObjectURL(pageUrl); }, [pageUrl]);
 
-  async function handlePhoto([photo]: File[]) {
+  /** Several photos at once (gallery multi-select): each becomes a queued student, marked one by one in the background. */
+  async function handleBatch(photos: File[]) {
+    setMarks([]); setCrops({}); setCopy(null);
+    const base = submissions.length;
+    try {
+      for (const [i, photo] of photos.entries()) {
+        const label = pupil.trim() ? `${pupil.trim()} ${i + 1}` : `Student ${base + i + 1}`;
+        const submissionId = newSubmissionId(assignment.id);
+        await saveCrop(submissionId, PHOTO_KEY, photo); // photo first, so the queue never sees a record without it
+        await createSubmission(assignment.id, label, [], { mode, page: pageIndex }, submissionId);
+      }
+      setPupil('');
+      setPhase({ kind: 'batch', count: photos.length });
+    } catch (e: unknown) {
+      setPhase({ kind: 'error', message: friendlyCloudError(e).message });
+    }
+  }
+
+  async function handlePhoto(photos: File[]) {
+    if (photos.length > 1) { await handleBatch(photos); return; }
+    const [photo] = photos;
     if (!photo) return;
     setMarks([]);
     setCrops(mode === 'page' ? { [PAGE_KEY]: URL.createObjectURL(photo) } : {});
     setCopy(null);
-    const label = pupil.trim() || `Student ${new Date().toLocaleTimeString()}`;
+    const label = pupil.trim() || `Student ${submissions.length + 1}`;
     try {
       // No connection and no on-device AI: keep the photo on this device and mark it when the connection is back.
       if (!navigator.onLine && !canReadOffline()) {
@@ -89,8 +110,8 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
           </div>
         )}
         <PhotoButtons takeLabel={busy ? 'Marking…' : mode === 'sheet' ? 'Photograph answer sheet' : 'Photograph the page'}
-          onPhoto={(files) => void handlePhoto(files)} disabled={busy} />
-        <p className="text-[13px] text-ink-soft">{mode === 'sheet' ? 'Keep all four black corner squares in the photo.' : 'Make sure every question number and answer is visible.'}</p>
+          onPhoto={(files) => void handlePhoto(files)} disabled={busy} multiple />
+        <p className="text-[13px] text-ink-soft">{mode === 'sheet' ? 'Keep all four black corner squares in the photo.' : 'Make sure every question number and answer is visible.'} Got a whole stack? Choose all the photos at once.</p>
       </Card>
 
       <div aria-live="polite">
@@ -105,6 +126,14 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
           <p className="text-sm text-ink-soft">
             You’re offline and this device can’t read handwriting without a connection. The photo stays on this device and REDPEN marks it
             automatically as soon as you’re back online. Keep photographing the rest of the class.
+          </p>
+        </Card>
+      )}
+      {phase.kind === 'batch' && (
+        <Card flag>
+          <p className="font-display text-xl font-bold" role="status">{phase.count} scripts added</p>
+          <p className="text-sm text-ink-soft">
+            REDPEN is marking them one by one below. You can keep photographing, and rename students in the Mark register afterwards.
           </p>
         </Card>
       )}
@@ -143,7 +172,7 @@ function QueuePanel({ queue }: { queue: QueueState }) {
     <Card labelledBy="queue-title">
       <h2 id="queue-title" className="font-display text-xl font-bold">{queue.waiting.length} waiting to be marked</h2>
       <p className="text-sm text-ink-soft" aria-live="polite">
-        {queue.current ? `Marking ${queue.current.pupil} now…` : navigator.onLine ? 'Starting…' : 'They will be marked automatically when you’re back online.'}
+        {queue.current ? `Marking ${queue.current.pupil} now…` : navigator.onLine || canReadOffline() ? 'Starting…' : 'They will be marked automatically when you’re back online.'}
       </p>
       <div className="flex flex-wrap gap-1.5">
         {queue.waiting.map((s) => <Pill key={s.id} color={queue.current?.id === s.id ? 'var(--color-pen)' : 'var(--color-ink-soft)'}>{s.pupil}</Pill>)}

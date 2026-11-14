@@ -21,7 +21,7 @@ const pdf = await Promise.all([page.waitForEvent('download', { timeout: 40000 })
 await page.goto(`${base}/mark`); await page.getByText('Photograph answer sheet').waitFor();
 await ctx.setOffline(true);
 await page.getByLabel('Student name or number').fill('CSP Student');
-await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles('../samples/english-sheet-photo.jpg');
+await page.locator('input[aria-label^="Choose photo"]').setInputFiles('../samples/english-sheet-photo.jpg');
 await page.getByText('Saved for marking: CSP Student').waitFor({ timeout: 20000 });
 await ctx.setOffline(false); await page.waitForTimeout(3000);
 await page.goto(`${base}/register`); await page.getByText('Download Excel (.xlsx)').waitFor();

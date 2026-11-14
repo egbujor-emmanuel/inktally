@@ -1,24 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Mark, Question } from '../../domain/types';
-import { loadCrop, saveMarks, updateQuestion, type Assignment, type Submission } from '../../data/store';
-import { verifyMark, verifyMarksBatch, verifyPage } from '../../marking/markAnswer';
-import { batchingEnabled } from '../../ai/batch';
+import { loadCrop, saveMarks, saveReadingHints, updateQuestion, type Assignment, type Submission } from '../../data/store';
 import { PAGE_KEY } from './MarkTab';
 import { parseNumericAnswer } from '../../marking/normalize';
+import { needsCheck } from '../../marking/cloudCheck';
+import { regradeAll } from '../../marking/regrade';
 import { MarkRow } from '../../components/MarkRow';
 import { useOnline } from '../../hooks/useStatus';
-import { friendlyCloudError } from '../../ai/errors';
-import { ErrorText, GhostButton, PenButton } from '../../ui/Kit';
+import type { CloudCheckState } from '../../hooks/useCloudCheck';
+import { Card, ErrorText, GhostButton, PenButton } from '../../ui/Kit';
 
-type Props = { assignment: Assignment; submissions: Submission[] };
-
-const needsCheck = (m: Mark) => m.status === 'provisional' || m.status === 'flagged';
+type Props = { assignment: Assignment; submissions: Submission[]; check: CloudCheckState };
 
 function teacherMark(mark: Mark, awarded: number): Mark {
   return { ...mark, awarded, status: 'reviewed', engine: 'teacher', reasons: [...mark.reasons, `Teacher set ${awarded}/${mark.max}.`] };
 }
 
-/** Adds the pupil's answer to the accepted list so every other pupil is marked the same way. */
+/** Adds the student's answer to the accepted list so every other student is marked the same way. */
 function acceptForEveryone(question: Question, read: string): Question | null {
   if (question.type === 'short') return { ...question, accept: [...question.accept, read] };
   if (question.type === 'numeric') {
@@ -28,12 +26,11 @@ function acceptForEveryone(question: Question, read: string): Question | null {
   return null;
 }
 
-export function ReviewTab({ assignment, submissions }: Props) {
+export function ReviewTab({ assignment, submissions, check }: Props) {
   const isOnline = useOnline();
   const [cropUrls, setCropUrls] = useState<Record<string, string>>({});
-  const [checking, setChecking] = useState<{ done: number; total: number } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const autoRan = useRef(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const checking = check.progress;
 
   const pending = submissions.flatMap((s) => s.marks.filter(needsCheck).map((m) => ({ s, m })));
   const provisionalCount = pending.filter(({ m }) => m.status === 'provisional').length;
@@ -54,81 +51,22 @@ export function ReviewTab({ assignment, submissions }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pending.map(({ s, m }) => `${s.id}:${m.q}:${m.status}`).join('|')]);
 
-  // Latest marks from Firestore, so a long cloud check never overwrites a score the teacher set meanwhile.
-  const latestSubs = useRef(submissions);
-  latestSubs.current = submissions;
-  const keepReviewed = (submissionId: string, next: Mark[]): Mark[] => {
-    const now = latestSubs.current.find((x) => x.id === submissionId)?.marks ?? [];
-    return next.map((m) => { const cur = now.find((x) => x.q === m.q); return cur?.status === 'reviewed' ? cur : m; });
-  };
-
-  const runCloudCheck = useCallback(async () => {
-    const targets = submissions.flatMap((s) => s.marks.filter(needsCheck).map((m) => ({ s, m })));
-    if (!targets.length) return;
-    setError(null);
-    setChecking({ done: 0, total: targets.length });
-    let done = 0;
-    for (const s of submissions) {
-      const page = await loadCrop(s.id, PAGE_KEY);
-      if (page && s.marks.some(needsCheck)) {
-        try {
-          await saveMarks(assignment.id, s.id, keepReviewed(s.id, await verifyPage(assignment.scheme.questions, page, s.marks)));
-        } catch (e: unknown) { setError(friendlyCloudError(e).message); }
-        done += s.marks.filter(needsCheck).length;
-        setChecking({ done, total: targets.length });
-        continue;
-      }
-      // One cloud request for all of this student's answers that need checking.
-      if (batchingEnabled() && s.marks.filter(needsCheck).length > 1) {
-        const crops: { q: number; type: Question['type']; blob: Blob }[] = [];
-        for (const m of s.marks.filter(needsCheck)) {
-          const question = assignment.scheme.questions.find((q) => q.q === m.q);
-          const blob = await loadCrop(s.id, m.q);
-          if (question && blob) crops.push({ q: m.q, type: question.type, blob });
-        }
-        try {
-          await saveMarks(assignment.id, s.id, keepReviewed(s.id, await verifyMarksBatch(assignment.scheme.questions, crops, s.marks)));
-          done += crops.length;
-          setChecking({ done, total: targets.length });
-          continue;
-        } catch { /* fall back to checking one answer at a time */ }
-      }
-      let changed = false;
-      const next: Mark[] = [];
-      for (const m of s.marks) {
-        const question = assignment.scheme.questions.find((q) => q.q === m.q);
-        const crop = needsCheck(m) ? await loadCrop(s.id, m.q) : undefined;
-        if (!question || !crop) { next.push(m); continue; }
-        try { next.push(await verifyMark(question, crop, m)); changed = true; } catch (e: unknown) {
-          next.push(m);
-          setError(friendlyCloudError(e).message);
-        }
-        done += 1;
-        setChecking({ done, total: targets.length });
-      }
-      if (changed) await saveMarks(assignment.id, s.id, keepReviewed(s.id, next));
-    }
-    setChecking(null);
-  }, [assignment, submissions]);
-
-  // When the teacher comes back online, verify provisional on-device marks automatically (once per visit).
-  useEffect(() => {
-    if (isOnline && provisionalCount > 0 && !autoRan.current && !checking) {
-      autoRan.current = true;
-      void runCloudCheck();
-    }
-  }, [isOnline, provisionalCount, checking, runCloudCheck]);
-
   async function setScore(s: Submission, m: Mark, awarded: number) {
     await saveMarks(assignment.id, s.id, s.marks.map((x) => (x.q === m.q ? teacherMark(x, awarded) : x)));
   }
 
+  /** Adds the answer to the scheme, then re-marks EVERY student already marked with it (from their stored reading). */
   async function acceptAnswer(s: Submission, m: Mark) {
     const question = assignment.scheme.questions.find((q) => q.q === m.q);
     const updated = question && acceptForEveryone(question, m.read);
     if (!updated) return;
     await updateQuestion(assignment, updated);
     await setScore(s, m, m.max);
+    const others = regradeAll(updated, submissions.filter((x) => x.id !== s.id && !x.queued));
+    for (const r of others) await saveMarks(assignment.id, r.submissionId, r.marks);
+    setNotice(others.length
+      ? `Accepted “${m.read.slice(0, 30)}”. ${others.length} other student${others.length === 1 ? '' : 's'}’ marks went up too.`
+      : `Accepted “${m.read.slice(0, 30)}”. Every student who writes it from now on gets the mark.`);
   }
 
   // Same layout as the Android Review tab.
@@ -136,12 +74,25 @@ export function ReviewTab({ assignment, submissions }: Props) {
     <div className="grid gap-3 pb-10">
       <div className="flex items-center gap-3 px-4">
         <p className="flex-1 font-display text-xl font-bold">{pending.length} answer{pending.length === 1 ? '' : 's'} to check</p>
-        <PenButton disabled={!isOnline || !!checking || pending.length === 0} onClick={() => void runCloudCheck()}>
+        <PenButton disabled={!isOnline || !!checking || pending.length === 0} onClick={() => void check.run()}>
           {checking ? `Checking ${checking.done}/${checking.total}…` : isOnline ? 'Check with the cloud' : 'Runs when online'}
         </PenButton>
       </div>
       {provisionalCount > 0 && <p className="px-4 text-sm text-ink-soft">{provisionalCount} marked on-device, waiting for the cloud check.</p>}
-      <ErrorText message={error} />
+      {notice && <p className="px-4 text-sm font-semibold" role="status">{notice}</p>}
+      {(assignment.readingHints?.length ?? 0) > 0 && (
+        <Card labelledBy="learned-title">
+          <h2 id="learned-title" className="font-display text-lg font-bold">What on-device AI learned about this class</h2>
+          <p className="text-sm text-ink-soft">When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. Cloud checks never see them, so they stay independent.</p>
+          <ul className="grid gap-1 text-sm">
+            {assignment.readingHints?.slice().reverse().map((h, i) => (
+              <li key={`${h.type}-${h.device}-${h.cloud}-${i}`}>Looked like <b>“{h.device}”</b> → was <b>“{h.cloud}”</b> <span className="text-ink-soft">({h.type})</span></li>
+            ))}
+          </ul>
+          <button type="button" className="btn-text justify-self-start" onClick={() => saveReadingHints(assignment.id, [])}>Forget these</button>
+        </Card>
+      )}
+      <ErrorText message={check.error} />
       {pending.length === 0 && <p className="px-4 font-hand text-[26px] text-ink-soft">All marks are verified or reviewed. ✓</p>}
       <ol className="grid gap-3 px-4">
         {pending.map(({ s, m }, i) => {

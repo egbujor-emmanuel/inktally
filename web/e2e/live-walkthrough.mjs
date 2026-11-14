@@ -116,7 +116,7 @@ await step('new assignment: COPY teacher marking scheme TYPED (no question paper
 
 await step('quick mark: photo -> key -> marked', async () => {
   await page.goto(`${URL_}/quick`);
-  await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles(`${SAMPLES}/maths.png`);
+  await page.locator('input[aria-label^="Choose photo"]').setInputFiles(`${SAMPLES}/maths.png`);
   await page.getByText('Does this answer key look right?').waitFor({ timeout: 90_000 });
   await page.getByRole('button', { name: /Looks right/ }).click();
   await page.getByText(/^Total:/).waitFor({ timeout: 90_000 });
@@ -130,7 +130,7 @@ await step('sample English -> mark printed sheet photo', async () => {
   await page.goto(`${base()}/mark`);
   await page.getByText('Photograph answer sheet').waitFor();
   await page.getByLabel('Student name or number').fill('Walkthrough Pupil');
-  await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles(`${SAMPLES}/english-sheet-photo.jpg`);
+  await page.locator('input[aria-label^="Choose photo"]').setInputFiles(`${SAMPLES}/english-sheet-photo.jpg`);
   await page.getByText(/^Total:/).waitFor({ timeout: 120_000 });
   const total = await page.getByText(/^Total:/).innerText();
   await page.getByText('Marked copy for').waitFor({ timeout: 30_000 });
@@ -149,7 +149,7 @@ await step('comment after marking -> on the marked copy', async () => {
 
 await step('exercise-book mode on the same assignment', async () => {
   await page.getByRole('radio', { name: /Exercise book page/ }).click();
-  await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles(`${SAMPLES}/maths.png`);
+  await page.locator('input[aria-label^="Choose photo"]').setInputFiles(`${SAMPLES}/maths.png`);
   await page.getByText(/^Total:/).waitFor({ timeout: 120_000 });
   return await page.getByText(/^Total:/).innerText();
 });
@@ -159,7 +159,7 @@ await step('OFFLINE without on-device AI: queued, then marked automatically back
   await page.getByText('Photograph answer sheet').waitFor();
   await ctx.setOffline(true);
   await page.getByLabel('Student name or number').fill('Offline Student');
-  await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles(`${SAMPLES}/english-sheet-photo.jpg`);
+  await page.locator('input[aria-label^="Choose photo"]').setInputFiles(`${SAMPLES}/english-sheet-photo.jpg`);
   await page.getByText('Saved for marking: Offline Student').waitFor({ timeout: 20_000 });
   await page.getByText(/1 waiting to be marked/).waitFor({ timeout: 20_000 });
   await ctx.setOffline(false);

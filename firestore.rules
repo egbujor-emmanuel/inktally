@@ -9,10 +9,11 @@ service cloud.firestore {
 
     // Assignment: title, class, marking scheme (<= 100 questions), status.
     function validAssignment(d) {
-      return d.keys().hasOnly(['title', 'className', 'scheme', 'status', 'ownerUid', 'createdAt'])
+      return d.keys().hasOnly(['title', 'className', 'scheme', 'status', 'readingHints', 'ownerUid', 'createdAt'])
         && shortText(d.title, 200) && shortText(d.className, 120)
         && d.scheme is map && d.scheme.questions is list && d.scheme.questions.size() <= 100
-        && (!('status' in d) || d.status in ['active', 'finished']);
+        && (!('status' in d) || d.status in ['active', 'finished'])
+        && (!('readingHints' in d) || (d.readingHints is list && d.readingHints.size() <= 12));
     }
 
     // Student record: name, marks (<= 100), optional teacher comment and offline-queue marker.

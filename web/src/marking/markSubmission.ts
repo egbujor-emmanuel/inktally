@@ -4,6 +4,8 @@ import type { Assignment } from '../data/store';
 import { MARKED_KEY, PAGE_KEY, saveCrop, saveMarks } from '../data/store';
 import type { Mark } from '../domain/types';
 import { markAnswer, markAnswersBatch, markPage } from './markAnswer';
+import { learnedHint } from './learning';
+import { config } from '../ai/models';
 import { batchingEnabled } from '../ai/batch';
 import { cloudWillRead } from '../ai/models';
 import { layoutSheet } from '../scan/layout';
@@ -72,7 +74,8 @@ export async function markSheetSubmission(
     const question = assignment.scheme.questions.find((q) => q.q === crop.q);
     if (!question) continue;
     let mark: Mark;
-    try { mark = await markAnswer(question, crop.blob); } catch (e: unknown) { if (failFast) throw e; mark = failedMark(question.q, question.max, e); }
+    const learned = config('device_learning') === 'true' ? learnedHint(assignment.readingHints, question.type) : '';
+    try { mark = await markAnswer(question, crop.blob, undefined, learned); } catch (e: unknown) { if (failFast) throw e; mark = failedMark(question.q, question.max, e); }
     collected.push(mark);
     onProgress?.({ marks: [...collected], total: scan.crops.length, crops });
     await saveMarks(assignment.id, submissionId, collected);

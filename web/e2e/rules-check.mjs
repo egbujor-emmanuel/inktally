@@ -17,7 +17,7 @@ await page.goto(`${base}/mark`); await page.getByText('Photograph answer sheet')
 await page.getByRole('button', { name: 'Mark as finished' }).click(); await page.getByRole('button', { name: 'Reopen' }).click(); await page.waitForTimeout(2000); await banner('status update');
 await ctx.setOffline(true);
 await page.getByLabel('Student name or number').fill('Rules Student');
-await page.locator('input[aria-label="Choose photo from gallery"]').setInputFiles('../samples/english-sheet-photo.jpg');
+await page.locator('input[aria-label^="Choose photo"]').setInputFiles('../samples/english-sheet-photo.jpg');
 await page.getByText('Saved for marking: Rules Student').waitFor({ timeout: 20000 });
 await ctx.setOffline(false); await page.waitForTimeout(6000); await banner('queued student create');
 await page.goto(`${base}/register`); await page.getByText('Download Excel (.xlsx)').waitFor();

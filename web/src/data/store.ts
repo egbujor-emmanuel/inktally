@@ -7,6 +7,7 @@ import {
 import { openDB, type IDBPDatabase } from 'idb';
 import { auth, db } from '../firebase/app';
 import type { Mark, MarkingScheme, Question } from '../domain/types';
+import type { ReadingHint } from '../marking/learning';
 import { friendlyCloudError } from '../ai/errors';
 
 export interface Assignment {
@@ -17,6 +18,8 @@ export interface Assignment {
   scheme: MarkingScheme;
   /** Finished assignments stay saved and viewable, just out of the way. */
   status?: 'active' | 'finished';
+  /** Handwriting lessons from the cloud check, fed into later on-device reads (marking/learning.ts). */
+  readingHints?: ReadingHint[];
   createdAt?: unknown;
 }
 
@@ -110,6 +113,11 @@ export function watchAssignment(id: string, onChange: (a: Assignment | null) => 
 export async function updateQuestion(assignment: Assignment, updated: Question): Promise<void> {
   const questions = assignment.scheme.questions.map((q) => (q.q === updated.q ? updated : q));
   queueWrite(updateDoc(doc(db, 'assignments', assignment.id), { 'scheme.questions': questions }), 'the edited question');
+}
+
+/** Saves what the cloud check taught the device about this class's handwriting ([] forgets it). */
+export function saveReadingHints(assignmentId: string, hints: ReadingHint[]): void {
+  queueWrite(updateDoc(doc(db, 'assignments', assignmentId), { readingHints: hints }), 'the handwriting hints');
 }
 
 export function setAssignmentStatus(id: string, status: 'active' | 'finished'): void {

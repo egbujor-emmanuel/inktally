@@ -104,6 +104,13 @@
       },
       "description": "Prompt template (shared by web and Android)",
       "valueType": "STRING"
+    },
+    "device_learning": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "description": "Cloud-check corrections become handwriting hints for later on-device reads of the same assignment.",
+      "valueType": "STRING"
     }
   }
 }

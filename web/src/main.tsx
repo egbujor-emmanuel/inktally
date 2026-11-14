@@ -5,6 +5,11 @@ import './index.css';
 import { App } from './App';
 import { AccessGate } from './components/AccessGate';
 
+// Offline app shell: after the first online visit REDPEN opens and reloads with no connection.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* app still works online */ }); });
+}
+
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');
 

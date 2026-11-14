@@ -67,7 +67,7 @@ export function MarkedCopy({ blob: raw, pupil, letterhead }: Props) {
   // Same card as the Android marked copy: eyebrow, title, image, note, Share + Print.
   return (
     <section className="card card-pad mx-4" aria-labelledby="marked-copy">
-      <p className="font-hand text-xl text-pen">no second round of marking</p>
+      <p className="font-hand text-xl text-pen">ready to hand back</p>
       <h2 id="marked-copy" className="font-display text-[22px] font-bold">Marked copy for {pupil}</h2>
       <img src={url} alt={`Marked copy of ${pupil}'s work`} className="w-full" />
       <p className="text-sm text-ink-soft">The student’s own work with every tick, cross and score — print it or send it to the parent. On the original paper, just write the total.</p>
