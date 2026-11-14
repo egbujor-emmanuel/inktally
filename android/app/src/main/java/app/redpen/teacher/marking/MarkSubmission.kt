@@ -11,6 +11,7 @@ import app.redpen.teacher.domain.Mark
 import app.redpen.teacher.domain.MarkEngine
 import app.redpen.teacher.domain.MarkStatus
 import app.redpen.teacher.domain.ReadSource
+import app.redpen.teacher.domain.wireType
 import app.redpen.teacher.scan.Render
 import app.redpen.teacher.scan.Scanner
 import app.redpen.teacher.scan.SheetLayout
@@ -19,7 +20,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * One student's photo -> marks + marked copy. Shared by the Mark tab (marking now) and the offline queue
- * (marking later, when a phone without on-device AI gets its connection back). Mirrors web/src/marking/markSubmission.ts.
+ * (marking later: photos taken offline, or a whole stack chosen at once). Mirrors web/src/marking/markSubmission.ts.
  */
 object MarkSubmission {
     const val SHEET = "sheet"
@@ -70,7 +71,9 @@ object MarkSubmission {
                 }
                 for ((q, crop) in scan.crops) {
                     val question = a.scheme.questions.firstOrNull { it.q == q } ?: continue
-                    collected += try { Marker.mark(question, crop) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { if (failFast) throw e; failedMark(q, question.max, e) }
+                    // What the cloud check taught the device about this class's handwriting (on-device reads only).
+                    val learned = if (Ai.deviceLearning()) learnedHint(a.readingHints, question.wireType) else ""
+                    collected += try { Marker.mark(question, crop, learned = learned) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { if (failFast) throw e; failedMark(q, question.max, e) }
                     onProgress(Progress(collected.toList(), scan.crops.size, scan.crops))
                     Repo.saveMarks(a.id, sid, collected)
                 }

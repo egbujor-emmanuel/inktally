@@ -59,6 +59,7 @@ fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     val a = assignment ?: return Busy("Opening…")
     val queue = rememberMarkingQueue(a, submissions)
+    val check = rememberCloudCheck(a, submissions)
     val markedCount = submissions.count { it.queued == null }
     val toCheck = submissions.sumOf { s -> s.marks.count { it.needsCheck() } }
 
@@ -85,6 +86,7 @@ fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
                 TextButton(onClick = { Repo.setStatus(a.id, if (a.isFinished) "active" else "finished") }) { Text(if (a.isFinished) "Reopen" else "Mark as finished", fontSize = 13.sp) }
                 TextButton(onClick = { confirmDelete = true }) { Text("Delete", color = RP.Pen, fontSize = 13.sp) }
             }
+            CheckStatus(check, onReview = { tab = ASSIGNMENT_TABS.indexOfFirst { it.first == "review" } })
             ErrorText(error)
         }
         ScrollableTabRow(selectedTabIndex = tab, containerColor = RP.Paper, edgePadding = 12.dp) {
@@ -93,7 +95,7 @@ fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
         when (ASSIGNMENT_TABS[tab].first) {
             "print" -> PrintTab(a, profile)
             "mark" -> MarkTab(a, submissions, profile, queue)
-            "review" -> ReviewTab(a, submissions)
+            "review" -> ReviewTab(a, submissions, check)
             "register" -> RegisterTab(a, submissions, profile, onSchool = { tab = 0 })
             else -> InsightsTab(a, submissions)
         }

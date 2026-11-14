@@ -62,7 +62,7 @@ fun PupilRecord(a: Assignment, s: Submission, profile: Profile, fresh: Bitmap? =
             raw == null -> Text("The marked copy image stays on the phone that marked this student (photos are never uploaded). The comment and scores are saved to your account.",
                 color = RP.InkSoft, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 16.dp))
             lettered != null -> Paper {
-                Text("no second round of marking", fontFamily = RP.Hand, fontSize = 20.sp, color = RP.Pen)
+                Text("ready to hand back", fontFamily = RP.Hand, fontSize = 20.sp, color = RP.Pen)
                 Text("Marked copy for ${s.pupil}", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
                 Image(lettered!!.asImageBitmap(), "Marked copy of ${s.pupil}'s work", Modifier.fillMaxWidth(), contentScale = ContentScale.FillWidth)
                 Text("The student’s own work with every tick, cross and score — print it or send it to the parent. On the original paper, just write the total.",

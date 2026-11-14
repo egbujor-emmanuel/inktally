@@ -57,3 +57,11 @@ data class Profile(val institution: String = "", val details: String = "", val t
 fun List<Mark>.total() = sumOf { it.awarded }
 fun List<Mark>.maxTotal() = sumOf { it.max }
 fun Mark.needsCheck() = status == MarkStatus.PROVISIONAL || status == MarkStatus.FLAGGED
+
+/** The question type as stored in Firestore ("objective" | "numeric" | "short" | "points"), same as web QuestionType. */
+val Question.wireType: String get() = when (this) {
+    is Question.Objective -> "objective"
+    is Question.Numeric -> "numeric"
+    is Question.Short -> "short"
+    is Question.Points -> "points"
+}

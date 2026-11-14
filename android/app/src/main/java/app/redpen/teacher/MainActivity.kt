@@ -49,6 +49,7 @@ import app.redpen.teacher.ui.RP
 import app.redpen.teacher.ui.RedpenTheme
 import app.redpen.teacher.ui.SchoolScreen
 import app.redpen.teacher.ui.StatusStrip
+import kotlinx.coroutines.flow.drop
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,6 +62,10 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(Unit) {
                         boot = runCatching { bootstrap(); DeviceModel.refresh(); null }
                             .getOrElse { "REDPEN needs internet once to set up: ${it.message}" }
+                    }
+                    // Whenever the connection changes, re-check Gemini Nano (offline marking must use the current status).
+                    LaunchedEffect(boot == null) {
+                        if (boot == null) Connectivity.online.drop(1).collect { DeviceModel.refresh() }
                     }
                     val nav = rememberNavController()
                     Column(Modifier.safeDrawingPadding()) {

@@ -79,18 +79,33 @@ object DeviceModel {
     private val _state = MutableStateFlow<State>(State.Checking)
     val state: StateFlow<State> = _state
 
+    /**
+     * Re-checks Gemini Nano. Called at start-up, after a download finishes, and whenever the connection changes,
+     * so "offline: mark on this device" is always current in the same session (same as web refreshDeviceCapability).
+     */
     suspend fun refresh() {
-        _state.value = runCatching {
+        val fresh = try {
             when (FirebaseAIOnDevice.checkStatus()) {
                 OnDeviceModelStatus.AVAILABLE -> State.Ready
                 OnDeviceModelStatus.DOWNLOADABLE -> State.Downloadable
                 OnDeviceModelStatus.DOWNLOADING -> State.Downloading(0)
                 else -> State.Unavailable
             }
-        }.getOrDefault(State.Unavailable)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            State.Unavailable
+        }
+        // Keep the byte count of a download in progress instead of resetting it to 0.
+        if (!(fresh is State.Downloading && _state.value is State.Downloading)) _state.value = fresh
     }
 
     suspend fun download() {
+        collectDownload()
+        if (_state.value == State.Ready) refresh() // the shared capability must use the new model at once
+    }
+
+    private suspend fun collectDownload() {
         FirebaseAIOnDevice.download().collect { s ->
             _state.value = when (s) {
                 is DownloadStatus.DownloadStarted -> State.Downloading(0)

@@ -14,8 +14,9 @@ import com.google.firebase.ai.type.PublicPreviewAPI
 object Marker {
     private const val PAGE_ON_DEVICE_WARNING = "Read offline from the whole page — on-device page reading can auto-correct mistakes, so this waits for the cloud check."
 
-    suspend fun mark(question: Question, crop: Bitmap, force: InferenceMode? = null): Mark {
-        val read = Ai.readAnswer(crop, question, force)
+    /** [learned]: what the cloud check taught the device about this class's handwriting (never used on cloud checks). */
+    suspend fun mark(question: Question, crop: Bitmap, force: InferenceMode? = null, learned: String = ""): Mark {
+        val read = Ai.readAnswer(crop, question, force, learned)
         return markFromRead(question, read.text, read.source, force)
     }
 
@@ -79,15 +80,9 @@ object Marker {
         return previous.map { p -> cloud.firstOrNull { it.q == p.q }?.let { reconcile(p, it) } ?: p }
     }
 
-    fun reconcile(previous: Mark, cloud: Mark): Mark {
-        if (previous.status == MarkStatus.REVIEWED) return previous
-        val same = cloud.awarded == previous.awarded
-        return when {
-            same && cloud.status != MarkStatus.FLAGGED -> cloud.copy(reasons = cloud.reasons +
-                if (previous.readSource == ReadSource.ON_DEVICE) "On-device mark confirmed by the cloud check." else "Confirmed by the cloud check.")
-            previous.readSource == ReadSource.ON_DEVICE && !same -> cloud.copy(status = MarkStatus.FLAGGED, reasons = listOf(
-                "Device read \"${previous.read}\" (${previous.awarded}/${previous.max}); cloud read \"${cloud.read}\" (${cloud.awarded}/${cloud.max}). Which is right?"))
-            else -> cloud
-        }
+    /** Re-checks several answers of one student in ONE cloud request and reconciles each (same as web verifyMarksBatch). */
+    suspend fun verifyBatch(questions: List<Question>, crops: List<Pair<Question, Bitmap>>, previous: List<Mark>): List<Mark> {
+        val cloud = markBatch(questions, crops, verify = true)
+        return previous.map { p -> cloud.firstOrNull { it.q == p.q }?.let { reconcile(p, it) } ?: p }
     }
 }

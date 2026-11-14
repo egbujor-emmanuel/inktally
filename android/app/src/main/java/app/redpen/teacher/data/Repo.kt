@@ -11,6 +11,7 @@ import app.redpen.teacher.domain.MarkingScheme
 import app.redpen.teacher.domain.Profile
 import app.redpen.teacher.domain.Question
 import app.redpen.teacher.domain.ReadSource
+import app.redpen.teacher.marking.ReadingHint
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.DocumentSnapshot
@@ -35,6 +36,8 @@ data class Assignment(
     val id: String, val title: String, val className: String, val scheme: MarkingScheme,
     /** Finished assignments stay saved and viewable, just out of the way. */
     val status: String = "active",
+    /** Handwriting lessons from the cloud check, fed into later on-device reads (marking/Learning.kt). */
+    val readingHints: List<ReadingHint> = emptyList(),
 ) {
     val isFinished get() = status == "finished"
     val maxTotal get() = scheme.questions.sumOf { it.max }
@@ -137,9 +140,17 @@ object Repo {
 
     fun schemeToMap(scheme: MarkingScheme) = mapOf("subject" to scheme.subject, "level" to scheme.level, "questions" to scheme.questions.map { it.toMap() })
 
+    private fun hintOf(m: Map<*, *>): ReadingHint? {
+        val type = m["type"] as? String ?: return null
+        val device = m["device"] as? String ?: return null
+        val cloud = m["cloud"] as? String ?: return null
+        return ReadingHint(type, device, cloud)
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun assignmentOf(d: DocumentSnapshot) = Assignment(d.id, d.getString("title") ?: "", d.getString("className") ?: "",
-        schemeOf(d.get("scheme") as? Map<String, Any?>), d.getString("status") ?: "active")
+        schemeOf(d.get("scheme") as? Map<String, Any?>), d.getString("status") ?: "active",
+        ((d.get("readingHints") as? List<*>) ?: emptyList<Any>()).mapNotNull { (it as? Map<*, *>)?.let(::hintOf) })
 
     @Suppress("UNCHECKED_CAST")
     private fun submissionOf(d: DocumentSnapshot) = Submission(d.id, d.getString("pupil") ?: "",
@@ -199,6 +210,10 @@ object Repo {
         val questions = a.scheme.questions.map { if (it.q == updated.q) updated else it }
         queue("the edited question", db.collection("assignments").document(a.id).update("scheme.questions", questions.map { it.toMap() }))
     }
+
+    /** Saves what the cloud check taught the device about this class's handwriting (an empty list forgets it). */
+    fun saveReadingHints(assignmentId: String, hints: List<ReadingHint>) = queue("the handwriting hints",
+        db.collection("assignments").document(assignmentId).update("readingHints", hints.map { mapOf("type" to it.type, "device" to it.device, "cloud" to it.cloud) }))
 
     /** Permanently deletes an assignment, every student's marks for it, and this device's photos for it. */
     suspend fun deleteAssignment(ctx: Context, id: String) {

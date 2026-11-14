@@ -1,4 +1,4 @@
-# Marks the English sample from a photo chosen in the gallery (CI pushes english-sheet-photo.jpg first),
+# Marks the English sample from a photo chosen in the gallery (one photo is marked straight away) (CI pushes english-sheet-photo.jpg first),
 # then adds a comment, opens the register and exports Excel.
 appId: app.redpen.teacher
 ---
@@ -22,15 +22,15 @@ appId: app.redpen.teacher
 - tapOn: "Student name or number"
 - inputText: "Ada Obi"
 - hideKeyboard
-- tapOn: "Choose photo"
+# The gallery button picks a whole stack (multi-select photo picker): select the one photo, then confirm with "Add".
+- tapOn: "Choose photos"
 - waitForAnimationToEnd
 - takeScreenshot: 10-picker
 - tapOn:
-    id: ".*icon_thumbnail.*|.*photo.*"
-    optional: true
-- tapOn:
     text: "Photo taken on.*"
-    optional: true
+- takeScreenshot: 10b-picker-selected
+- tapOn:
+    text: "Add.*"
 - extendedWaitUntil:
     visible: "Total: .*"
     timeout: 240000

@@ -61,8 +61,13 @@ import app.redpen.teacher.domain.ReadSource
 import app.redpen.teacher.domain.maxTotal
 import app.redpen.teacher.domain.needsCheck
 import app.redpen.teacher.domain.total
-import app.redpen.teacher.marking.Marker
 import app.redpen.teacher.marking.MarkSubmission
+import app.redpen.teacher.marking.acceptNotice
+import app.redpen.teacher.marking.regradeAll
+import app.redpen.teacher.DeviceModel
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import app.redpen.teacher.scan.Render
 import app.redpen.teacher.scan.Scanner
 import app.redpen.teacher.scan.SheetLayout
@@ -92,10 +97,11 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
     var crops by remember { mutableStateOf<Map<Int, Bitmap>>(emptyMap()) }
     var busy by remember { mutableStateOf(false) }
     var done by remember { mutableStateOf<Pair<String, Bitmap?>?>(null) } // submission id + marked copy
+    var stackAdded by remember { mutableStateOf<Int?>(null) } // "N scripts added"
 
     fun markPhoto(photo: Bitmap) {
-        busy = true; marks = emptyList(); crops = emptyMap(); done = null; queuedFor = null; status = null
-        val label = pupil.ifBlank { "Student ${java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date())}" }
+        busy = true; marks = emptyList(); crops = emptyMap(); done = null; queuedFor = null; status = null; stackAdded = null
+        val label = pupil.trim().ifBlank { "Student ${submissions.size + 1}" }
         val mode = if (sheetMode) MarkSubmission.SHEET else MarkSubmission.PAGE
         scope.launch {
             try {
@@ -127,7 +133,31 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
             } finally { busy = false }
         }
     }
-    val input = rememberPhotoInput(onPhoto = ::markPhoto, onError = { status = it })
+    /** Several photos at once (gallery multi-select): each becomes a queued student, marked one by one in the background. */
+    fun markStack(photos: List<android.net.Uri>) {
+        busy = true; marks = emptyList(); crops = emptyMap(); done = null; queuedFor = null; status = null; stackAdded = null
+        val base = submissions.size
+        val typed = pupil.trim()
+        val mode = if (sheetMode) MarkSubmission.SHEET else MarkSubmission.PAGE
+        scope.launch {
+            try {
+                photos.forEachIndexed { i, uri ->
+                    val label = if (typed.isNotEmpty()) "$typed ${i + 1}" else "Student ${base + i + 1}"
+                    val sid = Repo.newSubmissionId(a.id)
+                    // Photo first, so the queue never sees a record without it. One photo in memory at a time.
+                    withContext(Dispatchers.IO) { loadPhoto(ctx, uri).also { Repo.saveCrop(ctx, sid, Repo.PHOTO_KEY, it) }.recycle() }
+                    Repo.createSubmission(a.id, label, app.redpen.teacher.data.Queued(mode, page), sid)
+                }
+                pupil = ""
+                stackAdded = photos.size
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                status = "Something went wrong: ${Repo.friendly(e)}"
+            } finally { busy = false }
+        }
+    }
+    val input = rememberPhotoInput(onPhoto = ::markPhoto, onError = { status = it }, onPhotos = ::markStack)
 
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
@@ -144,8 +174,8 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
                     pages.indices.forEach { i -> if (i == page) PenButton("${i + 1}", {}) else GhostButton("${i + 1}", { page = i }) }
                 }
                 PhotoButtons(input, if (busy) "Marking…" else if (sheetMode) "Photograph answer sheet" else "Photograph the page", enabled = !busy)
-                Text(if (sheetMode) "Keep all four black corner squares in the photo." else "Make sure every question number and answer is visible.",
-                    color = RP.InkSoft, fontSize = 13.sp)
+                Text((if (sheetMode) "Keep all four black corner squares in the photo." else "Make sure every question number and answer is visible.") +
+                    " Got a whole stack? Choose all the photos at once.", color = RP.InkSoft, fontSize = 13.sp)
             }
         }
         status?.let { item { Text(it, fontFamily = if (it.startsWith("Total")) RP.Display else RP.Hand, fontWeight = FontWeight.Bold,
@@ -159,7 +189,16 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
                 }
             }
         }
-        if (queue.waiting.isNotEmpty()) item { QueuePanel(queue, online) }
+        stackAdded?.let { n ->
+            item {
+                Paper(borderColor = RP.Flag) {
+                    Text("$n scripts added", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Text("REDPEN is marking them one by one below. You can keep photographing, and rename students in the Mark register afterwards.",
+                        color = RP.InkSoft, fontSize = 14.sp)
+                }
+            }
+        }
+        if (queue.waiting.isNotEmpty()) item { QueuePanel(queue, online || device == DeviceModel.State.Ready) }
         done?.let { (sid, copy) ->
             submissions.find(sid)?.let { s -> item { PupilRecord(a, s, profile, copy) } }
         }
@@ -182,55 +221,82 @@ class QueueState(val waiting: List<Submission>, val current: Submission?, val er
 /** Students this app session has finished, until the database update arrives (never mark twice). */
 private val finishedHere: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
 
+/** Wait before retrying after the connection or the cloud failed mid-queue. */
+private const val QUEUE_RETRY_MS = 30_000L
+
 /**
- * The offline queue: photos taken offline on a phone without on-device AI are saved on the phone and marked here
- * automatically once the connection is back. Runs while the assignment is open (any tab).
+ * The marking queue: photos taken offline on a phone without on-device AI, and whole stacks chosen at once, are saved
+ * (the photo stays on this phone) and marked here one by one: on-device when Gemini Nano is ready, else once online.
+ * Runs while the assignment is open (any tab). Always works from the latest waiting list, keeps going until it is
+ * empty, and leaves a student queued if marking fails (e.g. the connection drops again) so it is retried later.
+ * Same design as web/src/hooks/useMarkingQueue.ts.
  */
 @Composable
 fun rememberMarkingQueue(a: Assignment, submissions: List<Submission>): QueueState {
     val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
     val online by Connectivity.online.collectAsState()
+    val device by DeviceModel.state.collectAsState()
+    // Online, or offline with Gemini Nano ready on this phone (then the queue marks on-device).
+    val canMark = online || device == DeviceModel.State.Ready
     var current by remember { mutableStateOf<Submission?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var tick by remember { mutableIntStateOf(0) }
+    val running = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
+    val latest = androidx.compose.runtime.rememberUpdatedState(submissions)
+    val assignment = androidx.compose.runtime.rememberUpdatedState(a)
     val waiting = submissions.filter { it.queued != null }
-    var retryTick by remember { mutableIntStateOf(0) }
-    LaunchedEffect(online, waiting.joinToString(",") { it.id }, retryTick) {
-        if (!online) return@LaunchedEffect
-        for (s in waiting) {
-            if (s.id in finishedHere) continue // finished by us; the database update has not arrived yet
-            val q = s.queued ?: continue
-            val photo = withContext(Dispatchers.IO) { Repo.loadCrop(ctx, s.id, Repo.PHOTO_KEY) } ?: continue // taken on another device
-            current = s
+    // Re-run when connectivity returns, the waiting list changes, or a run finishes (tick). A run in progress is
+    // never restarted by list changes: it re-reads the newest list for every student.
+    LaunchedEffect(a.id, canMark, waiting.joinToString(",") { it.id }, tick) {
+        if (!canMark || waiting.isEmpty() || !running.compareAndSet(false, true)) return@LaunchedEffect
+        scope.launch {
+            val done = HashSet<String>()
+            var failed = false
+            var progressed = false
             try {
-                when (val outcome = MarkSubmission.mark(ctx, a, q.mode, photo, q.page, s.id, s.pupil, failFast = true)) {
-                    is MarkSubmission.Outcome.Ok -> {
-                        finishedHere += s.id
-                        Repo.finishQueued(a.id, s.id, outcome.marks)
-                        withContext(Dispatchers.IO) { Repo.deleteCrop(ctx, s.id, Repo.PHOTO_KEY) } // crops + copy saved
-                        error = null
+                while (true) {
+                    if (!Connectivity.online.value && DeviceModel.state.value != DeviceModel.State.Ready) break
+                    // Students finished by us (or another device) drop out of the newest list.
+                    val next = latest.value.firstOrNull { it.queued != null && it.id !in done && it.id !in finishedHere } ?: break
+                    val q = next.queued ?: break
+                    done += next.id
+                    val photo = withContext(Dispatchers.IO) { Repo.loadCrop(ctx, next.id, Repo.PHOTO_KEY) } ?: continue // photo is on another device
+                    current = next
+                    try {
+                        when (val outcome = MarkSubmission.mark(ctx, assignment.value, q.mode, photo, q.page, next.id, next.pupil, failFast = true)) {
+                            is MarkSubmission.Outcome.Ok -> {
+                                finishedHere += next.id
+                                Repo.finishQueued(assignment.value.id, next.id, outcome.marks)
+                                withContext(Dispatchers.IO) { Repo.deleteCrop(ctx, next.id, Repo.PHOTO_KEY) } // crops + copy saved
+                                error = null; progressed = true
+                            }
+                            is MarkSubmission.Outcome.Failed -> error = "${next.pupil}: ${outcome.reason}"
+                        }
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        error = "${next.pupil}: ${Repo.friendly(e)}" // connection or cloud trouble: stays queued
+                        failed = true
                     }
-                    is MarkSubmission.Outcome.Failed -> error = "${s.pupil}: ${outcome.reason}"
+                    if (failed) break // stop and retry the rest later
                 }
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                error = "${s.pupil}: ${Repo.friendly(e)}" // connection or cloud trouble: stays queued, retried shortly
+            } finally {
                 current = null
-                kotlinx.coroutines.delay(30_000)
-                retryTick++
-                return@LaunchedEffect
+                running.set(false)
             }
+            // Retry automatically after a failure; after progress, re-check once in case new students arrived meanwhile.
+            if (failed) { kotlinx.coroutines.delay(QUEUE_RETRY_MS); tick++ } else if (progressed) tick++
         }
-        current = null
     }
     return QueueState(waiting, current, error)
 }
 
 @Composable
-private fun QueuePanel(queue: QueueState, online: Boolean) {
+private fun QueuePanel(queue: QueueState, canMark: Boolean) {
     Paper {
         Text("${queue.waiting.size} waiting to be marked", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        Text(queue.current?.let { "Marking ${it.pupil} now…" } ?: if (online) "Starting…" else "They will be marked automatically when you’re back online.",
+        Text(queue.current?.let { "Marking ${it.pupil} now…" } ?: if (canMark) "Starting…" else "They will be marked automatically when you’re back online.",
             color = RP.InkSoft, fontSize = 14.sp)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             queue.waiting.forEach { s -> Pill(s.pupil, if (queue.current?.id == s.id) RP.Pen else RP.InkSoft) }
@@ -249,52 +315,37 @@ private fun acceptForEveryone(q: Question, read: String): Question? = when (q) {
 }
 
 @Composable
-fun ReviewTab(a: Assignment, submissions: List<Submission>) {
+fun ReviewTab(a: Assignment, submissions: List<Submission>, check: CloudCheckState) {
     val ctx = LocalContext.current
-    val scope = rememberCoroutineScope()
     val online by Connectivity.online.collectAsState()
-    var checking by remember { mutableStateOf<String?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var notice by remember { mutableStateOf<String?>(null) }
+    val checking = check.progress
     val pending = submissions.flatMap { s -> s.marks.filter { it.needsCheck() }.map { s to it } }
-    val latestSubmissions = androidx.compose.runtime.rememberUpdatedState(submissions)
+    val provisionalCount = pending.count { it.second.status == MarkStatus.PROVISIONAL }
 
-    suspend fun cloudCheck() {
-        error = null
-        var done = 0
-        for (s in submissions) {
-            if (s.marks.none { it.needsCheck() }) continue
-            val pagePhoto = withContext(Dispatchers.IO) { Repo.loadCrop(ctx, s.id, Repo.PAGE_KEY) }
-            val next = if (pagePhoto != null) {
-                checking = "Checking ${s.pupil}’s page…"
-                runCatching { Marker.verifyPage(a.scheme.questions, pagePhoto, s.marks) }.getOrElse { error = Repo.friendly(it); s.marks }
-            } else s.marks.map { m ->
-                val question = a.scheme.questions.firstOrNull { it.q == m.q }
-                val crop = withContext(Dispatchers.IO) { Repo.loadCrop(ctx, s.id, m.q) }
-                if (question == null || crop == null || !m.needsCheck()) m
-                else { done++; checking = "Checking $done/${pending.size}…"; runCatching { Marker.verify(question, crop, m) }.getOrElse { error = Repo.friendly(it); m } }
-            }
-            // Keep any score the teacher set while the check was running.
-            val now = latestSubmissions.value.firstOrNull { it.id == s.id }?.marks ?: s.marks
-            val merged = next.map { m -> now.firstOrNull { it.q == m.q }?.takeIf { it.status == MarkStatus.REVIEWED } ?: m }
-            if (merged != s.marks) Repo.saveMarks(a.id, s.id, merged)
-        }
-        checking = null
-    }
-
-    // Back online with provisional on-device marks? Verify them automatically.
-    LaunchedEffect(online, pending.count { it.second.status == MarkStatus.PROVISIONAL }) {
-        if (online && checking == null && pending.any { it.second.status == MarkStatus.PROVISIONAL }) cloudCheck()
+    /** Adds the answer to the scheme, then re-marks EVERY student already marked with it (from their stored reading). */
+    fun acceptAnswer(s: Submission, m: Mark, widened: Question) {
+        Repo.updateQuestion(a, widened)
+        Repo.saveMarks(a.id, s.id, s.marks.map { x -> if (x.q == m.q) x.copy(awarded = x.max, status = MarkStatus.REVIEWED, engine = MarkEngine.TEACHER, reasons = x.reasons + "Teacher accepted “${m.read}” for everyone.") else x })
+        val others = regradeAll(widened, submissions.filter { it.id != s.id && it.queued == null })
+        others.forEach { Repo.saveMarks(a.id, it.submissionId, it.marks) }
+        notice = acceptNotice(m.read, others.size)
     }
 
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("${pending.size} answers to check", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.weight(1f))
-                PenButton(checking ?: if (online) "Check with the cloud" else "Runs when online", { scope.launch { cloudCheck() } },
+                Text("${pending.size} answer${if (pending.size == 1) "" else "s"} to check", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.weight(1f))
+                PenButton(checking?.let { "Checking ${it.first}/${it.second}…" } ?: if (online) "Check with the cloud" else "Runs when online", { check.run() },
                     enabled = online && checking == null && pending.isNotEmpty())
             }
         }
-        item { ErrorText(error) }
+        if (provisionalCount > 0) item {
+            Text("$provisionalCount marked on-device, waiting for the cloud check.", color = RP.InkSoft, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 16.dp))
+        }
+        notice?.let { item { Text(it, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 16.dp)) } }
+        if (a.readingHints.isNotEmpty()) item { LearnedCard(a) }
+        item { ErrorText(check.error) }
         if (pending.isEmpty()) item { Text("All marks are verified or reviewed. ✓", fontFamily = RP.Hand, fontSize = 26.sp, color = RP.InkSoft, modifier = Modifier.padding(horizontal = 16.dp)) }
         items(pending, key = { "${it.first.id}:${it.second.q}" }) { (s, m) ->
             val question = a.scheme.questions.firstOrNull { it.q == m.q }
@@ -309,14 +360,32 @@ fun ReviewTab(a: Assignment, submissions: List<Submission>) {
                         }
                     }
                     val widened = question?.let { if (m.read.isNotBlank() && m.awarded < m.max) acceptForEveryone(it, m.read) else null }
-                    if (widened != null) TextButton(onClick = {
-                        Repo.updateQuestion(a, widened)
-                        Repo.saveMarks(a.id, s.id, s.marks.map { x -> if (x.q == m.q) x.copy(awarded = x.max, status = MarkStatus.REVIEWED, engine = MarkEngine.TEACHER, reasons = x.reasons + "Teacher accepted “${m.read}” for everyone.") else x })
-                    }) { Text("Accept “${m.read.take(30)}” for everyone") }
+                    if (widened != null) TextButton(onClick = { acceptAnswer(s, m, widened) }) { Text("Accept “${m.read.take(30)}” for everyone") }
                 }
             }
         }
         item { Spacer(Modifier.height(40.dp)) }
+    }
+}
+
+/** What the cloud check taught Gemini Nano about this class's handwriting, newest first (same card as web ReviewTab). */
+@Composable
+private fun LearnedCard(a: Assignment) {
+    Paper {
+        Text("What on-device AI learned about this class", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text("When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. Cloud checks never see them, so they stay independent.",
+            color = RP.InkSoft, fontSize = 14.sp)
+        a.readingHints.reversed().forEach { h ->
+            Text(buildAnnotatedString {
+                append("Looked like ")
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("“${h.device}”") }
+                append(" → was ")
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("“${h.cloud}”") }
+                append(" ")
+                withStyle(SpanStyle(color = RP.InkSoft)) { append("(${h.type})") }
+            }, fontSize = 14.sp)
+        }
+        TextButton(onClick = { Repo.saveReadingHints(a.id, emptyList()) }) { Text("Forget these") }
     }
 }
 

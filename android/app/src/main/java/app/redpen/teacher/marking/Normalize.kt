@@ -10,7 +10,7 @@ private val DIGIT_LOOKALIKES = mapOf(
 )
 
 /** Same whitespace set as JavaScript's \s (incl. no-break and thin spaces), so both platforms parse identically. */
-private const val WS = "\\s\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF"
+internal const val WS = "\\s\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF"
 
 data class NumericParse(val value: Double?, val clean: Boolean, val signAfterEquals: Boolean)
 

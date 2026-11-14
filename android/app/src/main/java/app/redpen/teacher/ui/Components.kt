@@ -53,6 +53,7 @@ import app.redpen.teacher.ai.Telemetry
 import app.redpen.teacher.domain.Mark
 import app.redpen.teacher.domain.MarkStatus
 import app.redpen.teacher.domain.ReadSource
+import app.redpen.teacher.marking.statusLabel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -119,12 +120,13 @@ fun MarkCard(mark: Mark, crop: Bitmap?, extra: @Composable () -> Unit = {}) {
                     ReadSource.TEACHER -> Pill("Teacher", RP.Ink)
                 }
                 Pill(if (mark.engine.wire == "code") "Marked by code" else if (mark.engine.wire == "ai-points") "Point check" else "Teacher", RP.InkSoft)
-                when (mark.status) {
-                    MarkStatus.PROVISIONAL -> Pill("Provisional", RP.InkSoft)
-                    MarkStatus.VERIFIED -> Pill("Verified", RP.Device)
-                    MarkStatus.FLAGGED -> Pill("Check this", RP.Flag)
-                    MarkStatus.REVIEWED -> Pill("Reviewed", RP.Ink)
-                }
+                // "Verified" only when two readings agreed; a single cloud reading is "Cloud read" (marking/StatusLabel.kt).
+                Pill(statusLabel(mark), when (mark.status) {
+                    MarkStatus.PROVISIONAL -> RP.InkSoft
+                    MarkStatus.VERIFIED -> RP.Device
+                    MarkStatus.FLAGGED -> RP.Flag
+                    MarkStatus.REVIEWED -> RP.Ink
+                })
             }
             Text(mark.reasons.joinToString(" "), fontSize = 14.sp)
             extra()

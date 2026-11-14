@@ -122,15 +122,22 @@ fun loadPhoto(ctx: Context, uri: Uri, maxSide: Int = 2600): Bitmap {
     return if (rotation == 0) bmp else Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, Matrix().apply { postRotate(rotation.toFloat()) }, true)
 }
 
-class PhotoInput(val takePhoto: () -> Unit, val choosePhoto: () -> Unit)
+/** [multiple]: the gallery button picks several photos at once ("Choose photos"). */
+class PhotoInput(val takePhoto: () -> Unit, val choosePhoto: () -> Unit, val multiple: Boolean = false)
 
-/** Camera OR gallery: teachers often already have the photos on their phone. */
+/**
+ * Camera OR gallery: teachers often already have the photos on their phone.
+ * With [onPhotos], the gallery allows a whole stack: one photo still goes to [onPhoto]; several go to [onPhotos]
+ * as uris, so the caller can save them one at a time instead of holding every photo in memory.
+ */
 @Composable
-fun rememberPhotoInput(onPhoto: (Bitmap) -> Unit, onError: (String) -> Unit): PhotoInput {
+fun rememberPhotoInput(onPhoto: (Bitmap) -> Unit, onError: (String) -> Unit, onPhotos: ((List<Uri>) -> Unit)? = null): PhotoInput {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val latestOnPhoto by rememberUpdatedState(onPhoto)
     val latestOnError by rememberUpdatedState(onError)
+    val latestOnPhotos by rememberUpdatedState(onPhotos)
+    val multiple = onPhotos != null
     val file = remember { File(ctx.cacheDir, "capture-${System.nanoTime()}.jpg") }
     val uri = remember { FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", file) }
     fun decode(u: Uri) = scope.launch {
@@ -138,10 +145,18 @@ fun rememberPhotoInput(onPhoto: (Bitmap) -> Unit, onError: (String) -> Unit): Ph
     }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) decode(uri) }
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { picked -> picked?.let(::decode) }
-    return remember(uri) {
+    val stack = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { picked ->
+        when {
+            picked.size == 1 -> decode(picked.first())
+            picked.size > 1 -> latestOnPhotos?.invoke(picked) ?: decode(picked.first())
+        }
+    }
+    return remember(uri, multiple) {
+        val request = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
         PhotoInput(
             takePhoto = { runCatching { camera.launch(uri) }.onFailure { latestOnError("No camera app found — choose a photo instead.") } },
-            choosePhoto = { gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            choosePhoto = { if (multiple) stack.launch(request) else gallery.launch(request) },
+            multiple = multiple,
         )
     }
 }
@@ -150,7 +165,7 @@ fun rememberPhotoInput(onPhoto: (Bitmap) -> Unit, onError: (String) -> Unit): Ph
 fun PhotoButtons(input: PhotoInput, takeLabel: String, enabled: Boolean = true) {
     androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         PenButton(takeLabel, input.takePhoto, Modifier.weight(1.3f), enabled)
-        GhostButton("Choose photo", input.choosePhoto, Modifier.weight(1f), enabled)
+        GhostButton(if (input.multiple) "Choose photos" else "Choose photo", input.choosePhoto, Modifier.weight(1f), enabled)
     }
 }
 

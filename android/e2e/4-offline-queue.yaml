@@ -23,11 +23,12 @@ appId: app.redpen.teacher
 - hideKeyboard
 - setAirplaneMode: enabled
 - waitForAnimationToEnd
-- tapOn: "Choose photo"
+- tapOn: "Choose photos"
 - waitForAnimationToEnd
 - tapOn:
     text: "Photo taken on.*"
-    optional: true
+- tapOn:
+    text: "Add.*"
 - extendedWaitUntil:
     visible: "Saved for marking: Offline Student"
     timeout: 30000

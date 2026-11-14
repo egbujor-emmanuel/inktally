@@ -187,6 +187,10 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 enabled = online && !drafting && (images.isNotEmpty() || pdf != null || typed.isNotBlank() || hasGuide))
         }
+        if (online && !drafting && images.isEmpty() && pdf == null && typed.isBlank() && !hasGuide) item {
+            Text("Add the question paper or your marking scheme above first.", color = RP.InkSoft, fontSize = 13.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
+        }
         item { ErrorText(error) }
         if (drafting) item { Busy("Reading the questions and writing the answer key…") }
         if (questions.isNotEmpty()) {
