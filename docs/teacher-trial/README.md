@@ -1,6 +1,6 @@
 # Running the REDPEN teacher trial
 
-This folder is for whoever runs the trial. Teachers only ever see `teacher-guide.html` and the feedback form.
+This folder is for whoever runs the trial. Teachers only ever see the guide and the feedback form.
 
 | File | Who it's for | What to do with it |
 |---|---|---|
