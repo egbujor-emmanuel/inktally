@@ -99,6 +99,8 @@ html, body { background: var(--color-paper); color: var(--color-ink); font-famil
 .pill { display: inline-flex; align-items: center; border: 1px solid currentColor; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 600; }
 .hscroll { position: relative; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
 .hscroll::-webkit-scrollbar { display: none; }
+/* Desktop: the "how it works" cards share the row instead of scrolling sideways. */
+@media (min-width: 64rem) { .steps-row { display: grid; grid-template-columns: repeat(3, 1fr); overflow: visible; } .steps-row > * { width: auto; } }
 
 /* Material tab row (Android TabRow / ScrollableTabRow). */
 .tabs { position: relative; display: flex; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--color-border); }

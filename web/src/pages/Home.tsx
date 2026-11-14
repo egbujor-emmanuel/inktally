@@ -85,7 +85,7 @@ export function Home({ signedIn = true }: { signedIn?: boolean }) {
         </div>
       </section>
 
-      <div className="hscroll gap-3 px-4" role="region" aria-label="How REDPEN works" tabIndex={0}>
+      <div className="hscroll steps-row gap-3 px-4" role="region" aria-label="How REDPEN works" tabIndex={0}>
         {STEPS.map((s) => (
           <article key={s.n} className="w-[250px] flex-none rounded-[14px] border border-border bg-paper p-[18px] shadow-[0_3px_8px_rgb(31_42_68/0.12)]">
             <span className="font-hand text-[40px] leading-none text-pen">{s.n}</span>
