@@ -80,6 +80,8 @@ export function InsightsTab({ assignment, submissions }: Props) {
             <GhostButton disabled={!isOnline || !row.wrong.length || busyQ !== null} onClick={() => void handleCatchUp(row)}>
               {busyQ === row.question.q ? 'Writing…' : 'Catch-up sheet'}
             </GhostButton>
+            {!row.wrong.length ? <p className="text-[13px] text-ink-soft">Nobody lost marks on this question, so there is nothing to catch up on.</p>
+              : !isOnline && <p className="text-[13px] text-ink-soft">Catch-up sheets are written in the cloud, so they need internet.</p>}
           </section>
         );
       })}

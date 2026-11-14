@@ -94,6 +94,7 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
     var pupil by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
     var queuedFor by remember { mutableStateOf<String?>(null) }
+    var queuedSid by remember { mutableStateOf<String?>(null) }
     var marks by remember { mutableStateOf<List<Mark>>(emptyList()) }
     var crops by remember { mutableStateOf<Map<Int, Bitmap>>(emptyMap()) }
     var busy by remember { mutableStateOf(false) }
@@ -111,7 +112,7 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
                     val sid = Repo.newSubmissionId(a.id)
                     withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PHOTO_KEY, photo) } // photo first
                     Repo.createSubmission(a.id, label, app.redpen.teacher.data.Queued(mode, page), sid)
-                    queuedFor = label; pupil = ""
+                    queuedFor = label; queuedSid = sid; pupil = ""
                     return@launch
                 }
                 status = if (sheetMode) "Finding the answer boxes…" else "Reading the page…"
@@ -182,7 +183,16 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
         }
         status?.let { item { Text(it, fontFamily = if (it.startsWith("Total")) RP.Display else RP.Hand, fontWeight = FontWeight.Bold,
             fontSize = if (it.startsWith("Total")) 30.sp else 24.sp, color = if (it.startsWith("Total")) RP.Ink else RP.InkSoft, modifier = Modifier.padding(horizontal = 16.dp)) } }
-        queuedFor?.let { who ->
+        // A photo saved offline is marked when the connection returns: show its result instead of "saved for marking".
+        val queuedNowMarked = submissions.firstOrNull { it.id == queuedSid && it.queued == null && it.marks.isNotEmpty() }
+        if (queuedFor != null && queuedNowMarked != null) item {
+            Paper {
+                Text("Marked: ${queuedNowMarked.pupil} · ${queuedNowMarked.marks.sumOf { it.awarded }}/${queuedNowMarked.marks.sumOf { it.max }}",
+                    fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Text("The connection came back and REDPEN marked the saved photo. It is in the Mark register with everyone else.", color = RP.InkSoft, fontSize = 14.sp)
+            }
+        }
+        queuedFor?.takeIf { queuedNowMarked == null }?.let { who ->
             item {
                 Paper(borderColor = RP.Flag) {
                     Text("Saved for marking: $who", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
@@ -348,7 +358,7 @@ fun ReviewTab(a: Assignment, submissions: List<Submission>, check: CloudCheckSta
         notice?.let { item { Text(it, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 16.dp)) } }
         if (a.readingHints.isNotEmpty()) item { LearnedCard(a) }
         item { ErrorText(check.error) }
-        if (pending.isEmpty()) item { Text("All marks are verified or reviewed. ✓", fontFamily = RP.Hand, fontSize = 26.sp, color = RP.InkSoft, modifier = Modifier.padding(horizontal = 16.dp)) }
+        if (pending.isEmpty()) item { Text("Nothing to check: every mark was read by the cloud or set by you. ✓", fontFamily = RP.Hand, fontSize = 26.sp, color = RP.InkSoft, modifier = Modifier.padding(horizontal = 16.dp)) }
         items(pending, key = { "${it.first.id}:${it.second.q}" }) { (s, m) ->
             val question = a.scheme.questions.firstOrNull { it.q == m.q }
             Box(Modifier.padding(horizontal = 16.dp)) {
@@ -537,6 +547,8 @@ fun InsightsTab(a: Assignment, submissions: List<Submission>) {
                         busyQ = null
                     }
                 }, enabled = online && wrong.isNotEmpty() && busyQ == null)
+                if (wrong.isEmpty()) Text("Nobody lost marks on this question, so there is nothing to catch up on.", color = RP.InkSoft, fontSize = 13.sp)
+                else if (!online) Text("Catch-up sheets are written in the cloud, so they need internet.", color = RP.InkSoft, fontSize = 13.sp)
             }
         }
         item { ErrorText(error) }

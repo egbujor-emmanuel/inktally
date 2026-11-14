@@ -31,7 +31,7 @@ export function StatusBar({ trailing }: { trailing?: ReactNode }) {
 
   return (
     <div className="grid gap-1.5 py-1" role="status" aria-live="polite">
-      <div className="hscroll items-center px-4">
+      <div className="flex flex-wrap items-center gap-2 px-4">
         <Chip dot={isOnline ? 'var(--color-device)' : 'var(--color-flag)'} strong>{isOnline ? 'Online' : offlineText}</Chip>
         <Chip dot={ready ? 'var(--color-device)' : 'var(--color-cloud)'}>
           {device.progress !== null ? `Downloading Gemini Nano… ${Math.round(device.progress * 100)}%` : DEVICE_COPY[device.availability]}

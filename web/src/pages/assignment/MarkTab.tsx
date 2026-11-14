@@ -21,7 +21,7 @@ type Phase =
   | { kind: 'scanning' }
   | { kind: 'marking'; done: number; total: number }
   | { kind: 'done'; total: number; max: number }
-  | { kind: 'queued'; pupil: string }
+  | { kind: 'queued'; pupil: string; id: string }
   | { kind: 'batch'; count: number }
   | { kind: 'error'; message: string };
 
@@ -39,6 +39,10 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
   useEffect(() => () => { if (pageUrl) URL.revokeObjectURL(pageUrl); }, [pageUrl]);
 
   /** Several photos at once (gallery multi-select): each becomes a queued student, marked one by one in the background. */
+  // A photo saved offline is marked when the connection returns: replace the "saved for marking" note with its result.
+  const queuedNowMarked = phase.kind === 'queued'
+    ? submissions.find((s) => s.id === phase.id && !s.queued && s.marks.length > 0) : undefined;
+
   async function handleBatch(photos: File[]) {
     setMarks([]); setCrops({}); setCopy(null);
     const base = submissions.length;
@@ -72,7 +76,7 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
         await saveCrop(submissionId, PHOTO_KEY, photo); // photo first, so the queue never sees a record without it
         await createSubmission(assignment.id, label, [], { mode, page: pageIndex }, submissionId);
         setPupil('');
-        setPhase({ kind: 'queued', pupil: label });
+        setPhase({ kind: 'queued', pupil: label, id: submissionId });
         return;
       }
       setPhase({ kind: 'scanning' });
@@ -121,7 +125,13 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
         {phase.kind === 'done' && <p className="px-4 font-display text-[30px] font-bold">Total: {phase.total}/{phase.max}</p>}
         {phase.kind === 'error' && <p className="px-4 text-pen" role="alert">{phase.message}</p>}
       </div>
-      {phase.kind === 'queued' && (
+      {queuedNowMarked && (
+        <Card>
+          <p className="font-display text-xl font-bold" role="status">Marked: {queuedNowMarked.pupil} · {queuedNowMarked.marks.reduce((n, m) => n + m.awarded, 0)}/{queuedNowMarked.marks.reduce((n, m) => n + m.max, 0)}</p>
+          <p className="text-sm text-ink-soft">The connection came back and REDPEN marked the saved photo. It is in the Mark register with everyone else.</p>
+        </Card>
+      )}
+      {phase.kind === 'queued' && !queuedNowMarked && (
         <Card flag>
           <p className="font-display text-xl font-bold" role="status">Saved for marking: {phase.pupil}</p>
           <p className="text-sm text-ink-soft">

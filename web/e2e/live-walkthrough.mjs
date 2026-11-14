@@ -177,7 +177,7 @@ await step('OFFLINE without on-device AI: queued, then marked automatically back
 
 await step('review tab', async () => {
   await page.goto(`${base()}/review`);
-  await page.getByText(/to check|All marks are verified/).first().waitFor({ timeout: 30_000 });
+  await page.getByText(/to check|Nothing to check/).first().waitFor({ timeout: 30_000 });
   return (await page.locator('main').innerText()).split('\n').find((l) => /to check|verified/.test(l));
 });
 

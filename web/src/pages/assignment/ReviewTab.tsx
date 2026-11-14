@@ -94,7 +94,7 @@ export function ReviewTab({ assignment, submissions, check }: Props) {
         </Card>
       )}
       <ErrorText message={check.error} />
-      {pending.length === 0 && <p className="px-4 font-hand text-[26px] text-ink-soft">All marks are verified or reviewed. ✓</p>}
+      {pending.length === 0 && <p className="px-4 font-hand text-[26px] text-ink-soft">Nothing to check: every mark was read by the cloud or set by you. ✓</p>}
       <ol className="grid gap-3 px-4">
         {pending.map(({ s, m }, i) => {
           const question = assignment.scheme.questions.find((q) => q.q === m.q);
