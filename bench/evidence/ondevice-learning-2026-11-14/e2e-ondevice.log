@@ -1,0 +1,83 @@
+[09:11:19] home loaded: Online
+Checking on-device AI…
+[09:11:22] Nano status resolved: Online
+Gemini Nano not downloaded
+School details
+Download on-device AI
+[09:11:22] enabling on-device AI (model download)…
+[09:14:06] device status: Online
+Gemini Nano ready
+School details
+[09:14:07] GOING OFFLINE
+[09:14:46] OFFLINE MARKS:
+Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.
+Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.
+Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.
+Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional "Abuja" matches an accepted answer.
+Q5 0/1 AI read: “raned” On-device Marked by code Check this "raned" is close to "ran" — accept it?
+[09:14:46] status: Offline — marking on this device
+Gemini Nano ready
+5 on-device · 0 cloud
+School details
+[09:14:46] BACK ONLINE
+[09:14:48] AUTOMATIC CLOUD CHECK: Cloud check: 4 on-device marks confirmed, 1 needs you. The device learned 2 things about this class’s handwriting.
+[09:14:49] DEVICE LEARNED: What on-device AI learned about this class
+
+When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. Cloud checks never see them, so they stay independent.
+
+Looked like “raned” → was “runned” (short)
+Looked like “A” → was “D” (objective)
+Forget these
+[09:14:49] REVIEW AFTER CLOUD CHECK:
+JSS 1A · English Language
+
+English — Grammar Check
+
+1 student marked · 1 to check
+
+Mark as finished
+Delete
+
+Cloud check: 4 on-device marks confirmed, 1 needs you. The device learned 2 things about this class’s handwriting.
+
+Print sheets
+Mark
+Review
+Mark register
+Insights
+
+1 answer to check
+
+Check with the cloud
+What on-device AI learned about this class
+
+When the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. Cloud checks never see them, so they stay independent.
+
+Looked like “raned” → was “runned” (short)
+Looked like “A” → was “D” (objective)
+Forget these
+Q2
+1/1
+
+AI read: “D”
+
+Cloud
+Marked by code
+Check this
+
+Device read "A" (0/1); cloud read "D" (1/1). Which is right?
+
+Chidi Okafor
+
+0/1
+1/1
+[09:14:50] GOING OFFLINE AGAIN (with learned hints)
+[09:15:36] OFFLINE MARKS WITH HINTS:
+Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.
+Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.
+Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.
+Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional "Abuja" matches an accepted answer.
+Q5 0/1 AI read: “runned” On-device Marked by code Provisional "runned" is listed as not acceptable.
+[09:15:43] E2E DONE
+EXIT=0
+FINISHED

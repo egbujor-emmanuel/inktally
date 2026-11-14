@@ -1,0 +1,20 @@
+{
+  "at": "2026-11-14T09:15:43.383Z",
+  "site": "https://redpen-hybrid.web.app",
+  "offlineRows": [
+    "Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.",
+    "Q2 0/1 AI read: “A” On-device Marked by code Provisional Chose A; correct is D.",
+    "Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.",
+    "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+    "Q5 0/1 AI read: “raned” On-device Marked by code Check this \"raned\" is close to \"ran\" — accept it?"
+  ],
+  "reviewText": "JSS 1A · English Language\n\nEnglish — Grammar Check\n\n1 student marked · 1 to check\n\nMark as finished\nDelete\n\nCloud check: 4 on-device marks confirmed, 1 needs you. The device learned 2 things about this class’s handwriting.\n\nPrint sheets\nMark\nReview\nMark register\nInsights\n\n1 answer to check\n\nCheck with the cloud\nWhat on-device AI learned about this class\n\nWhen the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. Cloud checks never see them, so they stay independent.\n\nLooked like “raned” → was “runned” (short)\nLooked like “A” → was “D” (objective)\nForget these\nQ2\n1/1\n\nAI read: “D”\n\nCloud\nMarked by code\nCheck this\n\nDevice read \"A\" (0/1); cloud read \"D\" (1/1). Which is right?\n\nChidi Okafor\n\n0/1\n1/1",
+  "learned": "What on-device AI learned about this class\n\nWhen the cloud check read an answer differently, REDPEN kept the correction. Gemini Nano gets these hints on its next readings for this assignment, so it learns how these students write. Cloud checks never see them, so they stay independent.\n\nLooked like “raned” → was “runned” (short)\nLooked like “A” → was “D” (objective)\nForget these",
+  "secondRows": [
+    "Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.",
+    "Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.",
+    "Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.",
+    "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+    "Q5 0/1 AI read: “runned” On-device Marked by code Provisional \"runned\" is listed as not acceptable."
+  ]
+}

@@ -1,6 +1,6 @@
 // Firebase bootstrap: App Check (required by AI Logic), anonymous Auth, offline-first Firestore,
 // Remote Config (model names + prompts), and the AI Logic service.
-import { initializeApp, type FirebaseApp } from 'firebase/app';
+import { initializeApp, setLogLevel, type FirebaseApp } from 'firebase/app';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { getAuth, onAuthStateChanged, signInAnonymously, type User } from 'firebase/auth';
 import {
@@ -35,6 +35,9 @@ const debugToken = import.meta.env.DEV ? import.meta.env.VITE_APPCHECK_DEBUG_TOK
 if (debugToken) globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken;
 
 export const app: FirebaseApp = initializeApp(firebaseConfig);
+
+// Diagnostics: localStorage['redpen-debug'] = '1' turns on the Firebase SDK debug log (e.g. why a read went to the cloud).
+try { if (localStorage.getItem('redpen-debug')) setLogLevel('debug'); } catch { /* storage blocked: no diagnostics */ }
 
 initializeAppCheck(app, {
   provider: new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_SITE_KEY || 'debug-provider-only'),

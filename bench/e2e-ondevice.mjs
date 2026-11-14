@@ -47,11 +47,15 @@ try {
   await page.waitForSelector('text=Try it with a sample', { timeout: 60_000 });
   log('home loaded:', await page.locator('[role=status]').innerText());
 
+  // Wait until Chrome has answered whether Gemini Nano can run here (the chip starts as "Checking…").
+  await page.getByText(/Gemini Nano ready|Gemini Nano not downloaded|Downloading Gemini Nano|Cloud AI \(no on-device model\)/).first().waitFor({ timeout: 120_000 });
+  log('Nano status resolved:', await page.locator('[role=status]').first().innerText());
+  if (await page.getByText('Cloud AI (no on-device model)').count()) throw new Error('Chrome reports Gemini Nano unavailable on this machine');
   const enable = page.locator('button:has-text("Download on-device AI")');
   if (await enable.count()) {
     log('enabling on-device AI (model download)…');
     await enable.click();
-    await page.waitForSelector('text=On-device AI ready', { timeout: 15 * 60_000 });
+    await page.waitForSelector('text=Gemini Nano ready', { timeout: 15 * 60_000 });
   }
   log('device status:', await page.locator('[role=status]').innerText());
   await shot('1-home');
@@ -68,7 +72,9 @@ try {
   await sleep(1500);
   await page.fill('input[placeholder^="e.g."]', 'Chidi Okafor');
   await page.locator('input[aria-label^="Choose photo"]').setInputFiles(PHOTO);
-  await page.waitForSelector('text=Total:', { timeout: 10 * 60_000 });
+  // Marked on-device -> "Total:". Queued for later instead -> the on-device path did not engage: fail at once.
+  await page.getByText(/^Total:|Saved for marking/).first().waitFor({ timeout: 10 * 60_000 });
+  if (await page.getByText('Saved for marking').count()) throw new Error('photo was queued: on-device marking did not engage after the download');
   const offlineRows = await rows();
   log('OFFLINE MARKS:\n' + offlineRows.join('\n'));
   log('status:', await page.locator('[role=status]').innerText());
@@ -82,13 +88,33 @@ try {
   await page.getByRole('link', { name: 'Review', exact: true }).click();
   await sleep(1500);
   const reviewText = await page.locator('main').innerText();
+  const learned = await page.getByText('What on-device AI learned about this class').count()
+    ? await page.locator('section', { hasText: 'What on-device AI learned' }).innerText().catch(() => 'card shown') : 'no correction to learn from';
+  log('DEVICE LEARNED:', learned);
   log('REVIEW AFTER CLOUD CHECK:\n' + reviewText.slice(0, 1500));
   await shot('3-review-after-online');
 
+  // Learning check: mark the same sheet again offline, now that the device has this class's handwriting hints.
+  let secondRows = [];
+  if (!/no correction to learn from/.test(learned)) {
+    await page.getByRole('link', { name: 'Mark', exact: true }).click();
+    await page.waitForSelector('text=Photograph answer sheet', { timeout: 60_000 });
+    log('GOING OFFLINE AGAIN (with learned hints)');
+    await setOffline(true);
+    await sleep(1500);
+    await page.fill('input[placeholder^="e.g."]', 'Chidi Okafor (second marking)');
+    await page.locator('input[aria-label^="Choose photo"]').setInputFiles(PHOTO);
+    await page.getByText(/^Total:|Saved for marking/).first().waitFor({ timeout: 10 * 60_000 });
+    secondRows = await rows();
+    log('OFFLINE MARKS WITH HINTS:' + String.fromCharCode(10) + secondRows.join(String.fromCharCode(10)));
+    await shot('3b-offline-with-hints');
+    await setOffline(false);
+    await sleep(4000);
+  }
   await page.getByRole('link', { name: 'Insights', exact: true }).click();
   await sleep(2500);
   await shot('4-insights');
-  writeFileSync(`${OUT}/e2e-result.json`, JSON.stringify({ offlineRows, reviewText }, null, 2));
+  writeFileSync(`${OUT}/e2e-result.json`, JSON.stringify({ at: new Date().toISOString(), site: SITE, offlineRows, reviewText, learned, secondRows }, null, 2));
   log('E2E DONE');
 } catch (err) {
   log('E2E FAILED:', err.message);
