@@ -163,7 +163,8 @@ await step('OFFLINE without on-device AI: queued, then marked automatically back
   await page.getByText('Saved for marking: Offline Student').waitFor({ timeout: 20_000 });
   await page.getByText(/1 waiting to be marked/).waitFor({ timeout: 20_000 });
   await ctx.setOffline(false);
-  await page.waitForFunction(() => !/waiting to be marked/.test(document.body.innerText), null, { timeout: 180_000 });
+  // Locator polling (no string eval, so it works under the site's Content-Security-Policy).
+  await page.getByText(/waiting to be marked/).first().waitFor({ state: 'detached', timeout: 180_000 });
   await page.goto(`${base()}/register`);
   await page.getByRole('button', { name: /Download Excel/ }).waitFor({ timeout: 30_000 });
   // Names sit in editable inputs, so read input values as well as cell text.
