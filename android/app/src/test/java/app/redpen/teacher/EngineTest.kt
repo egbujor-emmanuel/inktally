@@ -20,6 +20,7 @@ class EngineTest {
 
     @Test fun readsValueAfterLastEquals() = assertEquals(23.0, parseNumericAnswer("15 + 9 = 23").value!!, 0.0)
     @Test fun stripsNairaAndCommas() = assertEquals(27000.0, parseNumericAnswer("= ₦27,000").value!!, 0.0)
+    @Test fun readsHashAsNaira() = assertEquals(27000.0, parseNumericAnswer("Answer = #27,000").value!!, 0.0)
     @Test fun mapsCyrillicLookalike() { val r = parseNumericAnswer("5б"); assertEquals(56.0, r.value!!, 0.0); assertTrue(!r.clean) }
     @Test fun parsesFractions() = assertEquals(0.75, parseNumericAnswer("3/4").value!!, 1e-9)
     @Test fun parsesMixedNumbers() = assertEquals(1.5, parseNumericAnswer("1 1/2").value!!, 1e-9)

@@ -42,12 +42,13 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
   async function handleBatch(photos: File[]) {
     setMarks([]); setCrops({}); setCopy(null);
     const base = submissions.length;
+    const startedAt = Date.now();
     try {
       for (const [i, photo] of photos.entries()) {
         const label = pupil.trim() ? `${pupil.trim()} ${i + 1}` : `Student ${base + i + 1}`;
         const submissionId = newSubmissionId(assignment.id);
         await saveCrop(submissionId, PHOTO_KEY, photo); // photo first, so the queue never sees a record without it
-        await createSubmission(assignment.id, label, [], { mode, page: pageIndex }, submissionId);
+        await createSubmission(assignment.id, label, [], { mode, page: pageIndex }, submissionId, startedAt + i);
       }
       setPupil('');
       setPhase({ kind: 'batch', count: photos.length });

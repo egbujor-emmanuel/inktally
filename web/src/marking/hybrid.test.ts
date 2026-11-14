@@ -184,6 +184,15 @@ describe('marking-point checks accept only a clear yes or no', () => {
   });
 });
 
+describe('batch capture order', () => {
+  test('students appear in the order their photos were taken; older records without an order stay first', async () => {
+    const { inCaptureOrder } = await import('../data/store');
+    const s = (id: string, order?: number) => ({ id, pupil: id, marks: [], ...(order === undefined ? {} : { order }) });
+    expect(inCaptureOrder([s('Student 3', 1002), s('old'), s('Student 2', 1001), s('Student 4', 1003)] as never).map((x) => x.id))
+      .toEqual(['old', 'Student 2', 'Student 3', 'Student 4']);
+  });
+});
+
 describe('status labels', () => {
   test('a single cloud reading is "Cloud read", not "Verified"', () => {
     expect(statusLabel(cloud(numericQ as never, '56'))).toBe('Cloud read');

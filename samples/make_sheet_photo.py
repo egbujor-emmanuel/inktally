@@ -1,6 +1,7 @@
 """Writes handwritten-style answers onto a blank REDPEN sheet and fakes a tilted phone photo.
 Synthetic test data for the scanner + on-device reading path (clearly not real pupil work).
-Usage: python make_sheet_photo.py blank.png out.jpg  (answers configured below)"""
+Usage: python make_sheet_photo.py blank.png out.jpg [answers name seed]
+  answers: comma-separated, one per box (default: the sample sheet's B,D,B,Abuja,runned); name and seed are optional."""
 import random, sys
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageChops
 
@@ -23,8 +24,11 @@ def perspective(pa, pb):
         A.append([0, 0, 0, x, y, 1, -v * x, -v * y]); B.append(v)
     return solve(A, B)
 
-def main(blank, out, seed=7):
+def main(blank, out, seed=7, answers=None, name=None):
     random.seed(seed)
+    global ANSWERS, NAME
+    if answers: ANSWERS = [(y, h, t) for (y, h, _), t in zip(ANSWERS, answers)]
+    if name: NAME = name
     sheet = Image.open(blank).convert('RGB'); W, H = sheet.size; px = W / 210.0
     font = ImageFont.truetype('Caveat.ttf', int(11 * px)); ink = (28, 38, 92, 255)
     for y, h, text in ANSWERS:
@@ -45,4 +49,6 @@ def main(blank, out, seed=7):
     photo.resize((int(photo.width * 0.75), int(photo.height * 0.75)), Image.LANCZOS).save(out, quality=85)
 
 if __name__ == '__main__':
-    main(sys.argv[1], sys.argv[2])
+    a = sys.argv
+    main(a[1], a[2], seed=int(a[5]) if len(a) > 5 else 7,
+         answers=a[3].split(',') if len(a) > 3 else None, name=a[4] if len(a) > 4 else None)

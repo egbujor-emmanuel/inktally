@@ -46,15 +46,17 @@ const Draft = z.object({ questions: z.array(DraftQuestion).min(1) });
 /** Converts the flat model output into the strongly-typed domain question, dropping unusable ones. */
 export function toQuestion(d: z.infer<typeof DraftQuestion>): Question | null {
   const base = { q: d.q, prompt: d.prompt, max: d.max };
+  // Only set when there is a list: Firestore rejects undefined fields (saving a teacher's scheme crashed on this).
+  const reject = d.reject?.length ? { reject: d.reject } : {};
   switch (d.type) {
     case 'objective':
       return d.correctOptions?.length ? { ...base, type: 'objective', correct: d.correctOptions.map((c) => c.trim().toUpperCase()) } : null;
     case 'numeric':
       return d.acceptNumbers?.length ? { ...base, type: 'numeric', accept: d.acceptNumbers } : null;
     case 'short':
-      return d.acceptText?.length ? { ...base, type: 'short', accept: d.acceptText, reject: d.reject } : null;
+      return d.acceptText?.length ? { ...base, type: 'short', accept: d.acceptText, ...reject } : null;
     case 'points':
-      return d.points?.length ? { ...base, type: 'points', points: d.points, reject: d.reject } : null;
+      return d.points?.length ? { ...base, type: 'points', points: d.points, ...reject } : null;
   }
 }
 

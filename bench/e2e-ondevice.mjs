@@ -88,7 +88,7 @@ try {
   await page.getByRole('link', { name: 'Review', exact: true }).click();
   await sleep(1500);
   const reviewText = await page.locator('main').innerText();
-  const learned = await page.getByText('What on-device AI learned about this class').count()
+  const learned = await page.getByText('What on-device AI learned').count()
     ? await page.locator('section', { hasText: 'What on-device AI learned' }).innerText().catch(() => 'card shown') : 'no correction to learn from';
   log('DEVICE LEARNED:', learned);
   log('REVIEW AFTER CLOUD CHECK:\n' + reviewText.slice(0, 1500));

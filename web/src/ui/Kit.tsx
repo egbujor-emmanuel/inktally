@@ -62,8 +62,15 @@ export function Card({ children, className = '', flag = false, labelledBy }: { c
   );
 }
 
+/** An error the teacher must see: it scrolls itself into view, so a button never looks like it did nothing. */
 export function ErrorText({ message }: { message: string | null | undefined }) {
-  return message ? <p className="px-4 text-sm text-pen" role="alert">{message}</p> : null;
+  const ref = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (!message) return;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    ref.current?.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+  }, [message]);
+  return message ? <p ref={ref} className="px-4 text-sm text-pen" role="alert">{message}</p> : null;
 }
 
 export function Busy({ children }: { children: ReactNode }) {

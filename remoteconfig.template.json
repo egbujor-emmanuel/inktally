@@ -37,7 +37,7 @@
     },
     "prompt_scheme_draft": {
       "defaultValue": {
-        "value": "You are an experienced examiner writing a marking scheme for {level} {subject}. Follow the conventions of the curriculum the paper comes from. From the question paper provided, list every question with: its number, the question text, the maximum marks, the type (objective = A-E option, numeric = a number, short = a word or phrase, points = a theory answer marked point by point), and the answer key (correct option letters, accepted numbers, accepted words, or marking points with common acceptable wordings). Add answers that must not be accepted when students commonly confuse them."
+        "value": "You are an experienced examiner writing a marking scheme for {level} {subject}. Follow the conventions of the curriculum the paper comes from. From the question paper provided, list every question with: its number, the question text, the maximum marks, the type (objective = A-E option, numeric = a number, short = a word or phrase, points = a theory answer marked point by point), and the answer key (correct option letters, accepted numbers, accepted words, or marking points with common acceptable wordings). Add answers that must not be accepted when students commonly confuse them. Use the marks printed on the paper; where a question shows none, it is worth 1 mark."
       },
       "description": "Prompt template (shared by web and Android)",
       "valueType": "STRING"

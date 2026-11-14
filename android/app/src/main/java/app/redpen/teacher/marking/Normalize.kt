@@ -14,7 +14,8 @@ internal const val WS = "\\s\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\
 
 data class NumericParse(val value: Double?, val clean: Boolean, val signAfterEquals: Boolean)
 
-private val CURRENCY_AND_SPACING = Regex("[₦$£€,$WS]|(?<![a-zA-Z])N(?=\\d)", RegexOption.IGNORE_CASE)
+// "#" before a number is how many Nigerian teachers and pupils write ₦ (same as web normalize.ts).
+private val CURRENCY_AND_SPACING = Regex("[₦$£€,$WS]|(?<![a-zA-Z])N(?=\\d)|#(?=\\d)", RegexOption.IGNORE_CASE)
 
 fun parseNumericAnswer(raw: String): NumericParse {
     val hasEquals = raw.contains('=')

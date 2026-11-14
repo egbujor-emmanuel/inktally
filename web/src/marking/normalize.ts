@@ -9,7 +9,8 @@ const DIGIT_LOOKALIKES: Record<string, string> = {
   '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
 };
 
-const CURRENCY_AND_SPACING = /[₦$£€,\s]|(?<![a-z])N(?=\d)/gi;
+// "#" before a number is how many Nigerian teachers and pupils write ₦ (and how models often transcribe it).
+const CURRENCY_AND_SPACING = /[₦$£€,\s]|(?<![a-z])N(?=\d)|#(?=\d)/gi;
 
 export interface NumericParse {
   value: number | null;

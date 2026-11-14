@@ -41,7 +41,8 @@ export const REMOTE_DEFAULTS = {
     + 'From the question paper provided, list every question with: its number, the question text, the maximum marks, '
     + 'the type (objective = A-E option, numeric = a number, short = a word or phrase, points = a theory answer marked point by point), '
     + 'and the answer key (correct option letters, accepted numbers, accepted words, or marking points with common acceptable wordings). '
-    + 'Add answers that must not be accepted when students commonly confuse them.',
+    + 'Add answers that must not be accepted when students commonly confuse them. '
+    + 'Use the marks printed on the paper; where a question shows none, it is worth 1 mark.',
   /** Used when the teacher supplies their OWN marking scheme: copy it, never invent or "correct" answers. */
   prompt_scheme_from_guide:
     'The teacher has provided their OWN marking scheme (labelled TEACHER’S MARKING SCHEME). Use it as the answer key exactly as written: '

@@ -270,6 +270,12 @@ class HybridTest {
         assertThrows(IllegalStateException::class.java) { parsePresent("{\"present\": \"maybe\"}") }
     }
 
+    @Test fun studentsAppearInPhotoOrderOlderRecordsFirst() {
+        val list = listOf(Submission("3", "Student 3", emptyList(), order = 1002), Submission("old", "old", emptyList()),
+            Submission("2", "Student 2", emptyList(), order = 1001), Submission("4", "Student 4", emptyList(), order = 1003))
+        assertEquals(listOf("old", "2", "3", "4"), app.redpen.teacher.data.inCaptureOrder(list).map { it.id })
+    }
+
     // ---- status labels
 
     @Test fun aSingleCloudReadingIsCloudReadNotVerified() {

@@ -48,7 +48,11 @@ data class Assignment(
 /** Saved offline on a phone without on-device AI; marked automatically when the phone is back online. */
 data class Queued(val mode: String, val page: Int)
 
-data class Submission(val id: String, val pupil: String, val marks: List<Mark>, val comment: String = "", val queued: Queued? = null)
+data class Submission(val id: String, val pupil: String, val marks: List<Mark>, val comment: String = "", val queued: Queued? = null,
+    /** Capture order (client clock, ms); see Repo.createSubmission. 0 for records saved before it existed. */ val order: Long = 0)
+
+/** Students in the order their photos were taken (same as web inCaptureOrder; older records keep their place, first). */
+fun inCaptureOrder(items: List<Submission>): List<Submission> = items.sortedBy { it.order }
 
 /**
  * Same Firestore layout and rules as the web app (assignments/{id}/submissions/{sid}, users/{uid}/settings/profile).
@@ -157,7 +161,8 @@ object Repo {
     @Suppress("UNCHECKED_CAST")
     private fun submissionOf(d: DocumentSnapshot) = Submission(d.id, d.getString("pupil") ?: "",
         ((d.get("marks") as? List<*>) ?: emptyList<Any>()).mapNotNull { (it as? Map<String, Any?>)?.let(::markOf) }, d.getString("comment") ?: "",
-        (d.get("queued") as? Map<String, Any?>)?.let { q -> Queued(q["mode"] as? String ?: "sheet", (q["page"] as? Number)?.toInt() ?: 0) })
+        (d.get("queued") as? Map<String, Any?>)?.let { q -> Queued(q["mode"] as? String ?: "sheet", (q["page"] as? Number)?.toInt() ?: 0) },
+        (d.get("order") as? Number)?.toLong() ?: 0L)
 
     /**
      * Snapshot listener that survives transient denials: a listener can reach the server before a doc we just
@@ -254,12 +259,13 @@ object Repo {
 
     fun deleteCrop(ctx: Context, submissionId: String, q: Int) { cropFile(ctx, submissionId, q).delete() }
 
-    fun createSubmission(assignmentId: String, pupil: String, queued: Queued? = null, id: String? = null): String {
+    /** [order] fixes where the student appears in lists: the photo order of a batch (same as web createSubmission). */
+    fun createSubmission(assignmentId: String, pupil: String, queued: Queued? = null, id: String? = null, order: Long = System.currentTimeMillis()): String {
         val col = db.collection("assignments").document(assignmentId).collection("submissions")
         val ref = if (id != null) col.document(id) else col.document()
         val data = buildMap<String, Any> {
             put("assignmentId", assignmentId); put("ownerUid", uid()); put("pupil", pupil.take(PUPIL_LIMIT))
-            put("marks", emptyList<Any>()); put("createdAt", FieldValue.serverTimestamp())
+            put("marks", emptyList<Any>()); put("order", order); put("createdAt", FieldValue.serverTimestamp())
             queued?.let { put("queued", mapOf("mode" to it.mode, "page" to it.page)) }
         }
         queue("the student", ref.set(data))
@@ -289,7 +295,7 @@ object Repo {
         resilient { fail ->
             db.collection("assignments").document(assignmentId).collection("submissions")
                 .whereEqualTo("ownerUid", uid()).orderBy("createdAt", Query.Direction.ASCENDING)
-                .addSnapshotListener { snap, e -> if (e != null) fail(e) else trySend(snap?.documents?.map(::submissionOf) ?: emptyList()) }
+                .addSnapshotListener { snap, e -> if (e != null) fail(e) else trySend(inCaptureOrder(snap?.documents?.map(::submissionOf) ?: emptyList())) }
         }
     }
 

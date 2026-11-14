@@ -140,6 +140,7 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
         val base = submissions.size
         val typed = pupil.trim()
         val mode = if (sheetMode) MarkSubmission.SHEET else MarkSubmission.PAGE
+        val startedAt = System.currentTimeMillis()
         scope.launch {
             try {
                 photos.forEachIndexed { i, uri ->
@@ -147,7 +148,7 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
                     val sid = Repo.newSubmissionId(a.id)
                     // Photo first, so the queue never sees a record without it. One photo in memory at a time.
                     withContext(Dispatchers.IO) { loadPhoto(ctx, uri).also { Repo.saveCrop(ctx, sid, Repo.PHOTO_KEY, it) }.recycle() }
-                    Repo.createSubmission(a.id, label, app.redpen.teacher.data.Queued(mode, page), sid)
+                    Repo.createSubmission(a.id, label, app.redpen.teacher.data.Queued(mode, page), sid, order = startedAt + i)
                 }
                 pupil = ""
                 stackAdded = photos.size

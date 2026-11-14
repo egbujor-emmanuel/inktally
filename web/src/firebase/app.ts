@@ -49,6 +49,8 @@ export const auth = getAuth(app);
 /** Firestore with an IndexedDB cache: marks are saved instantly offline and sync when online. */
 export const db: Firestore = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  // An optional field left undefined (e.g. no "do not accept" list) is dropped instead of failing the whole save.
+  ignoreUndefinedProperties: true,
 });
 
 export const remoteConfig: RemoteConfig = getRemoteConfig(app);

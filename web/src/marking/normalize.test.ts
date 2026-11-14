@@ -13,6 +13,8 @@ describe('parseNumericAnswer', () => {
   it('strips thousands separators and naira signs', () => {
     expect(parseNumericAnswer('= ₦27,000').value).toBe(27000);
     expect(parseNumericAnswer('N27,000').value).toBe(27000);
+    expect(parseNumericAnswer('Answer = #27,000').value).toBe(27000); // "#" is a common way to write ₦
+    expect(parseNumericAnswer('#').value).toBeNull();
   });
 
   it('maps handwriting lookalikes to digits (Cyrillic б for 6)', () => {

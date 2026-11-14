@@ -34,6 +34,8 @@ export interface Submission {
   comment?: string;
   /** Saved offline on a device without on-device AI: marked automatically when the device is back online. */
   queued?: QueuedCapture;
+  /** Capture order (client clock, ms); see createSubmission. */
+  order?: number;
   createdAt?: unknown;
 }
 
@@ -158,10 +160,14 @@ export async function saveScheme(assignmentId: string, scheme: MarkingScheme): P
 /** A fresh student-record id, so device-only images can be saved before the record itself is written. */
 export function newSubmissionId(assignmentId: string): string { return doc(submissions(assignmentId)).id; }
 
-export async function createSubmission(assignmentId: string, pupil: string, marks: Mark[], queued?: QueuedCapture, id?: string): Promise<string> {
+/**
+ * [order] fixes where the student appears in lists: the photo order of a batch (server timestamps of writes made in
+ * the same moment can land in any order). Defaults to now.
+ */
+export async function createSubmission(assignmentId: string, pupil: string, marks: Mark[], queued?: QueuedCapture, id?: string, order = Date.now()): Promise<string> {
   const ref = id ? doc(submissions(assignmentId), id) : doc(submissions(assignmentId));
   const name = pupil.trim().slice(0, PUPIL_LIMIT) || 'Student';
-  queueWrite(setDoc(ref, { assignmentId, ownerUid: uid(), pupil: name, marks, createdAt: serverTimestamp(), ...(queued ? { queued } : {}) }), 'the student');
+  queueWrite(setDoc(ref, { assignmentId, ownerUid: uid(), pupil: name, marks, order, createdAt: serverTimestamp(), ...(queued ? { queued } : {}) }), 'the student');
   return ref.id;
 }
 
@@ -193,7 +199,12 @@ export function updateSubmission(assignmentId: string, submissionId: string, pat
 
 export function watchSubmissions(assignmentId: string, onChange: (items: Submission[]) => void, onError: (e: Error) => void): Unsubscribe {
   const q = query(submissions(assignmentId), where('ownerUid', '==', uid()), orderBy('createdAt', 'asc'));
-  return resilientSnapshot((fail) => onSnapshot(q, (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Submission)), fail), onError);
+  return resilientSnapshot((fail) => onSnapshot(q, (snap) => onChange(inCaptureOrder(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Submission))), fail), onError);
+}
+
+/** Students in the order their photos were taken (records saved before [order] existed keep their place, first). */
+export function inCaptureOrder(items: Submission[]): Submission[] {
+  return [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }
 
 // ---- Device-only crop storage ----

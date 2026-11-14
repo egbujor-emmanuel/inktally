@@ -52,7 +52,7 @@ val REMOTE_DEFAULTS: Map<String, Any> = mapOf(
         "From the question paper provided, list every question with: its number, the question text, the maximum marks, " +
         "the type (objective = A-E option, numeric = a number, short = a word or phrase, points = a theory answer marked point by point), " +
         "and the answer key (correct option letters, accepted numbers, accepted words, or marking points with common acceptable wordings). " +
-        "Add answers that must not be accepted when students commonly confuse them.",
+        "Add answers that must not be accepted when students commonly confuse them. Use the marks printed on the paper; where a question shows none, it is worth 1 mark.",
     "prompt_scheme_from_guide" to "The teacher has provided their OWN marking scheme (labelled TEACHER’S MARKING SCHEME). Use it as the answer key exactly as written: " +
         "the same question numbers, maximum marks, correct options, accepted answers, marking points and any answers marked as not acceptable. " +
         "Do not add answers, remove answers, change marks or correct anything, even if you think the scheme is wrong. " +
@@ -163,7 +163,7 @@ object Ai {
     private fun authorModel(schema: Schema, cloudModel: String) = Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel(
         modelName = cloudModel,
         generationConfig = generationConfig {
-            responseMimeType = "application/json"; responseSchema = schema; temperature = 0.2f
+            responseMimeType = "application/json"; responseSchema = schema; temperature = 0f // repeatable answer keys
             thinkingConfig = if (routing.thinkingAllowed(cloudModel)) thinking("author_thinking") else null
         },
         requestOptions = RequestOptions(timeoutInMillis = AUTHOR_TIMEOUT_MS),

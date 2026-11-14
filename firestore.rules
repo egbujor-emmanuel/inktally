@@ -43,7 +43,8 @@ service cloud.firestore {
 
     // Student record: name, marks (<= 100), optional teacher comment and offline-queue marker.
     function validSubmission(d) {
-      return d.keys().hasOnly(['assignmentId', 'ownerUid', 'pupil', 'marks', 'comment', 'queued', 'createdAt'])
+      return d.keys().hasOnly(['assignmentId', 'ownerUid', 'pupil', 'marks', 'comment', 'queued', 'order', 'createdAt'])
+        && (!('order' in d) || d.order is number)
         && shortText(d.pupil, 120) && d.marks is list && d.marks.size() <= 100
         && (!('comment' in d) || shortText(d.comment, 1000))
         && (!('queued' in d) || (d.queued is map && d.queued.keys().hasOnly(['mode', 'page'])));

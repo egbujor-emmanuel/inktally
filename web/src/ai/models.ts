@@ -150,7 +150,7 @@ export function authorModel(schema: ObjectSchema, modelName = config('cloud_auth
     mode: InferenceMode.ONLY_IN_CLOUD,
     inCloudParams: {
       model,
-      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.2, ...thinking('author_thinking', model) },
+      generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0, ...thinking('author_thinking', model) },
     },
   }, { timeout }), model);
 }

@@ -37,7 +37,7 @@ No Gemini Nano hardware to hand? Watch the recorded run on the live site: [`benc
 git clone https://github.com/egbujor-emmanuel/redpen && cd redpen/web
 cp .env.example .env.local        # fill in your Firebase web config
 npm install && npm run dev        # http://localhost:5173
-npm test                          # 72 unit tests (hybrid core: routing, reconcile, learning + guard rails, strict yes/no, batch fallback; engine; scanner; exports)
+npm test                          # 77 unit tests (hybrid core: routing, reconcile, learning + guard rails, strict yes/no, batch fallback; engine; scanner; exports)
 node e2e/live-walkthrough.mjs [url] [--mobile]   # 17-step click-through of every feature on the live site
 node e2e/offline-coldstart.mjs [url]             # open with no connection, add a stack offline, marked on reconnect
 ```
@@ -118,7 +118,7 @@ Every number below comes from a file in this repo or a check anyone can re-run.
 
 | Test | Result | Source |
 |---|---|---|
-| Unit tests — web (Vitest) | **72 / 72 pass**, incl. 29 for the hybrid core: quota routing and expiry, per-request error attribution, no retry when every model is exhausted, thinking-level fallback, batch fallback on a missing answer, reconcile (a failed or unsure read is never "confirmed"; different readings with the same score are not a confirmation), keep-reviewed, learning loop and its guard rails, strict yes/no point checks, re-marking, labels | [`routing.test.ts`](web/src/ai/routing.test.ts), [`hybrid.test.ts`](web/src/marking/hybrid.test.ts) |
+| Unit tests — web (Vitest) | **77 / 77 pass**, incl. 30 for the hybrid core: quota routing and expiry, per-request error attribution, no retry when every model is exhausted, thinking-level fallback, batch fallback on a missing answer, reconcile (a failed or unsure read is never "confirmed"; different readings with the same score are not a confirmation), keep-reviewed, learning loop and its guard rails, strict yes/no point checks, re-marking, labels | [`routing.test.ts`](web/src/ai/routing.test.ts), [`hybrid.test.ts`](web/src/marking/hybrid.test.ts) |
 | Unit tests — Android (JUnit, same hybrid-core cases + register exports) | pass in CI | [android.yml](.github/workflows/android.yml) |
 | Web click-through of every feature on the live site — school details, typed + photo drafting, copying a teacher's own scheme from a photo and from text, print, Quick mark, sheet marking, exercise-book marking, comment → marked copy, offline queue, rename → Excel content check, review, insights + catch-up, finish/reopen, delete | **17 / 17**, desktop and mobile | [`live-walkthrough.mjs`](web/e2e/live-walkthrough.mjs) |
 | Web cold start with no connection: open → assignment from cache → add a stack of 3 scripts offline → reconnect | **6 / 6**; all 3 scripts marked 3/5 automatically | [`offline-coldstart.mjs`](web/e2e/offline-coldstart.mjs), [result + screenshots](bench/evidence/web-offline-coldstart-2026-11-14/) |
