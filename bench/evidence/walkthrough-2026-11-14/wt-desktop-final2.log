@@ -1,0 +1,40 @@
+PASS open site + passcode (9008 ms) Online
+Checking on-device AI…
+PASS school details: save institution profile (8829 ms) saved + survived reload
+PASS new assignment: draft scheme from TYPED questions (5896 ms) 4 questions drafted
+PASS new assignment: save -> print sheet (238 ms) 1 sheet page(s) with institution header
+PASS new assignment: draft scheme from PHOTO of a page (7362 ms) 6 questions from photo
+PASS new assignment: COPY teacher marking scheme from a PHOTO (3544 ms) 5 questions copied; F.C.T. accepted, "runned" rejected, Q5 = 2 marks
+PASS new assignment: COPY teacher marking scheme TYPED (no question paper) (2880 ms) 3 questions copied exactly
+PASS quick mark: photo -> key -> marked (13050 ms) Total: 4/6
+PASS sample English -> mark printed sheet photo (5303 ms) Total: 3/5 + marked copy
+PASS comment after marking -> on the marked copy (306 ms) comment saved, copy re-rendered with letterhead + comment
+PASS exercise-book mode on the same assignment (3214 ms) Total: 3/5
+PASS OFFLINE without on-device AI: queued, then marked automatically back online (5332 ms) saved offline, marked automatically on reconnect: 3/5
+PASS review tab (1063 ms) 0 answers to check
+PASS mark register + Excel download (2270 ms) 3 rows; English-Grammar-Check-marks.xlsx has letterhead, renamed student, comment
+PASS insights + catch-up sheet (3343 ms) catch-up generated
+PASS finish + reopen (1195 ms) 
+PASS delete assignment (667 ms) 
+
+==== SUMMARY (desktop)
+17/17 steps passed
+console errors: [
+  'Failed to load resource: net::ERR_FAILED',
+  'Failed to load resource: net::ERR_INTERNET_DISCONNECTED',
+  '[2026-11-14T20:03:13.383Z]  @firebase/firestore: Firestore (13.2.0): Could not reach Cloud Firestore backend. Connection failed 1 times. Most recent error: FirebaseError: [code=unavailable]: The operation could not be completed\n' +
+    'This typically indicates that your device does not have a healthy Intern',
+  `Framing 'https://www.google.com/' violates the following report-only Content Security Policy directive: "frame-ancestors 'self'". The violation has been logged, but no further action has been taken.\n`
+]
+failed requests: [
+  'net::ERR_FAILED https://fonts.gstatic.com/s/fraunces/v38/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxC9TeA.woff2',
+  'net::ERR_FAILED https://fonts.gstatic.com/s/intertight/v9/NGSwv5HMAFg6IuGlBNMjxLsH8ag.woff2',
+  'net::ERR_FAILED https://fonts.gstatic.com/s/caveat/v23/Wnz6HAc5bAfYB2Q7ZjYY.woff2',
+  'net::ERR_FAILED https://fonts.gstatic.com/s/intertight/v9/NGSwv5HMAFg6IuGlBNMjxLsJ8ah8QA.woff2',
+  'net::ERR_ABORTED https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fredpen-hybrid%2F',
+  'net::ERR_INTERNET_DISCONNECTED https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fredpen-hybrid%2F',
+  'net::ERR_INTERNET_DISCONNECTED https://www.google.com/images/cleardot.gif?zx=1i4tegbskyot',
+  'net::ERR_INTERNET_DISCONNECTED https://www.google.com/images/cleardot.gif?zx=th7r2adm2xoy',
+  'net::ERR_ABORTED https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fredpen-hybrid%2Fd',
+  'net::ERR_BLOCKED_BY_ORB https://csp.withgoogle.com/csp/frame-ancestors/38fac9d5b82543fc4729580d18ff2d3d'
+]

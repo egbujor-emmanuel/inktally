@@ -148,10 +148,13 @@ await step('comment after marking -> on the marked copy', async () => {
 });
 
 await step('exercise-book mode on the same assignment', async () => {
+  // Whole-page reading (no corner squares used) of the same student's page must give the same true score.
   await page.getByRole('radio', { name: /Exercise book page/ }).click();
-  await page.locator('input[aria-label^="Choose photo"]').setInputFiles(`${SAMPLES}/maths.png`);
+  await page.locator('input[aria-label^="Choose photo"]').setInputFiles(`${SAMPLES}/english-sheet-photo.jpg`);
   await page.getByText(/^Total:/).waitFor({ timeout: 120_000 });
-  return await page.getByText(/^Total:/).innerText();
+  const total = await page.getByText(/^Total:/).innerText();
+  if (!/3\s*\/\s*5/.test(total)) throw new Error(`expected the true score 3/5, got "${total}"`);
+  return total;
 });
 
 await step('OFFLINE without on-device AI: queued, then marked automatically back online', async () => {
