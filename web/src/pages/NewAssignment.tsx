@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { draftScheme } from '../ai/scheme';
+import { draftScheme, resolveLabels } from '../ai/scheme';
 import { createAssignment } from '../data/store';
 import type { Question } from '../domain/types';
 import { SchemeEditor, isComplete } from '../components/SchemeEditor';
@@ -61,8 +61,9 @@ export function NewAssignment() {
   const isOnline = useOnline();
   const [title, setTitle] = useState('');
   const [className, setClassName] = useState('');
-  const [subject, setSubject] = useState('Mathematics');
-  const [level, setLevel] = useState('Grade 6');
+  // Empty by default: REDPEN reads the subject and level from the paper (a silent default printed the wrong ones).
+  const [subject, setSubject] = useState('');
+  const [level, setLevel] = useState('');
   const [paperPhotos, setPaperPhotos] = useState<File[]>([]);
   const [paperPdf, setPaperPdf] = useState<File | null>(null);
   const [paperText, setPaperText] = useState('');
@@ -85,6 +86,8 @@ export function NewAssignment() {
         guideImages: guidePhotos, guidePdf: guidePdf ?? undefined, guideText: guideText || undefined,
       }, subject, level);
       setQuestions(scheme.questions);
+      if (!subject.trim()) setSubject(scheme.subject);
+      if (!level.trim()) setLevel(scheme.level);
     } catch (e: unknown) {
       setError(friendlyCloudError(e).message);
     } finally {
@@ -97,7 +100,11 @@ export function NewAssignment() {
     if (!usable.length) { setError('Add at least one question with an answer.'); return; }
     try {
       await ensureUser(); // the form shows before sign-in finishes; saving waits for it
-      const id = await createAssignment({ title: title || `${subject} — ${level}`, className: className || level, scheme: { subject, level, questions: usable } });
+      const labels = resolveLabels(subject, level, {});
+      const id = await createAssignment({
+        title: title || [labels.subject, labels.level].filter(Boolean).join(' — '), className: className || labels.level,
+        scheme: { ...labels, questions: usable },
+      });
       navigate(`/a/${id}/print`);
     } catch (e: unknown) {
       setError(friendlyCloudError(e).message);
@@ -113,7 +120,7 @@ export function NewAssignment() {
       <Card>
         <Field label="Title" value={title} onChange={setTitle} placeholder="Fractions quiz" />
         <Field label="Class / group" value={className} onChange={setClassName} placeholder="e.g. Primary 6A, Biology 101 group B" />
-        <Field label="Subject" value={subject} onChange={setSubject} />
+        <Field label="Subject" value={subject} onChange={setSubject} placeholder="Leave empty: REDPEN reads it from the paper" />
         <LevelField level={level} onChange={setLevel} />
       </Card>
       <Card labelledBy="paper-title">

@@ -62,8 +62,9 @@ fun QuickMarkScreen(onOpenAssignment: (String) -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val online by Connectivity.online.collectAsState()
-    var subject by remember { mutableStateOf("Mathematics") }
-    var level by remember { mutableStateOf("Grade 6") }
+    // Empty by default: REDPEN reads the subject and level from the page (same as web).
+    var subject by remember { mutableStateOf("") }
+    var level by remember { mutableStateOf("") }
     var pupil by remember { mutableStateOf("") }
     var photo by remember { mutableStateOf<Bitmap?>(null) }
     var step by remember { mutableStateOf<QuickStep>(QuickStep.Snap) }
@@ -73,7 +74,7 @@ fun QuickMarkScreen(onOpenAssignment: (String) -> Unit) {
         photo = bmp; error = null; step = QuickStep.Drafting
         scope.launch {
             runCatching { Ai.draftScheme(listOf(bmp), null, subject, level, isStudentPage = true) }
-                .onSuccess { step = QuickStep.Confirm(it.questions) }
+                .onSuccess { if (subject.isBlank()) subject = it.subject; if (level.isBlank()) level = it.level; step = QuickStep.Confirm(it.questions) }
                 .onFailure { error = Repo.friendly(it); step = QuickStep.Snap }
         }
     }, onError = { error = it })
@@ -86,7 +87,8 @@ fun QuickMarkScreen(onOpenAssignment: (String) -> Unit) {
         scope.launch {
             try {
                 val today = SimpleDateFormat("d MMM", Locale.getDefault()).format(Date())
-                val aid = Repo.createAssignment("Quick mark — $subject, $today", level, MarkingScheme(subject, level, usable))
+                val (s, l) = app.redpen.teacher.ai.resolveLabels(subject, level)
+                val aid = Repo.createAssignment("Quick mark — $s, $today", l, MarkingScheme(s, l, usable))
                 val sid = Repo.createSubmission(aid, pupil.ifBlank { "Student" })
                 withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PAGE_KEY, page) }
                 val marks = Marker.markPage(usable, page)
@@ -102,7 +104,7 @@ fun QuickMarkScreen(onOpenAssignment: (String) -> Unit) {
         item { PageTitle("no preparation needed", "Quick mark", "Photograph one student’s page with the questions on it. REDPEN works out the answers from the questions, you check them in seconds, then it marks the page. The answer key is saved so you can mark the rest of the class.") }
         if (step == QuickStep.Snap) item {
             Paper {
-                Field(subject, { subject = it }, "Subject")
+                Field(subject, { subject = it }, "Subject", placeholder = "Leave empty: REDPEN reads it from the page")
                 LevelField(level) { level = it }
                 Field(pupil, { pupil = it }, "Student", placeholder = "Name or number")
                 if (online) PhotoButtons(input, "Photograph the page") else Text("Quick mark needs internet (the cloud writes the answer key).", color = RP.Pen)

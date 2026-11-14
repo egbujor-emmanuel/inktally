@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { draftScheme } from '../ai/scheme';
+import { draftScheme, resolveLabels } from '../ai/scheme';
 import { PAGE_KEY, createAssignment, createSubmission, saveCrop, saveMarks } from '../data/store';
 import type { Mark, Question } from '../domain/types';
 import { markPage } from '../marking/markAnswer';
@@ -25,8 +25,9 @@ type Step =
 export function QuickMark() {
   const isOnline = useOnline();
   const navigate = useNavigate();
-  const [subject, setSubject] = useState('Mathematics');
-  const [level, setLevel] = useState('Grade 6');
+  // Empty by default: REDPEN reads the subject and level from the page.
+  const [subject, setSubject] = useState('');
+  const [level, setLevel] = useState('');
   const [pupil, setPupil] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -42,6 +43,8 @@ export function QuickMark() {
     try {
       const scheme = await draftScheme({ images: [file], isPupilPage: true }, subject, level);
       if (!scheme.questions.length) throw new Error('No questions could be found on that page. Make sure the questions are visible.');
+      if (!subject.trim()) setSubject(scheme.subject);
+      if (!level.trim()) setLevel(scheme.level);
       setStep({ kind: 'confirm', questions: scheme.questions });
     } catch (e: unknown) {
       setError(friendlyCloudError(e).message);
@@ -57,7 +60,8 @@ export function QuickMark() {
     try {
       await ensureUser(); // the form shows before sign-in finishes; saving waits for it
       const today = new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-      const assignmentId = await createAssignment({ title: `Quick mark — ${subject}, ${today}`, className: level, scheme: { subject, level, questions: usable } });
+      const labels = resolveLabels(subject, level, {});
+      const assignmentId = await createAssignment({ title: `Quick mark — ${labels.subject}, ${today}`, className: labels.level, scheme: { ...labels, questions: usable } });
       const submissionId = await createSubmission(assignmentId, pupil.trim() || 'Student', []);
       await saveCrop(submissionId, PAGE_KEY, photo);
       const marks = await markPage(usable, photo);
@@ -78,7 +82,7 @@ export function QuickMark() {
         intro="Photograph one student’s page with the questions on it. REDPEN works out the answers from the questions, you check them in seconds, then it marks the page. The answer key is saved so you can mark the rest of the class." />
       {step.kind === 'snap' && (
         <Card>
-          <Field label="Subject" value={subject} onChange={setSubject} />
+          <Field label="Subject" value={subject} onChange={setSubject} placeholder="Leave empty: REDPEN reads it from the page" />
           <LevelField level={level} onChange={setLevel} />
           <Field label="Student" value={pupil} onChange={setPupil} placeholder="Name or number" />
           {isOnline

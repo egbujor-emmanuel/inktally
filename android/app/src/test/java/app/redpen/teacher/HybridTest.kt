@@ -276,6 +276,14 @@ class HybridTest {
         assertEquals(listOf("old", "2", "3", "4"), app.redpen.teacher.data.inCaptureOrder(list).map { it.id })
     }
 
+    @Test fun subjectAndLevelComeFromTheTeacherThenThePaperNeverMadeUp() {
+        assertEquals("Biology" to "SS 1", app.redpen.teacher.ai.resolveLabels("Biology", "SS 1", "Chemistry", "SS 2"))
+        assertEquals("English Language" to "JSS 1", app.redpen.teacher.ai.resolveLabels(" ", "", "English Language", "JSS 1"))
+        assertEquals("General" to "", app.redpen.teacher.ai.resolveLabels("", ""))
+        val r = app.redpen.teacher.ai.resolveLabels("", "", "<b>\"Maths\"</b>" + "x".repeat(100)).first
+        assertFalse(Regex("[<>\"]").containsMatchIn(r)); assertTrue(r.length <= 60)
+    }
+
     // ---- status labels
 
     @Test fun aSingleCloudReadingIsCloudReadNotVerified() {

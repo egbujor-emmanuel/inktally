@@ -33,3 +33,21 @@ describe('toQuestion', () => {
     expect(toQuestion({ q: 2, type: 'numeric', prompt: '7 x 8', max: 1, acceptNumbers: [] })).toBeNull();
   });
 });
+
+describe('subject and level labels', async () => {
+  const { resolveLabels } = await import('./scheme');
+  test('what the teacher typed wins over what the paper says', () => {
+    expect(resolveLabels('Biology', 'SS 1', { subject: 'Chemistry', level: 'SS 2' })).toEqual({ subject: 'Biology', level: 'SS 1' });
+  });
+  test('an empty form takes the subject and level read from the paper', () => {
+    expect(resolveLabels(' ', '', { subject: 'English Language', level: 'JSS 1' })).toEqual({ subject: 'English Language', level: 'JSS 1' });
+  });
+  test('nothing typed and nothing on the paper gives a neutral label, never a made-up subject', () => {
+    expect(resolveLabels('', '', {})).toEqual({ subject: 'General', level: '' });
+  });
+  test('labels from the model are cleaned and capped', () => {
+    const r = resolveLabels('', '', { subject: '<b>"Maths"</b>' + 'x'.repeat(100) });
+    expect(r.subject).not.toMatch(/[<>"]/);
+    expect(r.subject.length).toBeLessThanOrEqual(60);
+  });
+});

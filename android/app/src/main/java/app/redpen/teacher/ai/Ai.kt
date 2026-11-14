@@ -351,7 +351,7 @@ object Ai {
         "Work out the correct answers yourself from the QUESTIONS only. The student's answers may be wrong: never copy them into the marking scheme. " +
         "Each numbered item is ONE question: lines under it such as \"Answer = ...\" or working are part of that same question, never a new one."
 
-    private val DRAFT_SCHEMA = Schema.obj(mapOf("questions" to Schema.array(Schema.obj(
+    private val DRAFT_SCHEMA = Schema.obj(mapOf("subject" to Schema.string(), "level" to Schema.string(), "questions" to Schema.array(Schema.obj(
         mapOf(
             "q" to Schema.integer(), "prompt" to Schema.string(), "max" to Schema.integer(),
             "type" to Schema.enumeration(listOf("objective", "numeric", "short", "points")),
@@ -359,7 +359,7 @@ object Ai {
             "acceptText" to Schema.array(Schema.string()), "points" to Schema.array(Schema.string()), "reject" to Schema.array(Schema.string()),
         ),
         optionalProperties = listOf("correctOptions", "acceptNumbers", "acceptText", "points", "reject"),
-    ))))
+    ))), optionalProperties = listOf("subject", "level"))
 
     private fun JSONObject.strings(key: String): List<String> = optJSONArray(key)?.let { a -> (0 until a.length()).map { a.optString(it).trim() }.filter { it.isNotEmpty() } } ?: emptyList()
 
@@ -389,7 +389,9 @@ object Ai {
         val hasPaper = images.isNotEmpty() || !typed.isNullOrBlank() || pdf != null
         require(hasPaper || guide.isPresent) { "Add the question paper or your marking scheme (photo, PDF or typed) first." }
         val request: Content = content {
-            text(fill(cfg("prompt_scheme_draft"), mapOf("subject" to subject, "level" to level)))
+            text(fill(cfg("prompt_scheme_draft"), mapOf("subject" to subject.ifBlank { "the subject shown on the paper" },
+                "level" to level.ifBlank { "the class or level shown on the paper" })))
+            text(DETECT_LABELS_NOTE)
             if (isStudentPage) text(STUDENT_PAGE_NOTE)
             if (guide.isPresent) text(cfg("prompt_scheme_from_guide"))
             if (hasPaper) {
@@ -408,11 +410,14 @@ object Ai {
         val started = System.currentTimeMillis()
         val r = authorGenerate(DRAFT_SCHEMA, request)
         Telemetry.record("author", ReadSource.IN_CLOUD, System.currentTimeMillis() - started)
-        val arr: JSONArray = runCatching { JSONObject(stripFence(r.text ?: "")).getJSONArray("questions") }
+        val draft: JSONObject = runCatching { JSONObject(stripFence(r.text ?: "")) }
+            .getOrElse { throw IllegalStateException("The drafted marking scheme was incomplete. Try a clearer photo or type the questions.") }
+        val arr: JSONArray = runCatching { draft.getJSONArray("questions") }
             .getOrElse { throw IllegalStateException("The drafted marking scheme was incomplete. Try a clearer photo or type the questions.") }
         val questions = (0 until arr.length()).mapNotNull { toQuestion(arr.getJSONObject(it)) }.sortedBy { it.q }
         if (questions.isEmpty()) throw IllegalStateException("No questions could be found. Make sure the questions are visible, or type them.")
-        return MarkingScheme(subject, level, questions)
+        val (s, l) = resolveLabels(subject, level, draft.optString("subject"), draft.optString("level"))
+        return MarkingScheme(s, l, questions)
     }
 
     /** Turns the class's actual mistakes on one question into a short catch-up activity. No names, no images. */

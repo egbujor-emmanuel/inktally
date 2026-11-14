@@ -72,17 +72,24 @@ export function App() {
     <div className="min-h-dvh">
       {/* Same header as the Android app: logo + account, two big buttons, one swipeable status line. */}
       <header className="z-20 border-b border-border bg-paper sm:sticky sm:top-0">
-        <div className="mx-auto max-w-3xl">
-          <div className="flex items-center px-4 pt-2.5">
+        <div className="mx-auto max-w-3xl lg:max-w-5xl">
+          <div className="flex items-center px-4 pt-2.5 lg:gap-3">
             <Link to="/" className="flex items-center gap-2 font-display text-2xl font-bold" aria-label="REDPEN home">
               <img src="/logo-mark.svg" alt="" width={36} height={36} className="size-9" />
               <span>RED<span className="text-pen">PEN</span></span>
             </Link>
             <span className="flex-1" />
+            {/* Desktop: the two main actions sit in the header row instead of two full-width buttons. */}
+            {boot.state === 'ready' && (
+              <nav className="hidden gap-2 lg:flex" aria-label="Main">
+                <Link to="/quick" className="btn-ghost px-6">Quick mark</Link>
+                <Link to="/new" className="btn-pen px-6">New assignment</Link>
+              </nav>
+            )}
             {boot.state === 'ready' && <AccountMenu />}
           </div>
           {boot.state === 'ready' && (
-            <nav className="grid grid-cols-2 gap-2 px-4 py-1.5" aria-label="Main">
+            <nav className="grid grid-cols-2 gap-2 px-4 py-1.5 lg:hidden" aria-label="Main">
               <Link to="/quick" className="btn-ghost">Quick mark</Link>
               <Link to="/new" className="btn-pen">New assignment</Link>
             </nav>
@@ -92,7 +99,7 @@ export function App() {
           )} />
         </div>
       </header>
-      <main className="mx-auto max-w-3xl pb-24">
+      <main className="mx-auto max-w-3xl pb-24 lg:max-w-5xl">
         {writeError && (
           <p className="m-3 bg-white p-3 text-[13px] text-pen" role="alert">
             A change could not be saved: {writeError}{' '}

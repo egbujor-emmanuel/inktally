@@ -63,8 +63,9 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
     val online by Connectivity.online.collectAsState()
     var title by remember { mutableStateOf("") }
     var className by remember { mutableStateOf("") }
-    var subject by remember { mutableStateOf("Mathematics") }
-    var level by remember { mutableStateOf("Grade 6") }
+    // Empty by default: REDPEN reads the subject and level from the paper (same as web).
+    var subject by remember { mutableStateOf("") }
+    var level by remember { mutableStateOf("") }
     var images by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
     var pdf by remember { mutableStateOf<Pair<String, ByteArray>?>(null) }
     var typed by remember { mutableStateOf("") }
@@ -111,7 +112,7 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
         scope.launch {
             runCatching { Ai.draftScheme(images, typed.ifBlank { null }, subject, level, pdf = pdf?.second,
                 guide = Ai.Guide(guideImages, guideTyped.ifBlank { null }, guidePdf?.second)) }
-                .onSuccess { questions = it.questions }
+                .onSuccess { questions = it.questions; if (subject.isBlank()) subject = it.subject; if (level.isBlank()) level = it.level }
                 .onFailure { error = Repo.friendly(it) }
             drafting = false
         }
@@ -120,7 +121,8 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
     fun save() {
         val usable = questions.filter { it.isComplete() }
         if (usable.isEmpty()) { error = "Add at least one question with an answer."; return }
-        val id = Repo.createAssignment(title.ifBlank { "$subject — $level" }, className.ifBlank { level }, MarkingScheme(subject, level, usable))
+        val (s, l) = app.redpen.teacher.ai.resolveLabels(subject, level)
+        val id = Repo.createAssignment(title.ifBlank { listOf(s, l).filter { it.isNotBlank() }.joinToString(" — ") }, className.ifBlank { l }, MarkingScheme(s, l, usable))
         onSaved(id)
     }
 
@@ -130,7 +132,7 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
             Paper {
                 Field(title, { title = it }, "Title", placeholder = "Fractions quiz")
                 Field(className, { className = it }, "Class / group", placeholder = "e.g. Primary 6A, Biology 101 group B")
-                Field(subject, { subject = it }, "Subject")
+                Field(subject, { subject = it }, "Subject", placeholder = "Leave empty: REDPEN reads it from the paper")
                 LevelField(level) { level = it }
             }
         }
