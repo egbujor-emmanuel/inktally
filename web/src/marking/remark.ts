@@ -12,19 +12,27 @@ export interface RemarkResult { updates: { submissionId: string; marks: Mark[] }
 
 const sameQuestion = (a: Question | undefined, b: Question | undefined): boolean => JSON.stringify(a) === JSON.stringify(b);
 
+/** Reasons that carry the hybrid safety net: a cloud confirmation, a held reading, a device/cloud disagreement. */
+const KEEP_REASON = /confirmed by the cloud check|^Held for checking:|Which is right\?|^The device read /i;
+
 /** One stored mark under the edited question (or unchanged when the question did not change). */
 export function remarkOne(before: Question | undefined, after: Question | undefined, mark: Mark): Mark {
   if (!after || mark.status === 'reviewed' || mark.engine === 'teacher' || sameQuestion(before, after)) return mark;
-  if (after.type === 'points') {
+  // Nothing was read (a failed read): there is nothing to re-mark, and the "could not read" flag must stay.
+  if (mark.status === 'flagged' && !mark.read.trim()) return mark;
+  // Theory points and method marks were judged by the model, not by code: never re-judge them silently.
+  if (after.type === 'points' || mark.engine === 'ai-points') {
     const awarded = Math.min(mark.awarded, after.max);
     return { ...mark, max: after.max, awarded, status: 'flagged', reasons: [...mark.reasons, POINTS_CHANGED_REASON] };
   }
   const next = after.type === 'objective' ? markObjective(after, mark.read, mark.readSource)
     : after.type === 'numeric' ? markNumeric(after, mark.read, mark.readSource)
     : markShort(after, mark.read, mark.readSource);
-  // A reading that was waiting for the cloud check keeps waiting; one that was already final stays final.
-  const status = next.status === 'flagged' ? 'flagged' : mark.status === 'provisional' ? 'provisional' : next.status;
-  return { ...next, status, reasons: [...next.reasons, REMARK_REASON] };
+  // Flags survive re-marking ("Check this", "Which is right?"); a reading waiting for the cloud check keeps waiting;
+  // a mark that was confirmed by the cloud keeps that confirmation (the reading itself did not change).
+  const status = mark.status === 'flagged' || next.status === 'flagged' ? 'flagged' : mark.status === 'provisional' ? 'provisional' : next.status;
+  const kept = mark.reasons.filter((r) => KEEP_REASON.test(r));
+  return { ...next, status, reasons: [...next.reasons, ...kept, REMARK_REASON] };
 }
 
 /** Re-marks every student for the edited key and counts what changed, for "3 went up, 1 went down, 2 to check". */

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Assignment, Submission } from '../data/store';
+import type { Mark } from '../domain/types';
 import { cloudCheck, needsCheck, type CheckSummary } from '../marking/cloudCheck';
 import { useOnline } from './useStatus';
 
@@ -13,8 +14,13 @@ export interface CloudCheckState {
 
 /**
  * Verifies on-device marks automatically as soon as the device is online, on whichever tab is open.
- * Each provisional mark is tried once per connection; going offline and back online tries again.
+ * Each on-device reading still waiting (provisional, or held/flagged for checking) is tried once per connection;
+ * going offline and back online tries again.
  */
+/** An on-device reading the cloud should look at by itself: provisional, or held/flagged with something read. */
+export const awaitsAutoCheck = (m: Mark): boolean =>
+  m.status === 'provisional' || (m.status === 'flagged' && m.readSource === 'on_device' && m.read.trim() !== '');
+
 export function useCloudCheck(assignment: Assignment | null | undefined, submissions: Submission[]): CloudCheckState {
   const isOnline = useOnline();
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -49,7 +55,7 @@ export function useCloudCheck(assignment: Assignment | null | undefined, submiss
 
   useEffect(() => {
     if (!isOnline || running.current) return;
-    const untried = submissions.some((s) => !s.queued && s.marks.some((m) => m.status === 'provisional' && !tried.current.has(`${s.id}:${m.q}`)));
+    const untried = submissions.some((s) => !s.queued && s.marks.some((m) => awaitsAutoCheck(m) && !tried.current.has(`${s.id}:${m.q}`)));
     if (untried) void run();
   }, [isOnline, submissions, run, runs]);
 

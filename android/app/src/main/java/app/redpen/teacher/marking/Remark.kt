@@ -16,10 +16,16 @@ const val POINTS_CHANGED_REASON = "The marking points for this question changed 
 data class RemarkSummary(val students: Int = 0, val up: Int = 0, val down: Int = 0, val toCheck: Int = 0)
 data class RemarkResult(val updates: List<Pair<String, List<Mark>>>, val summary: RemarkSummary)
 
+/** Reasons that carry the hybrid safety net: a cloud confirmation, a held reading, a device/cloud disagreement. */
+private val KEEP_REASON = Regex("""confirmed by the cloud check|^Held for checking:|Which is right\?|^The device read """, RegexOption.IGNORE_CASE)
+
 /** One stored mark under the edited question (or unchanged when the question did not change). */
 fun remarkOne(before: Question?, after: Question?, mark: Mark): Mark {
     if (after == null || mark.status == MarkStatus.REVIEWED || mark.engine == MarkEngine.TEACHER || before == after) return mark
-    if (after is Question.Points) {
+    // Nothing was read (a failed read): there is nothing to re-mark, and the "could not read" flag must stay.
+    if (mark.status == MarkStatus.FLAGGED && mark.read.isBlank()) return mark
+    // Theory points and method marks were judged by the model, not by code: never re-judge them silently.
+    if (after is Question.Points || mark.engine == MarkEngine.AI_POINTS) {
         return mark.copy(max = after.max, awarded = minOf(mark.awarded, after.max), status = MarkStatus.FLAGGED, reasons = mark.reasons + POINTS_CHANGED_REASON)
     }
     val next = when (after) {
@@ -28,13 +34,14 @@ fun remarkOne(before: Question?, after: Question?, mark: Mark): Mark {
         is Question.Short -> markShort(after, mark.read, mark.readSource)
         is Question.Points -> return mark
     }
-    // A reading that was waiting for the cloud check keeps waiting; one that was already final stays final.
+    // Flags survive re-marking; a reading waiting for the cloud check keeps waiting; a cloud confirmation is kept.
     val status = when {
-        next.status == MarkStatus.FLAGGED -> MarkStatus.FLAGGED
+        mark.status == MarkStatus.FLAGGED || next.status == MarkStatus.FLAGGED -> MarkStatus.FLAGGED
         mark.status == MarkStatus.PROVISIONAL -> MarkStatus.PROVISIONAL
         else -> next.status
     }
-    return next.copy(status = status, reasons = next.reasons + REMARK_REASON)
+    val kept = mark.reasons.filter { KEEP_REASON.containsMatchIn(it) }
+    return next.copy(status = status, reasons = next.reasons + kept + REMARK_REASON)
 }
 
 /** Re-marks every student for the edited key and counts what changed. */

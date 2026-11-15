@@ -224,12 +224,12 @@ object Repo {
 
     private fun hintMap(h: ReadingHint) = mapOf("type" to h.type, "device" to h.device, "cloud" to h.cloud, "n" to h.n)
 
-    /** Replaces the handwriting hints (the teacher's "Forget these" saves an empty list). */
-    fun saveReadingHints(assignmentId: String, hints: List<ReadingHint>) = queue("the handwriting hints",
+    /** Replaces the known device misreads (the teacher's "Forget these" saves an empty list). */
+    fun saveReadingHints(assignmentId: String, hints: List<ReadingHint>) = queue("what REDPEN learned",
         db.collection("assignments").document(assignmentId).update("readingHints", hints.map(::hintMap)))
 
     /**
-     * Merges freshly learned hints into the assignment's newest saved hints in a transaction (hints saved meanwhile by
+     * Merges freshly learned device misreads into the assignment's newest saved ones in a transaction (ones saved meanwhile by
      * another device are kept; same as web addReadingHints). Returns how many confusions were new. Online only.
      */
     suspend fun addReadingHints(assignmentId: String, fresh: List<ReadingHint>): Int {

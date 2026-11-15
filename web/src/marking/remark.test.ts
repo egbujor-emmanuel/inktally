@@ -46,6 +46,42 @@ describe('remarkOne', () => {
   });
 });
 
+describe('the hybrid safety net survives an answer-key edit', () => {
+  const fixed: Question = { ...numQ, accept: [24] };
+
+  test('a device/cloud disagreement stays "Check this" with both readings', () => {
+    const disagree: Mark = { ...markNumeric(numQ as never, '24', 'in_cloud'), status: 'flagged', reasons: ['Device read "23" (1/1); cloud read "24" (0/1). Which is right?'] };
+    const next = remarkOne(numQ, fixed, disagree);
+    expect(next.status).toBe('flagged');
+    expect(next.reasons.some((r) => r.includes('Which is right?'))).toBe(true);
+  });
+
+  test('a held reading stays held', () => {
+    const held: Mark = { ...markNumeric(numQ as never, '24', 'on_device'), status: 'flagged', reasons: ['Held for checking: on this assignment Gemini Nano has read “21” as “24” before, so check this one.'] };
+    const next = remarkOne(numQ, fixed, held);
+    expect(next.status).toBe('flagged');
+    expect(next.reasons.some((r) => r.startsWith('Held for checking:'))).toBe(true);
+  });
+
+  test('a failed read is left exactly as it was', () => {
+    const failed: Mark = { q: 2, read: '', readSource: 'on_device', max: 1, awarded: 0, engine: 'code', status: 'flagged', reasons: ['Could not read this answer (quota).'] };
+    expect(remarkOne(numQ, fixed, failed)).toBe(failed);
+  });
+
+  test('a mark confirmed by the cloud check stays Verified', () => {
+    const confirmed: Mark = { ...markNumeric(numQ as never, '24', 'in_cloud'), reasons: ['Answer 24.', 'On-device mark confirmed by the cloud check.'] };
+    const next = remarkOne(numQ, fixed, confirmed);
+    expect(next.status).toBe('verified');
+    expect(next.reasons.some((r) => /confirmed by the cloud check/i.test(r))).toBe(true);
+  });
+
+  test('a number that earned method marks is flagged, not re-marked without them', () => {
+    const method: Mark = { q: 2, read: '15 + 9 = 23, working shown', readSource: 'in_cloud', max: 1, awarded: 1, engine: 'ai-points', status: 'verified', reasons: [], pointsFound: ['correct method'] };
+    const next = remarkOne(numQ, fixed, method);
+    expect(next).toMatchObject({ status: 'flagged', awarded: 1 });
+  });
+});
+
 describe('remarkAll', () => {
   test('counts what went up, what went down and what needs a look, per answer', () => {
     const before = [numQ, ptsQ];

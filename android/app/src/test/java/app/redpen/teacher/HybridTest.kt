@@ -339,6 +339,22 @@ class HybridTest {
         assertSame(teacher, app.redpen.teacher.marking.remarkOne(pts, pts.copy(points = listOf("x")), teacher))
     }
 
+    @Test fun theSafetyNetSurvivesAnAnswerKeyEdit() {
+        val q = Question.Numeric(2, "15 + 9", 1, listOf(23.0))
+        val fixed = q.copy(accept = listOf(24.0))
+        val disagree = app.redpen.teacher.marking.markNumeric(q, "24", ReadSource.IN_CLOUD).copy(status = MarkStatus.FLAGGED, reasons = listOf("Device read \"23\" (1/1); cloud read \"24\" (0/1). Which is right?"))
+        val d = app.redpen.teacher.marking.remarkOne(q, fixed, disagree)
+        assertEquals(MarkStatus.FLAGGED, d.status); assertTrue(d.reasons.any { it.contains("Which is right?") })
+        val held = app.redpen.teacher.marking.markNumeric(q, "24", ReadSource.ON_DEVICE).copy(status = MarkStatus.FLAGGED, reasons = listOf("Held for checking: on this assignment Gemini Nano has read “21” as “24” before, so check this one."))
+        assertTrue(isHeld(app.redpen.teacher.marking.remarkOne(q, fixed, held)))
+        val failed = Mark(2, "", ReadSource.ON_DEVICE, 0, 1, MarkEngine.CODE, MarkStatus.FLAGGED, listOf("Could not read this answer (quota)."))
+        assertSame(failed, app.redpen.teacher.marking.remarkOne(q, fixed, failed))
+        val confirmed = app.redpen.teacher.marking.markNumeric(q, "24", ReadSource.IN_CLOUD).copy(reasons = listOf("Answer 24.", "On-device mark confirmed by the cloud check."))
+        assertEquals("Verified", statusLabel(app.redpen.teacher.marking.remarkOne(q, fixed, confirmed)))
+        val method = Mark(2, "15 + 9 = 23, working shown", ReadSource.IN_CLOUD, 1, 1, MarkEngine.AI_POINTS, MarkStatus.VERIFIED, emptyList(), pointsFound = listOf("correct method"))
+        assertEquals(MarkStatus.FLAGGED, app.redpen.teacher.marking.remarkOne(q, fixed, method).status)
+    }
+
     @Test fun remarkAllCountsAndUsesTheWebNotice() {
         val q = Question.Numeric(2, "15 + 9", 1, listOf(23.0))
         val pts = Question.Points(4, "Two functions of blood", 2, listOf("carries oxygen", "fights germs"))

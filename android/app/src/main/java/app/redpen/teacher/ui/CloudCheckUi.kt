@@ -111,7 +111,7 @@ fun rememberCloudCheck(a: Assignment, submissions: List<Submission>): CloudCheck
     LaunchedEffect(online) { if (!online) tried.clear() }
 
     val key = submissions.filter { it.queued == null }.flatMap { s ->
-        s.marks.filter { it.status == MarkStatus.PROVISIONAL && "${s.id}:${it.q}" !in tried }.map { "${s.id}:${it.q}" }
+        s.marks.filter { (it.status == MarkStatus.PROVISIONAL || (it.status == MarkStatus.FLAGGED && it.readSource == app.redpen.teacher.domain.ReadSource.ON_DEVICE && it.read.isNotBlank())) && "${s.id}:${it.q}" !in tried }.map { "${s.id}:${it.q}" }
     }.joinToString(",")
     LaunchedEffect(online, key, runs) {
         if (online && key.isNotEmpty() && !running.get()) run()

@@ -7,7 +7,7 @@ service cloud.firestore {
     function owns(data) { return signedIn() && data.ownerUid == request.auth.uid; }
     function shortText(v, n) { return v is string && v.size() <= n; }
 
-    // One handwriting hint (fed into on-device read prompts): exactly these fields, short strings, a whole-number count.
+    // One known device misread (matching offline readings are held for the teacher): exactly these fields, short strings, a whole-number count.
     function validHint(h) {
       return h is map && h.keys().hasOnly(['type', 'device', 'cloud', 'n']) && h.keys().hasAll(['type', 'device', 'cloud'])
         && h.type in ['objective', 'numeric', 'short']

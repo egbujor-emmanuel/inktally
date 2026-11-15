@@ -39,6 +39,8 @@ const setOffline = (offline) => cdp.send('Network.emulateNetworkConditions', { o
 const rows = () => page.$$eval('ol > li', (lis) => lis.map((li) => li.innerText.replace(/\s+/g, ' ').slice(0, 160)));
 
 try {
+  // Always test the build that is live now: drop any cached app from an earlier run (Gemini Nano itself is kept).
+  await cdp.send('Storage.clearDataForOrigin', { origin: new URL(SITE).origin, storageTypes: 'service_workers,cache_storage' });
   await page.goto(SITE, { waitUntil: 'load' });
   if (await page.locator('text=REDPEN preview').count()) {
     await page.fill('input', CODE);
@@ -94,19 +96,19 @@ try {
   log('REVIEW AFTER CLOUD CHECK:\n' + reviewText.slice(0, 1500));
   await shot('3-review-after-online');
 
-  // Learning check: mark the same sheet again offline, now that the device has this class's handwriting hints.
+  // Learning check: mark the same sheet again offline; readings that match a misread the cloud found are held for the teacher.
   let secondRows = [];
   if (!/no correction to learn from/.test(learned)) {
     await page.getByRole('link', { name: 'Mark', exact: true }).click();
     await page.waitForSelector('text=Photograph answer sheet', { timeout: 60_000 });
-    log('GOING OFFLINE AGAIN (with learned hints)');
+    log('GOING OFFLINE AGAIN (known misreads are held)');
     await setOffline(true);
     await sleep(1500);
     await page.fill('input[placeholder^="e.g."]', 'Chidi Okafor (second marking)');
     await page.locator('input[aria-label^="Choose photo"]').setInputFiles(PHOTO);
     await page.getByText(/^Total:|Saved for marking/).first().waitFor({ timeout: 10 * 60_000 });
     secondRows = await rows();
-    log('OFFLINE MARKS WITH HINTS:' + String.fromCharCode(10) + secondRows.join(String.fromCharCode(10)));
+    log('SECOND OFFLINE MARKING (held readings say "Held for checking"):' + String.fromCharCode(10) + secondRows.join(String.fromCharCode(10)));
     await shot('3b-offline-with-hints');
     await setOffline(false);
     await sleep(4000);

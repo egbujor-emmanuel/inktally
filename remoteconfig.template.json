@@ -109,7 +109,7 @@
       "defaultValue": {
         "value": "true"
       },
-      "description": "Cloud-check corrections become handwriting hints for later on-device reads of the same assignment.",
+      "description": "Misreads found by the cloud check hold matching later on-device readings of the same assignment for the teacher (never changing what was read).",
       "valueType": "STRING"
     }
   }

@@ -119,7 +119,7 @@ export async function updateQuestion(assignment: Assignment, updated: Question):
 
 /** Saves what the cloud check taught the device about this class's handwriting ([] forgets it). */
 /**
- * Merges freshly learned hints into the assignment's newest saved hints (in a transaction, so hints saved meanwhile
+ * Merges freshly learned device misreads into the assignment's newest saved ones (in a transaction, so ones saved meanwhile
  * by another tab or device are kept). Resolves to how many confusions were new. Only runs online (after a cloud check).
  */
 export async function addReadingHints(assignmentId: string, fresh: ReadingHint[]): Promise<number> {
@@ -132,9 +132,9 @@ export async function addReadingHints(assignmentId: string, fresh: ReadingHint[]
   });
 }
 
-/** Replaces the hints (the teacher's "Forget these"). */
+/** Replaces the known misreads (the teacher's "Forget these"). */
 export function saveReadingHints(assignmentId: string, hints: ReadingHint[]): void {
-  queueWrite(updateDoc(doc(db, 'assignments', assignmentId), { readingHints: hints }), 'the handwriting hints');
+  queueWrite(updateDoc(doc(db, 'assignments', assignmentId), { readingHints: hints }), 'what REDPEN learned');
 }
 
 export function setAssignmentStatus(id: string, status: 'active' | 'finished'): void {
