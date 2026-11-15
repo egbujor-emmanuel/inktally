@@ -24,8 +24,8 @@ export default defineConfig({
         additionalManifestEntries: [{ url: '/index.html', revision: BUILD_ID }],
         maximumFileSizeToCacheInBytes: 6_000_000,
         navigateFallback: '/index.html',
-        // Firebase Hosting's reserved paths (Auth redirect handler, init.json) must always hit the network.
-        navigateFallbackDenylist: [/^\/__\//],
+        // /__/: Firebase Hosting's reserved paths. /trial/: printable PDFs for the teacher trial, opened directly.
+        navigateFallbackDenylist: [/^\/__\//, /^\/trial\//],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
