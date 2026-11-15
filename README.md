@@ -37,8 +37,8 @@ No Gemini Nano hardware to hand? Watch the recorded runs on the live site: [`ben
 git clone https://github.com/egbujor-emmanuel/redpen && cd redpen/web
 cp .env.example .env.local        # fill in your Firebase web config
 npm install && npm run dev        # http://localhost:5173
-npm test                          # 84 unit tests (hybrid core: routing, reconcile, held misreads replayed on real Nano data, strict yes/no, batch fallback; engine; scanner; exports)
-node e2e/live-walkthrough.mjs [url] [--mobile]   # 17-step click-through of every feature on the live site
+npm test                          # 91 unit tests (hybrid core: routing, reconcile, held misreads replayed on real Nano data, strict yes/no, batch fallback; engine; scanner; exports)
+node e2e/live-walkthrough.mjs [url] [--mobile]   # 18-step click-through of every feature on the live site
 node e2e/offline-coldstart.mjs [url]             # open with no connection, add a stack offline, marked on reconnect
 ```
 Android: open `android/` in Android Studio, add your `app/google-services.json`, run. CI unit-tests and builds every push ([workflow](.github/workflows/android.yml)), then installs the APK on an Android emulator and taps through every screen with Maestro ([e2e workflow](.github/workflows/android-e2e.yml), [flows](android/e2e/)).
@@ -100,7 +100,8 @@ Because the Firebase console does not show on-device inference, REDPEN records e
 ## Features (identical on web and Android)
 
 - **Quick mark** — one photo of a student's page → AI answer key from the questions → teacher confirms → marked. Key saved for the class.
-- **Assignments** — draft a marking scheme from photos, a PDF or typed questions, **or upload your own marking scheme and REDPEN copies it exactly** (alternatives, "do not accept", mark allocations); edit it; print answer sheets with corner markers.
+- **Assignments** — draft a marking scheme from photos, a PDF or typed questions, **or upload your own marking scheme and REDPEN copies it exactly** (alternatives, "do not accept", mark allocations); print answer sheets with corner markers.
+- **Answer key, editable after marking** — fix a wrong answer or a mark at any time; every student already marked is re-marked on the spot from what REDPEN already read (no new photos, no new AI reading); theory answers whose marking points changed are flagged for you.
 - **Two capture modes** — printed REDPEN sheet (fully offline, names private) or any exercise-book page; camera, or **choose a whole stack of photos at once** — each script is queued and marked in the background (on-device when Gemini Nano is ready, otherwise as soon as there is a connection).
 - **Automatic cloud check** — back online, on-device marks are re-read by the cloud on whatever screen is open: *"Cloud check: 8 on-device marks confirmed, 1 needs you."*
 - **Learns the device's misreads** — every misread the cloud check finds is remembered for the assignment, and matching offline readings are held as *Check this*; the teacher can see the list and forget it.
@@ -118,9 +119,9 @@ Every number below comes from a file in this repo or a check anyone can re-run.
 
 | Test | Result | Source |
 |---|---|---|
-| Unit tests — web (Vitest) | **84 / 84 pass**, incl. 33 for the hybrid core: quota routing and expiry, per-request error attribution, no retry when every model is exhausted, thinking-level fallback, batch fallback on a missing answer, reconcile (a failed or unsure read is never "confirmed"; different readings with the same score are not a confirmation), keep-reviewed, learned misreads held (incl. a replay of the held-out Nano run), strict yes/no point checks, re-marking, labels | [`routing.test.ts`](web/src/ai/routing.test.ts), [`hybrid.test.ts`](web/src/marking/hybrid.test.ts) |
+| Unit tests — web (Vitest) | **91 / 91 pass**, incl. 33 for the hybrid core and 6 for editing the answer key after marking: quota routing and expiry, per-request error attribution, no retry when every model is exhausted, thinking-level fallback, batch fallback on a missing answer, reconcile (a failed or unsure read is never "confirmed"; different readings with the same score are not a confirmation), keep-reviewed, learned misreads held (incl. a replay of the held-out Nano run), strict yes/no point checks, re-marking, labels | [`routing.test.ts`](web/src/ai/routing.test.ts), [`hybrid.test.ts`](web/src/marking/hybrid.test.ts) |
 | Unit tests — Android (JUnit, same hybrid-core cases + register exports) | pass in CI | [android.yml](.github/workflows/android.yml) |
-| Web click-through of every feature on the live site — school details, typed + photo drafting, copying a teacher's own scheme from a photo and from text, print, Quick mark, sheet marking, exercise-book marking, comment → marked copy, offline queue, rename → Excel content check, review, insights + catch-up, finish/reopen, delete | **17 / 17**, desktop and mobile (the exercise-book step must give the true score, 3/5) | [`live-walkthrough.mjs`](web/e2e/live-walkthrough.mjs), [logs](bench/evidence/walkthrough-2026-11-14/) |
+| Web click-through of every feature on the live site — school details, typed + photo drafting, copying a teacher's own scheme from a photo and from text, print, Quick mark, sheet marking, exercise-book marking, comment → marked copy, answer key edited after marking → everyone re-marked, offline queue, rename → Excel content check, review, insights + catch-up, finish/reopen, delete | **18 / 18**, desktop and mobile (the exercise-book step must give the true score, 3/5; editing the answer key after marking must re-mark both students) | [`live-walkthrough.mjs`](web/e2e/live-walkthrough.mjs), [logs](bench/evidence/walkthrough-2026-11-14/) |
 | Web cold start with no connection: open → assignment from cache → add a stack of 3 scripts offline → reconnect | **6 / 6**; all 3 scripts marked 3/5 automatically | [`offline-coldstart.mjs`](web/e2e/offline-coldstart.mjs), [result + screenshots](bench/evidence/web-offline-coldstart-2026-11-14/) |
 | Android on an emulator — every screen, gallery photo marked, comment, marked copy, register, Excel, teacher's scheme copied, offline queue in airplane mode | 4 / 4 Maestro flows pass in CI; sample sheet marked **3/5 = the true score** | [flows](android/e2e/), [android-e2e.yml](.github/workflows/android-e2e.yml) |
 | Android Excel file opened by an independent library (openpyxl) | letterhead, comment, escaping and formula guard verified in CI | [android.yml](.github/workflows/android.yml) |

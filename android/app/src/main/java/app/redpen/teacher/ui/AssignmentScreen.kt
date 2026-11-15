@@ -45,7 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-val ASSIGNMENT_TABS = listOf("print" to "Print sheets", "mark" to "Mark", "review" to "Review", "register" to "Mark register", "insights" to "Insights")
+val ASSIGNMENT_TABS = listOf("print" to "Print sheets", "key" to "Answer key", "mark" to "Mark", "review" to "Review", "register" to "Mark register", "insights" to "Insights")
 
 @Composable
 fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
@@ -94,6 +94,7 @@ fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
         }
         when (ASSIGNMENT_TABS[tab].first) {
             "print" -> PrintTab(a, profile)
+            "key" -> KeyTab(a, submissions)
             "mark" -> MarkTab(a, submissions, profile, queue)
             "review" -> ReviewTab(a, submissions, check)
             "register" -> RegisterTab(a, submissions, profile, onSchool = { tab = 0 })

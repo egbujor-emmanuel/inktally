@@ -1,0 +1,41 @@
+PASS open site + passcode (6324 ms) Online
+Checking on-device AI…
+PASS school details: save institution profile (9785 ms) saved + survived reload
+PASS new assignment: draft scheme from TYPED questions (7356 ms) 4 questions drafted
+PASS new assignment: save -> print sheet (675 ms) 1 sheet page(s) with institution header
+PASS new assignment: draft scheme from PHOTO of a page (8507 ms) 6 questions from photo
+PASS new assignment: COPY teacher marking scheme from a PHOTO (4199 ms) 5 questions copied; F.C.T. accepted, "runned" rejected, Q5 = 2 marks
+PASS new assignment: COPY teacher marking scheme TYPED (no question paper) (3462 ms) 3 questions copied exactly
+PASS quick mark: photo -> key -> marked (12987 ms) Total: 4/6
+PASS sample English -> mark printed sheet photo (7453 ms) Total: 3/5 + marked copy
+PASS comment after marking -> on the marked copy (439 ms) comment saved, copy re-rendered with letterhead + comment
+PASS exercise-book mode on the same assignment (2743 ms) Total: 3/5
+PASS answer key: edit after marking -> everyone re-marked from stored readings (1577 ms) Answer key saved. Re-marked 2 students: 2 answers went up, 0 went down.
+PASS OFFLINE without on-device AI: queued, then marked automatically back online (6431 ms) saved offline, marked automatically on reconnect: 4/5 (under the edited key)
+PASS review tab (1610 ms) 0 answers to check
+PASS mark register + Excel download (5366 ms) 3 rows; English-Grammar-Check-marks.xlsx has letterhead, renamed student, comment
+PASS insights + catch-up sheet (3684 ms) catch-up generated
+PASS finish + reopen (2429 ms) 
+PASS delete assignment (1384 ms) 
+
+==== SUMMARY (mobile)
+18/18 steps passed
+console errors: [
+  'Failed to load resource: net::ERR_FAILED',
+  'Failed to load resource: net::ERR_INTERNET_DISCONNECTED',
+  '[2026-11-15T04:35:01.605Z]  @firebase/firestore: Firestore (13.2.0): Could not reach Cloud Firestore backend. Connection failed 1 times. Most recent error: FirebaseError: [code=unavailable]: The operation could not be completed\n' +
+    'This typically indicates that your device does not have a healthy Intern'
+]
+failed requests: [
+  'net::ERR_FAILED https://fonts.gstatic.com/s/fraunces/v38/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxC9TeA.woff2',
+  'net::ERR_FAILED https://fonts.gstatic.com/s/intertight/v9/NGSwv5HMAFg6IuGlBNMjxLsH8ag.woff2',
+  'net::ERR_FAILED https://fonts.gstatic.com/s/caveat/v23/Wnz6HAc5bAfYB2Q7ZjYY.woff2',
+  'net::ERR_ABORTED https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fredpen-hybrid%2Fd',
+  'net::ERR_ABORTED https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fredpen-hybrid%2F',
+  'net::ERR_INTERNET_DISCONNECTED https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fredpen-hybrid%2Fd',
+  'net::ERR_INTERNET_DISCONNECTED https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fredpen-hybrid%2F',
+  'net::ERR_INTERNET_DISCONNECTED https://www.google.com/images/cleardot.gif?zx=cawqx9lqfq91',
+  'net::ERR_INTERNET_DISCONNECTED https://www.google.com/images/cleardot.gif?zx=3ypv0569cnum',
+  'net::ERR_INTERNET_DISCONNECTED https://www.google.com/images/cleardot.gif?zx=2k2hl8x2sitc',
+  'net::ERR_INTERNET_DISCONNECTED https://www.google.com/images/cleardot.gif?zx=61gyirw8veqj'
+]

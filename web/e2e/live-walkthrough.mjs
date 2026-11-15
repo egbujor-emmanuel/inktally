@@ -36,7 +36,13 @@ async function step(name, fn) {
   }
 }
 const alertText = async () => (await page.locator('[role=alert]').allInnerTexts()).join(' / ');
-const base = () => page.url().replace(/\/(print|mark|review|register|insights)$/, '');
+const base = () => page.url().replace(/\/(print|key|mark|review|register|insights)$/, '');
+/** Polls a predicate with page.evaluate (the site's CSP blocks Playwright's in-page waitForFunction polling). */
+async function waitUntil(fn, arg, timeout = 15_000) {
+  const end = Date.now() + timeout;
+  while (Date.now() < end) { if (await page.evaluate(fn, arg)) return; await page.waitForTimeout(250); }
+  throw new Error('condition not met in time');
+}
 
 await step('open site + passcode', async () => {
   await page.goto(URL_, { waitUntil: 'load' });
@@ -54,7 +60,7 @@ await step('school details: save institution profile', async () => {
   await page.getByRole('button', { name: 'Save details' }).click();
   await page.getByText(/^Saved/).waitFor({ timeout: 10_000 });
   await page.reload(); await page.getByLabel('Institution name').waitFor();
-  await page.waitForFunction((v) => document.querySelector('input')?.value === v, SCHOOL, { timeout: 15_000 });
+  await waitUntil((v) => document.querySelector('input')?.value === v, SCHOOL);
   return 'saved + survived reload';
 });
 
@@ -143,7 +149,7 @@ await step('comment after marking -> on the marked copy', async () => {
   await page.getByRole('button', { name: 'Save comment' }).click();
   await page.getByText(/^Saved\. It is on the marked copy/).waitFor({ timeout: 10_000 });
   // The letterhead copy is taller than the bare copy (header + comment footer).
-  await page.waitForFunction(() => { const i = document.querySelector('img[alt^="Marked copy"]'); return i && i.naturalHeight > i.naturalWidth * 1.45; }, null, { timeout: 15_000 });
+  await waitUntil(() => { const i = document.querySelector('img[alt^="Marked copy"]'); return Boolean(i && i.naturalHeight > i.naturalWidth * 1.45); }, null);
   return 'comment saved, copy re-rendered with letterhead + comment';
 });
 
@@ -155,6 +161,19 @@ await step('exercise-book mode on the same assignment', async () => {
   const total = await page.getByText(/^Total:/).innerText();
   if (!/3\s*\/\s*5/.test(total)) throw new Error(`expected the true score 3/5, got "${total}"`);
   return total;
+});
+
+await step('answer key: edit after marking -> everyone re-marked from stored readings', async () => {
+  // Q3's key is A; both students so far wrote B. Accepting B as well must raise both, with no new photos.
+  await page.goto(`${base()}/key`);
+  await page.getByRole('button', { name: 'Save answer key' }).waitFor({ timeout: 30_000 });
+  await page.getByLabel('Correct letter(s)').nth(2).fill('A, B');
+  await page.getByRole('button', { name: 'Save answer key' }).click();
+  const notice = page.getByText(/^Answer key saved\./);
+  await notice.waitFor({ timeout: 20_000 });
+  const text = await notice.innerText();
+  if (!/Re-marked 2 students: 2 answers went up/.test(text)) throw new Error(`unexpected re-mark result: "${text}"`);
+  return text;
 });
 
 await step('OFFLINE without on-device AI: queued, then marked automatically back online', async () => {
@@ -174,8 +193,9 @@ await step('OFFLINE without on-device AI: queued, then marked automatically back
   const rows = await page.locator('tbody tr').evaluateAll((trs) => trs.map((tr) =>
     [...tr.querySelectorAll('input,textarea')].map((i) => i.value).join(' ') + ' ' + tr.innerText));
   const row = rows.find((t) => t.includes('Offline Student')) ?? '';
-  if (!/\b3\b/.test(row)) throw new Error(`queued student should total 3/5 once marked, row: ${row.replace(/\s+/g, ' ')}`);
-  return 'saved offline, marked automatically on reconnect: 3/5';
+  // The answer-key step above now also accepts B for Q3, so this student's true score is 4/5.
+  if (!/\b4\b/.test(row)) throw new Error(`queued student should total 4/5 once marked, row: ${row.replace(/\s+/g, ' ')}`);
+  return 'saved offline, marked automatically on reconnect: 4/5 (under the edited key)';
 });
 
 await step('review tab', async () => {

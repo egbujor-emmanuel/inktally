@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { Question } from '../domain/types';
 import { Field, GhostButton } from '../ui/Kit';
 
-type Props = { questions: Question[]; onChange: (questions: Question[]) => void };
+/** locked: students are already marked, so questions can't be added, removed or change type (the printed sheets would no longer match). */
+type Props = { questions: Question[]; onChange: (questions: Question[]) => void; locked?: boolean };
 type QuestionType = Question['type'];
 
 // Same labels and order as the Android SchemeEditor.
@@ -28,7 +29,7 @@ function ListField({ initial, label, multiline, rows, onParsed }: { initial: str
   return <Field label={label} value={raw} multiline={multiline} rows={rows} maxLength={5000} onChange={(v) => { setRaw(v); onParsed(v); }} />;
 }
 
-export function SchemeEditor({ questions, onChange }: Props) {
+export function SchemeEditor({ questions, onChange, locked = false }: Props) {
   const update = (next: Question) => onChange(questions.map((q) => (q.q === next.q ? next : q)));
   const remove = (n: number) => onChange(questions.filter((q) => q.q !== n).map((q, i) => ({ ...q, q: i + 1 })));
   const add = () => onChange([...questions, { q: questions.length + 1, type: 'short', prompt: '', max: 1, accept: [''] }]);
@@ -43,6 +44,7 @@ export function SchemeEditor({ questions, onChange }: Props) {
             <span className="w-10 flex-none font-hand text-4xl text-pen">{q.q}</span>
             <ListField key={k(q, 'p')} initial={q.prompt} label="Question" onParsed={(v) => update({ ...q, prompt: v })} />
           </div>
+          {locked ? <p className="text-[13px] font-semibold text-ink-soft">{TYPES.find(([t]) => t === q.type)?.[1]}</p> : (
           <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={`Question ${q.q} type`}>
             {TYPES.map(([t, label]) => (
               <button key={t} type="button" role="radio" aria-checked={q.type === t} onClick={() => { if (q.type !== t) update(retype(q, t)); }}
@@ -51,6 +53,7 @@ export function SchemeEditor({ questions, onChange }: Props) {
               </button>
             ))}
           </div>
+          )}
           <div className="flex items-center gap-2">
             <span className="text-sm">Marks</span>
             <button type="button" className="btn-text !text-xl" aria-label="Fewer marks" onClick={() => update({ ...q, max: Math.max(1, q.max - 1) })}>–</button>
@@ -58,7 +61,7 @@ export function SchemeEditor({ questions, onChange }: Props) {
               className="w-8 appearance-none bg-transparent text-center font-hand text-[28px] text-pen [&::-webkit-inner-spin-button]:appearance-none" />
             <button type="button" className="btn-text !text-xl" aria-label="More marks" onClick={() => update({ ...q, max: Math.min(20, q.max + 1) })}>+</button>
             <span className="flex-1" />
-            <button type="button" className="btn-text !text-ink-soft" onClick={() => remove(q.q)}>Remove</button>
+            {!locked && <button type="button" className="btn-text !text-ink-soft" onClick={() => remove(q.q)}>Remove</button>}
           </div>
           {q.type === 'objective' && (
             <ListField key={k(q, 'o')} initial={q.correct.join(', ')} label="Correct letter(s)"
@@ -82,7 +85,7 @@ export function SchemeEditor({ questions, onChange }: Props) {
           )}
         </fieldset>
       ))}
-      <div className="px-4"><GhostButton onClick={add}>+ Add question</GhostButton></div>
+      {!locked && <div className="px-4"><GhostButton onClick={add}>+ Add question</GhostButton></div>}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { deleteAssignment, setAssignmentStatus, watchAssignment, watchSubmissions, type Assignment, type Submission } from '../data/store';
 import { AnswerSheet } from '../components/AnswerSheet';
+import { KeyTab } from './assignment/KeyTab';
 import { MarkTab } from './assignment/MarkTab';
 import { ReviewTab } from './assignment/ReviewTab';
 import { InsightsTab } from './assignment/InsightsTab';
@@ -15,6 +16,7 @@ import { useCloudCheck, type CloudCheckState } from '../hooks/useCloudCheck';
 
 const TABS = [
   { to: 'print', label: 'Print sheets' },
+  { to: 'key', label: 'Answer key' },
   { to: 'mark', label: 'Mark' },
   { to: 'review', label: 'Review' },
   { to: 'register', label: 'Mark register' },
@@ -85,6 +87,7 @@ export function AssignmentPage() {
         <Routes>
           <Route index element={<Navigate to="mark" replace />} />
           <Route path="print" element={<PrintTab assignment={assignment} profile={profile} />} />
+          <Route path="key" element={<KeyTab assignment={assignment} submissions={submissions} />} />
           <Route path="mark" element={<MarkTab assignment={assignment} submissions={submissions} queue={queue} />} />
           <Route path="review" element={<ReviewTab assignment={assignment} submissions={submissions} check={check} />} />
           <Route path="register" element={<RegisterTab assignment={assignment} submissions={submissions} />} />

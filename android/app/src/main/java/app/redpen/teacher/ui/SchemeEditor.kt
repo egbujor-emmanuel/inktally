@@ -60,9 +60,12 @@ private fun ListField(key: Any, initial: String, label: String, minLines: Int = 
     )
 }
 
-/** Edit the answer key: type, question, marks and accepted answers per question. Same fields as the web editor. */
+/**
+ * Edit the answer key: type, question, marks and accepted answers per question. Same fields as the web editor.
+ * [locked]: students are already marked, so questions can't be added, removed or change type (printed sheets would no longer match).
+ */
 @Composable
-fun SchemeEditor(questions: List<Question>, onChange: (List<Question>) -> Unit) {
+fun SchemeEditor(questions: List<Question>, onChange: (List<Question>) -> Unit, locked: Boolean = false) {
     fun update(next: Question) = onChange(questions.map { if (it.q == next.q) next else it })
     fun remove(n: Int) = onChange(questions.filter { it.q != n }.mapIndexed { i, q -> q.withBase(q = i + 1) })
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -73,7 +76,8 @@ fun SchemeEditor(questions: List<Question>, onChange: (List<Question>) -> Unit) 
                     Text("${q.q}", fontFamily = RP.Hand, fontSize = 36.sp, color = RP.Pen, modifier = Modifier.width(40.dp))
                     ListField("p-${q.q}-$type-${questions.size}", q.prompt, "Question") { update(q.withBase(prompt = it)) }
                 }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (locked) Text(TYPES.firstOrNull { it.first == type }?.second ?: "", fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, color = RP.InkSoft)
+                else FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     TYPES.forEach { (t, label) ->
                         FilterChip(selected = type == t, onClick = { if (type != t) update(retype(q, t)) }, label = { Text(label, fontSize = 13.sp) },
                             colors = FilterChipDefaults.filterChipColors(selectedContainerColor = RP.Ink, selectedLabelColor = Color.White))
@@ -85,7 +89,7 @@ fun SchemeEditor(questions: List<Question>, onChange: (List<Question>) -> Unit) 
                     Text("${q.max}", fontFamily = RP.Hand, fontSize = 28.sp, color = RP.Pen)
                     TextButton(onClick = { update(q.withBase(max = (q.max + 1).coerceAtMost(20))) }) { Text("+", fontSize = 20.sp) }
                     androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-                    TextButton(onClick = { remove(q.q) }) { Text("Remove", color = RP.InkSoft) }
+                    if (!locked) TextButton(onClick = { remove(q.q) }) { Text("Remove", color = RP.InkSoft) }
                 }
                 when (q) {
                     is Question.Objective -> ListField("o-${q.q}-${questions.size}", q.correct.joinToString(", "), "Correct letter(s)") { v ->
@@ -105,7 +109,7 @@ fun SchemeEditor(questions: List<Question>, onChange: (List<Question>) -> Unit) 
                 }
             }
         }
-        GhostButton("+ Add question", { onChange(questions + Question.Short(questions.size + 1, "", 1, listOf(""))) }, Modifier.padding(horizontal = 16.dp))
+        if (!locked) GhostButton("+ Add question", { onChange(questions + Question.Short(questions.size + 1, "", 1, listOf(""))) }, Modifier.padding(horizontal = 16.dp))
     }
 }
 

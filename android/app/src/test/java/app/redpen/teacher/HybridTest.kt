@@ -317,6 +317,42 @@ class HybridTest {
         assertFalse(Regex("[<>\"]").containsMatchIn(r)); assertTrue(r.length <= 60)
     }
 
+    // ---- editing the answer key after marking (same cases as web remark.test.ts)
+
+    @Test fun aCorrectedNumericKeyReMarksStoredReadingsUpAndDown() {
+        val q = Question.Numeric(2, "15 + 9", 1, listOf(23.0))
+        val fixed = q.copy(accept = listOf(24.0))
+        val right = app.redpen.teacher.marking.markNumeric(q, "24", ReadSource.IN_CLOUD)
+        assertEquals(0, right.awarded)
+        assertEquals(1, app.redpen.teacher.marking.remarkOne(q, fixed, right).awarded)
+        assertEquals(0, app.redpen.teacher.marking.remarkOne(q, fixed, app.redpen.teacher.marking.markNumeric(q, "23", ReadSource.IN_CLOUD)).awarded)
+        assertEquals(app.redpen.teacher.marking.REMARK_REASON, app.redpen.teacher.marking.remarkOne(q, fixed, right).reasons.last())
+        assertEquals(MarkStatus.PROVISIONAL, app.redpen.teacher.marking.remarkOne(q, fixed, app.redpen.teacher.marking.markNumeric(q, "24", ReadSource.ON_DEVICE)).status)
+    }
+
+    @Test fun changedMarkingPointsFlagTheTheoryAnswerAndTeacherMarksStay() {
+        val pts = Question.Points(4, "Two functions of blood", 2, listOf("carries oxygen", "fights germs"))
+        val m = Mark(4, "it carries oxygen", ReadSource.IN_CLOUD, 1, 2, MarkEngine.AI_POINTS, MarkStatus.VERIFIED, emptyList())
+        val next = app.redpen.teacher.marking.remarkOne(pts, pts.copy(max = 1, points = listOf("carries oxygen")), m)
+        assertEquals(MarkStatus.FLAGGED, next.status); assertEquals(1, next.max); assertEquals(1, next.awarded)
+        val teacher = m.copy(engine = MarkEngine.TEACHER, status = MarkStatus.REVIEWED)
+        assertSame(teacher, app.redpen.teacher.marking.remarkOne(pts, pts.copy(points = listOf("x")), teacher))
+    }
+
+    @Test fun remarkAllCountsAndUsesTheWebNotice() {
+        val q = Question.Numeric(2, "15 + 9", 1, listOf(23.0))
+        val pts = Question.Points(4, "Two functions of blood", 2, listOf("carries oxygen", "fights germs"))
+        val theory = Mark(4, "carries oxygen", ReadSource.IN_CLOUD, 1, 2, MarkEngine.AI_POINTS, MarkStatus.VERIFIED, emptyList())
+        val subs = listOf(
+            Submission("a", "A", listOf(app.redpen.teacher.marking.markNumeric(q, "24", ReadSource.IN_CLOUD), theory)),
+            Submission("b", "B", listOf(app.redpen.teacher.marking.markNumeric(q, "23", ReadSource.IN_CLOUD))),
+        )
+        val r = app.redpen.teacher.marking.remarkAll(listOf(q, pts), listOf(q.copy(accept = listOf(24.0)), pts.copy(points = listOf("carries oxygen", "fights infection"))), subs)
+        assertEquals(app.redpen.teacher.marking.RemarkSummary(2, 1, 1, 1), r.summary)
+        assertEquals("Answer key saved. Re-marked 2 students: 1 answer went up, 1 went down, 1 to check.", app.redpen.teacher.marking.remarkNotice(r.summary))
+        assertEquals("Answer key saved. No marks changed.", app.redpen.teacher.marking.remarkNotice(app.redpen.teacher.marking.RemarkSummary()))
+    }
+
     // ---- status labels
 
     @Test fun aSingleCloudReadingIsCloudReadNotVerified() {

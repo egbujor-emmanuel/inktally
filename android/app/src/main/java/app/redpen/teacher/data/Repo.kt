@@ -213,6 +213,10 @@ object Repo {
 
     fun setStatus(id: String, status: String) = queue("the assignment status", db.collection("assignments").document(id).update("status", status))
 
+    /** Saves the edited answer key (the Answer key tab). */
+    fun saveQuestions(a: Assignment, questions: List<Question>) =
+        queue("the answer key", db.collection("assignments").document(a.id).update("scheme.questions", questions.map { it.toMap() }))
+
     fun updateQuestion(a: Assignment, updated: Question) {
         val questions = a.scheme.questions.map { if (it.q == updated.q) updated else it }
         queue("the edited question", db.collection("assignments").document(a.id).update("scheme.questions", questions.map { it.toMap() }))
