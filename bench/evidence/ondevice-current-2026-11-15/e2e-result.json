@@ -1,0 +1,14 @@
+{
+  "at": "2026-11-15T05:13:56.808Z",
+  "site": "https://redpen-hybrid.web.app",
+  "offlineRows": [
+    "Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.",
+    "Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.",
+    "Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.",
+    "Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional \"Abuja\" matches an accepted answer.",
+    "Q5 0/1 AI read: “runned” On-device Marked by code Provisional \"runned\" is listed as not acceptable."
+  ],
+  "reviewText": "JSS 1A · English Language\n\nEnglish — Grammar Check\n\n1 student marked\n\nMark as finished\nDelete\n\nCloud check: 5 on-device marks confirmed.\n\nPrint sheets\nAnswer key\nMark\nReview\nMark register\nInsights\n\n0 answers to check\n\nCheck with the cloud\n\nNothing to check: every mark was read by the cloud or set by you. ✓",
+  "learned": "no correction to learn from",
+  "secondRows": []
+}

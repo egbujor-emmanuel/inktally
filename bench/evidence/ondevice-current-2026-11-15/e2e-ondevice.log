@@ -1,0 +1,49 @@
+[05:10:50] home loaded: Online
+Checking on-device AI…
+[05:10:55] Nano status resolved: Online
+Gemini Nano ready
+School details
+[05:10:55] device status: Online
+Gemini Nano ready
+School details
+[05:10:56] GOING OFFLINE
+[05:13:50] OFFLINE MARKS:
+Q1 1/1 AI read: “B” On-device Marked by code Provisional Chose B — correct.
+Q2 1/1 AI read: “D” On-device Marked by code Provisional Chose D — correct.
+Q3 0/1 AI read: “B” On-device Marked by code Provisional Chose B; correct is A.
+Q4 1/1 AI read: “Abuja” On-device Marked by code Provisional "Abuja" matches an accepted answer.
+Q5 0/1 AI read: “runned” On-device Marked by code Provisional "runned" is listed as not acceptable.
+[05:13:50] status: Offline — marking on this device
+Gemini Nano ready
+5 on-device · 0 cloud
+School details
+[05:13:50] BACK ONLINE
+[05:13:52] AUTOMATIC CLOUD CHECK: Cloud check: 5 on-device marks confirmed.
+[05:13:54] DEVICE LEARNED: no correction to learn from
+[05:13:54] REVIEW AFTER CLOUD CHECK:
+JSS 1A · English Language
+
+English — Grammar Check
+
+1 student marked
+
+Mark as finished
+Delete
+
+Cloud check: 5 on-device marks confirmed.
+
+Print sheets
+Answer key
+Mark
+Review
+Mark register
+Insights
+
+0 answers to check
+
+Check with the cloud
+
+Nothing to check: every mark was read by the cloud or set by you. ✓
+[05:13:56] E2E DONE
+EXIT=0
+FINISHED
