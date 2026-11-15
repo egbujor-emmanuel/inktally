@@ -64,7 +64,7 @@ export function AssignmentPage() {
       )}
       {/* Same header as the Android AssignmentScreen. */}
       <header className="px-4 pt-3">
-        <p className="font-hand text-xl text-pen">{assignment.className} · {assignment.scheme.subject}</p>
+        <p className="font-hand text-xl text-pen">{[assignment.className, assignment.scheme.subject].filter((x) => x?.trim()).join(' · ')}</p>
         <h1 className="font-display text-2xl font-bold leading-7">{assignment.title}</h1>
         <div className="flex items-center">
           <p className="flex-1 text-[13px] text-ink-soft">

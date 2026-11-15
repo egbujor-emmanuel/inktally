@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { saveMarks, saveScheme, type Assignment, type Submission } from '../../data/store';
+import { saveKeyAndMarks, type Assignment, type Submission } from '../../data/store';
 import { SchemeEditor, isComplete } from '../../components/SchemeEditor';
 import { remarkAll, remarkNotice } from '../../marking/remark';
 import { friendlyCloudError } from '../../ai/errors';
@@ -30,8 +30,7 @@ export function KeyTab({ assignment, submissions }: { assignment: Assignment; su
     setSaving(true); setError(null);
     try {
       const { updates, summary } = remarkAll(saved, draft, submissions);
-      await saveScheme(assignment.id, { ...assignment.scheme, questions: draft });
-      for (const u of updates) await saveMarks(assignment.id, u.submissionId, u.marks);
+      saveKeyAndMarks(assignment.id, { ...assignment.scheme, questions: draft }, updates); // one atomic write
       setNotice(remarkNotice(summary));
     } catch (e: unknown) {
       setError(friendlyCloudError(e).message);
@@ -44,7 +43,7 @@ export function KeyTab({ assignment, submissions }: { assignment: Assignment; su
     <div className="grid gap-3 pb-6">
       <p className="px-4 text-sm text-ink-soft">
         {locked
-          ? 'Students have been marked, so the questions stay as printed. Fix any answer or mark and REDPEN re-marks everyone from what it already read — no new photos, no new AI reading.'
+          ? 'Students have been photographed or marked, so the questions stay as printed. Fix any answer or mark and REDPEN re-marks everyone from what it already read — no new photos, no new AI reading.'
           : 'Check the answer key. You can still add or remove questions until marking starts (then reprint the sheets).'}
       </p>
       <SchemeEditor key={version} questions={draft} locked={locked} onChange={(q) => { setDraft(q); setNotice(null); }} />

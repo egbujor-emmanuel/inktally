@@ -44,7 +44,7 @@ fun KeyTab(a: Assignment, submissions: List<Submission>) {
 
     LazyColumn(contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            Text(if (locked) "Students have been marked, so the questions stay as printed. Fix any answer or mark and REDPEN re-marks everyone from what it already read — no new photos, no new AI reading."
+            Text(if (locked) "Students have been photographed or marked, so the questions stay as printed. Fix any answer or mark and REDPEN re-marks everyone from what it already read — no new photos, no new AI reading."
                 else "Check the answer key. You can still add or remove questions until marking starts (then reprint the sheets).",
                 color = RP.InkSoft, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 16.dp))
         }
@@ -54,8 +54,7 @@ fun KeyTab(a: Assignment, submissions: List<Submission>) {
                 if (!draft.all { it.isComplete() }) { error = "Every question needs at least one answer."; return@PenButton }
                 error = null
                 val result = remarkAll(saved, draft, submissions)
-                Repo.saveQuestions(a, draft)
-                result.updates.forEach { (sid, marks) -> Repo.saveMarks(a.id, sid, marks) }
+                Repo.saveKeyAndMarks(a, draft, result.updates) // one atomic write
                 notice = remarkNotice(result.summary)
             }, Modifier.padding(horizontal = 16.dp), enabled = dirty)
         }

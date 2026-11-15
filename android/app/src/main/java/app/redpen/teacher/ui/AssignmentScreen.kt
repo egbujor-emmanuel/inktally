@@ -78,7 +78,7 @@ fun AssignmentScreen(id: String, initialTab: String, onDeleted: () -> Unit) {
 
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp)) {
-            Text("${a.className} · ${a.scheme.subject}", fontFamily = RP.Hand, fontSize = 20.sp, color = RP.Pen)
+            Text(listOf(a.className, a.scheme.subject).filter { it.isNotBlank() }.joinToString(" · "), fontFamily = RP.Hand, fontSize = 20.sp, color = RP.Pen)
             Text(a.title, fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 28.sp)
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Text("$markedCount student${if (markedCount == 1) "" else "s"} marked${if (toCheck > 0) " · $toCheck to check" else ""}${if (queue.waiting.isNotEmpty()) " · ${queue.waiting.size} waiting" else ""}",

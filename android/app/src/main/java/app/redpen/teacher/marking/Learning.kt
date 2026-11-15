@@ -9,7 +9,7 @@ import app.redpen.teacher.domain.wireType
 // The cloud teaches REDPEN where the device goes wrong. Kotlin port of web/src/marking/learning.ts.
 // When the cloud check reads an answer differently from Gemini Nano, the pair ("the device read A" -> "it was D") is
 // saved on the assignment. From then on, an offline on-device reading that matches a known misread is HELD for the
-// teacher ("Check this") instead of counting as a normal mark.
+// teacher ("Check this", listed in Review) so it is checked before the marks go back.
 // Why holding, not hinting: on real Gemini Nano, adding the corrections to the read prompt made no measurable difference
 // on unseen students, and a letter hint could turn a student who truly wrote A into D (see
 // bench/evidence/learning-heldout-2026-11-14/). Holding matching readings caught every one of the device's misreads

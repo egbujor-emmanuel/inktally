@@ -1,6 +1,6 @@
 // The cloud teaches REDPEN where the device goes wrong. When the cloud check reads an answer differently from Gemini
 // Nano, the pair ("the device read A" -> "it was D") is saved on the assignment. From then on, an offline on-device
-// reading that matches a known misread is HELD for the teacher ("Check this") instead of counting as a normal mark.
+// reading that matches a known misread is HELD for the teacher ("Check this", listed in Review) so it is checked before the marks go back.
 //
 // Why holding, not hinting: a held-out test on real Gemini Nano (bench/evidence/learning-heldout-2026-11-14/) showed
 // that adding the corrections to the read prompt made no measurable difference on unseen students (19/25, 19/25,

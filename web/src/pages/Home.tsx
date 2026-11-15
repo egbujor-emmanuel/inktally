@@ -109,7 +109,7 @@ export function Home({ signedIn = true }: { signedIn?: boolean }) {
       {shown.map((a) => (
         <PaperCard key={a.id} tick onClick={() => navigate(`/a/${a.id}/print`)}>
           <span className="font-display text-lg font-semibold">{a.title}</span>
-          <span className="text-sm text-ink-soft">{a.className} · {a.scheme.subject} · {a.scheme.questions.length} questions</span>
+          <span className="text-sm text-ink-soft">{[a.className, a.scheme.subject, `${a.scheme.questions.length} questions`].filter((x) => x?.trim()).join(' · ')}</span>
         </PaperCard>
       ))}
 

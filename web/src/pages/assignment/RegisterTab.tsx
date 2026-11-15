@@ -120,7 +120,7 @@ export function RegisterTab({ assignment, submissions }: Props) {
                     <td key={questions[i].q} className={`${cell} font-hand text-xl ${v !== null && v < questions[i].max ? 'text-pen' : 'text-ink'}`}>{v ?? '–'}</td>
                   ))}
                   <td className={`${cell} font-hand text-xl text-pen`}>{r.total}</td>
-                  <td className={`${cell} text-xs text-ink-soft`}>{r.submission.queued ? 'Waiting' : r.unchecked ? `${r.unchecked} to check` : 'Final'}</td>
+                  <td className={`${cell} text-xs text-ink-soft`}>{r.submission.queued ? 'Waiting' : r.unchecked ? `${r.unchecked} to check` : 'Marked'}</td>
                   <td className={cell}>
                     <button type="button" className={`text-left ${r.submission.comment ? 'font-hand text-xl text-pen' : 'text-xs text-ink-soft'}`}
                       aria-label={`Comment for ${r.submission.pupil}`} onClick={() => startEdit(r.submission, 'comment')}>

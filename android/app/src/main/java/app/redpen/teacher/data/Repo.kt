@@ -213,9 +213,21 @@ object Repo {
 
     fun setStatus(id: String, status: String) = queue("the assignment status", db.collection("assignments").document(id).update("status", status))
 
-    /** Saves the edited answer key (the Answer key tab). */
-    fun saveQuestions(a: Assignment, questions: List<Question>) =
-        queue("the answer key", db.collection("assignments").document(a.id).update("scheme.questions", questions.map { it.toMap() }))
+    /**
+     * Saves an edited answer key and every student re-marked under it as ONE atomic batch (same as web saveKeyAndMarks),
+     * so the key and the marks can never disagree. A class over 450 students is split, with the key in the first batch.
+     */
+    fun saveKeyAndMarks(a: Assignment, questions: List<Question>, updates: List<Pair<String, List<Mark>>>) {
+        val chunks: List<List<Pair<String, List<Mark>>>> = if (updates.isEmpty()) listOf(emptyList()) else updates.chunked(450)
+        chunks.forEachIndexed { i, chunk ->
+            val batch = db.batch()
+            if (i == 0) batch.update(db.collection("assignments").document(a.id), "scheme.questions", questions.map { it.toMap() })
+            chunk.forEach { (sid, marks) ->
+                batch.update(db.collection("assignments").document(a.id).collection("submissions").document(sid), "marks", marks.map { it.toMap() })
+            }
+            queue("the answer key and re-marked students", batch.commit())
+        }
+    }
 
     fun updateQuestion(a: Assignment, updated: Question) {
         val questions = a.scheme.questions.map { if (it.q == updated.q) updated else it }

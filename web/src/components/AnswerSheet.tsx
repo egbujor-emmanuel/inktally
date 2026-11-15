@@ -42,7 +42,7 @@ export function AnswerSheet({ title, className, questions, profile }: Props) {
           )}
           <text x={32} y={21} fontFamily="Fraunces, serif" fontSize={7} fontWeight={700} fill="#1f2a44" {...fit(title, 7)}>{title}</text>
           <text x={32} y={28} fontFamily="Inter Tight, sans-serif" fontSize={3.6} fill="#555">
-            {className} · Page {page.page} of {pages.length} · Keep the four black squares in the photo
+            {className?.trim() ? `${className} · ` : ''}Page {page.page} of {pages.length} · Keep the four black squares in the photo
           </text>
           {profile?.details && (
             <text x={32} y={34} fontFamily="Inter Tight, sans-serif" fontSize={3} fill="#777" {...fit(profile.details, 3)}>{profile.details}</text>

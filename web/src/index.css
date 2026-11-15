@@ -105,6 +105,8 @@ html, body { background: var(--color-paper); color: var(--color-ink); font-famil
 /* Material tab row (Android TabRow / ScrollableTabRow). */
 .tabs { position: relative; display: flex; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--color-border); }
 .tabs::-webkit-scrollbar { display: none; }
+/* Phones: fade the right edge so it is clear more tabs scroll into view. */
+@media (max-width: 40rem) { .tabs { mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); } }
 .tab { flex: none; padding: 14px 18px; font-size: 14px; font-weight: 500; color: var(--color-pen); border-bottom: 3px solid transparent; white-space: nowrap; }
 .tab[aria-current="page"], .tab[aria-selected="true"] { border-bottom-color: var(--color-pen); }
 

@@ -106,7 +106,7 @@ object Register {
         rows.forEach { r ->
             sheet += listOf<Cell?>(Txt(safeText(r.submission.pupil), 7)) + r.scores.map { it?.let { v -> Num(v.toDouble(), 7) } ?: Txt("", 7) } +
                 listOf(Num(r.total.toDouble(), Style.TOTAL), Num(if (max > 0) r.total.toDouble() / max else 0.0, Style.PERCENT),
-                    Txt(if (r.submission.queued != null) "Waiting to be marked" else if (r.unchecked > 0) "${r.unchecked} to check" else "Final", 7), Txt(safeText(r.submission.comment), Style.WRAP))
+                    Txt(if (r.submission.queued != null) "Waiting to be marked" else if (r.unchecked > 0) "${r.unchecked} to check" else "Marked", 7), Txt(safeText(r.submission.comment), Style.WRAP))
         }
         if (rows.isNotEmpty()) {
             sheet += emptyList<Cell?>()

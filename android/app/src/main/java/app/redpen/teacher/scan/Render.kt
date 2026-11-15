@@ -66,7 +66,7 @@ object Render {
         }
         if (profile.institution.isNotBlank()) text(profile.institution.uppercase(), 32.0, 13.5, paint(PEN, 3.8f * s, f.body, bold = true).apply { letterSpacing = 0.05f })
         text(title, 32.0, 21.0, paint(INK, 7f * s, f.display))
-        text("$className · Page $page of $pages · Keep the four black squares in the photo", 32.0, 28.0, paint(0xFF555555.toInt(), 3.6f * s, f.body))
+        text("${if (className.isNotBlank()) "$className · " else ""}Page $page of $pages · Keep the four black squares in the photo", 32.0, 28.0, paint(0xFF555555.toInt(), 3.6f * s, f.body))
         if (profile.details.isNotBlank()) text(profile.details, 32.0, 34.0, paint(0xFF777777.toInt(), 3f * s, f.body))
         val label = paint(INK, 4.2f * s, f.body)
         val line = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = INK; strokeWidth = 0.3f * s }
@@ -305,7 +305,7 @@ object Render {
             c.drawText(r.submission.pupil.take(28), x, y + 19f, bold); x = pad + nameW
             r.scores.forEachIndexed { i, v -> c.drawText(v?.toString() ?: "–", x + 8, y + 20f, if (v != null && v < qs[i].max) hand else paint(INK, 13f, f.hand)); x += qW }
             c.drawText("${r.total}", x + 8, y + 20f, hand); x += totW
-            c.drawText(if (r.submission.queued != null) "Waiting" else if (r.unchecked > 0) "${r.unchecked} to check" else "Final", x + 2, y + 19f, soft); x += statW
+            c.drawText(if (r.submission.queued != null) "Waiting" else if (r.unchecked > 0) "${r.unchecked} to check" else "Marked", x + 2, y + 19f, soft); x += statW
             val comment = wrap(body::measureText, r.submission.comment, commentW - 6).take(2)
             comment.forEachIndexed { i, line -> c.drawText(line, x + 2, y + 13f + i * 12f, body) }
             y += rowH

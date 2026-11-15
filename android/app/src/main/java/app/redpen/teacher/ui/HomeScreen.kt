@@ -121,7 +121,7 @@ fun HomeScreen(onOpen: (String) -> Unit, onQuick: () -> Unit, onNew: () -> Unit)
             else -> items(shown, key = { it.id }) { a ->
                 PaperCard(onClick = { onOpen(a.id) }, trailingTick = true) {
                     Text(a.title, fontFamily = RP.Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
-                    Text("${a.className} · ${a.scheme.subject} · ${a.scheme.questions.size} questions", color = RP.InkSoft, fontSize = 14.sp)
+                    Text(listOf(a.className, a.scheme.subject, "${a.scheme.questions.size} questions").filter { it.isNotBlank() }.joinToString(" · "), color = RP.InkSoft, fontSize = 14.sp)
                 }
             }
         }

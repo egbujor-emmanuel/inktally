@@ -1,7 +1,7 @@
 // Persistence. Assignments + marks live in Firestore (offline-first cache, per-teacher security rules).
 // Answer-box images stay ONLY on this device in IndexedDB — they are never uploaded to Firebase.
 import {
-  collection, deleteDoc, deleteField, getDocs, doc, getDoc, onSnapshot, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where,
+  collection, deleteDoc, deleteField, getDocs, doc, getDoc, onSnapshot, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where, writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { openDB, type IDBPDatabase } from 'idb';
@@ -182,6 +182,25 @@ export async function deleteSubmission(assignmentId: string, submissionId: strin
 /** A queued student has now been marked: store the marks and take them off the waiting list. */
 export function finishQueued(assignmentId: string, submissionId: string, marks: Mark[]): void {
   queueWrite(updateDoc(doc(db, 'assignments', assignmentId, 'submissions', submissionId), { marks, queued: deleteField() }), 'the marks');
+}
+
+/** Firestore allows 500 writes per batch; one write is the answer key itself. */
+const BATCH_LIMIT = 450;
+
+/**
+ * Saves an edited answer key and every student re-marked under it as ONE atomic batch, so the key and the marks can
+ * never disagree (a lost write could otherwise leave a student scored against the old key). Applied to the offline
+ * cache at once and synced as a unit. A class over BATCH_LIMIT students is split, with the key in the first batch.
+ */
+export function saveKeyAndMarks(assignmentId: string, scheme: MarkingScheme, updates: { submissionId: string; marks: Mark[] }[]): void {
+  for (let start = 0; start === 0 || start < updates.length; start += BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    if (start === 0) batch.update(doc(db, 'assignments', assignmentId), { scheme });
+    for (const u of updates.slice(start, start + BATCH_LIMIT)) {
+      batch.update(doc(db, 'assignments', assignmentId, 'submissions', u.submissionId), { marks: u.marks });
+    }
+    queueWrite(batch.commit(), 'the answer key and re-marked students');
+  }
 }
 
 export async function saveMarks(assignmentId: string, submissionId: string, marks: Mark[]): Promise<void> {

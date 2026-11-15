@@ -384,7 +384,7 @@ fun ReviewTab(a: Assignment, submissions: List<Submission>, check: CloudCheckSta
 private fun LearnedCard(a: Assignment) {
     Paper {
         Text("What REDPEN learned about on-device reading here", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Text("When the cloud check found Gemini Nano misreading an answer, REDPEN kept it. From now on, an offline reading that matches one of these is held as “Check this” instead of counting, so you see the shaky marks before you are back online. REDPEN never changes what the device read, so it cannot push an answer towards the key.",
+        Text("When the cloud check found Gemini Nano misreading an answer, REDPEN kept it. From now on, an offline reading that matches one of these is held as “Check this” and listed here, so you see the shaky marks before you are back online. REDPEN never changes what the device read, so it cannot push an answer towards the key.",
             color = RP.InkSoft, fontSize = 14.sp)
         a.readingHints.reversed().forEach { h ->
             Text(buildAnnotatedString {
@@ -482,7 +482,7 @@ fun RegisterTab(a: Assignment, submissions: List<Submission>, profile: Profile, 
                         Cell(r.submission.pupil, 130, bold = true, onClick = { editing = r.submission to "pupil" })
                         r.scores.forEachIndexed { i, v -> Cell(v?.toString() ?: "–", 54, hand = true, red = v != null && v < a.scheme.questions[i].max) }
                         Cell("${r.total}", 70, hand = true, red = true)
-                        Cell(if (r.submission.queued != null) "Waiting" else if (r.unchecked > 0) "${r.unchecked} to check" else "Final", 86, small = true)
+                        Cell(if (r.submission.queued != null) "Waiting" else if (r.unchecked > 0) "${r.unchecked} to check" else "Marked", 86, small = true)
                         Cell(r.submission.comment.ifBlank { "Add a comment" }, 200, hand = r.submission.comment.isNotBlank(), red = r.submission.comment.isNotBlank(),
                             small = r.submission.comment.isBlank(), onClick = { editing = r.submission to "comment" })
                         Box(Modifier.width(92.dp)) { TextButton(onClick = { openId = if (openId == r.submission.id) null else r.submission.id }) { Text(if (openId == r.submission.id) "Close" else "Marked copy", fontSize = 12.sp) } }
