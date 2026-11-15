@@ -65,7 +65,7 @@ private fun ListField(key: Any, initial: String, label: String, minLines: Int = 
  * [locked]: students are already marked, so questions can't be added, removed or change type (printed sheets would no longer match).
  */
 @Composable
-fun SchemeEditor(questions: List<Question>, onChange: (List<Question>) -> Unit, locked: Boolean = false) {
+fun SchemeEditor(questions: List<Question>, locked: Boolean = false, onChange: (List<Question>) -> Unit) {
     fun update(next: Question) = onChange(questions.map { if (it.q == next.q) next else it })
     fun remove(n: Int) = onChange(questions.filter { it.q != n }.mapIndexed { i, q -> q.withBase(q = i + 1) })
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

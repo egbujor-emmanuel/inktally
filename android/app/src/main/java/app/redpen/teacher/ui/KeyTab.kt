@@ -48,7 +48,7 @@ fun KeyTab(a: Assignment, submissions: List<Submission>) {
                 else "Check the answer key. You can still add or remove questions until marking starts (then reprint the sheets).",
                 color = RP.InkSoft, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 16.dp))
         }
-        item { key(version) { SchemeEditor(draft, { draft = it; notice = null }, locked = locked) } }
+        item { key(version) { SchemeEditor(draft, locked = locked) { draft = it; notice = null } } }
         item {
             PenButton("Save answer key", {
                 if (!draft.all { it.isComplete() }) { error = "Every question needs at least one answer."; return@PenButton }
