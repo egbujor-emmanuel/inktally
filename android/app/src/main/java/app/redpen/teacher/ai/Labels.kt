@@ -6,6 +6,9 @@ package app.redpen.teacher.ai
 const val DETECT_LABELS_NOTE = "Also return \"subject\" and \"level\": the subject and the class or level this paper is for, as short labels " +
     "(for example \"Mathematics\", \"JSS 2\"). Use an empty string for either one if the paper does not show it."
 
+/** Marks for working on calculations (WAEC-style partial credit). Same text as web. */
+const val METHOD_MARKS_NOTE = "For a calculation worth more than 1 mark, list what earns marks for working in \"methodPoints\" (for example \"uses speed = distance ÷ time\" or \"finds the profit, 9,000\"), one item per mark, and put only the final answer in \"acceptNumbers\". When the teacher's scheme gives method marks, copy them exactly."
+
 private const val MAX_LABEL = 60
 private val LABEL_BREAKERS = Regex("""[<>"]""")
 private val LABEL_SPACES = Regex("""\s+""")

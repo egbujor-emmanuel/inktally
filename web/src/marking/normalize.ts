@@ -20,9 +20,22 @@ export interface NumericParse {
   signAfterEquals: boolean;
 }
 
+/** Written fractions ("4⅜") become "4 3/8" so the mixed-number rule reads them. */
+const VULGAR: Record<string, string> = {
+  '½': '1/2', '⅓': '1/3', '⅔': '2/3', '¼': '1/4', '¾': '3/4', '⅕': '1/5', '⅖': '2/5', '⅗': '3/5', '⅘': '4/5',
+  '⅙': '1/6', '⅚': '5/6', '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8',
+};
+/**
+ * A unit after the answer ("50 km/h", "8 g/cm³") is dropped BEFORE look-alike letters are mapped to digits, so the
+ * unit's letters are never misread as digits. Multi-letter units may touch the number; one-letter units ("50 s") only
+ * count after a space, so a misread digit such as "1s" (15) is never cut short.
+ */
+const UNIT = /(?:\s*(?:km\/hr?|kmh|kph|m\/s²|m\/s2|m\/s|ms-1|g\/cm³|g\/cm3|kg\/m³|kg\/m3|cm³|cm3|cm²|cm2|m³|m²|mm|cm|km|kg|mg|ml|litres?|liters?|secs?|seconds?|mins?|minutes?|hrs?|hours?|°c|°f|°|pa|units?)|\s+(?:s|m|g|h|l|k|n|j|w|v|a))\.?\s*$/i;
+
 /** Reads the numeric answer a pupil wrote, preferring whatever follows the last "=". */
 export function parseNumericAnswer(raw: string): NumericParse {
-  const afterEquals = raw.includes('=') ? raw.slice(raw.lastIndexOf('=') + 1) : raw;
+  const lastPart = raw.includes('=') ? raw.slice(raw.lastIndexOf('=') + 1) : raw;
+  const afterEquals = lastPart.replace(UNIT, '').replace(/\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (_, f: string) => ` ${VULGAR[f]}`);
   const signAfterEquals = /^\s*[-−–]/.test(afterEquals) && raw.includes('=');
   let clean = true;
   const mapped = [...afterEquals].map((ch) => {

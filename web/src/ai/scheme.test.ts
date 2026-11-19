@@ -28,6 +28,13 @@ describe('toQuestion', () => {
     expect(q).toMatchObject({ accept: ['ran'], reject: ['runned'] });
   });
 
+  test('method marks from the scheme are kept on calculations worth more than 1 mark', () => {
+    const q = toQuestion({ q: 6, type: 'numeric', prompt: 'Average speed', max: 2, acceptNumbers: [50], methodPoints: ['uses speed = distance ÷ time'] });
+    expect(q).toMatchObject({ accept: [50], methodPoints: ['uses speed = distance ÷ time'] });
+    expect(toQuestion({ q: 7, type: 'numeric', prompt: 'One mark', max: 1, acceptNumbers: [8], methodPoints: ['x'] })).not.toHaveProperty('methodPoints');
+    expect(toQuestion({ q: 8, type: 'numeric', prompt: 'No method', max: 2, acceptNumbers: [8] })).not.toHaveProperty('methodPoints');
+  });
+
   test('questions with no usable answer are dropped', () => {
     expect(toQuestion({ q: 1, type: 'objective', prompt: 'Pick one', max: 1 })).toBeNull();
     expect(toQuestion({ q: 2, type: 'numeric', prompt: '7 x 8', max: 1, acceptNumbers: [] })).toBeNull();

@@ -95,8 +95,17 @@ fun SchemeEditor(questions: List<Question>, locked: Boolean = false, onChange: (
                     is Question.Objective -> ListField("o-${q.q}-${questions.size}", q.correct.joinToString(", "), "Correct letter(s)") { v ->
                         update(q.copy(correct = v.uppercase().split(Regex("[,\\s]+")).filter { it.isNotEmpty() }))
                     }
-                    is Question.Numeric -> ListField("n-${q.q}-${questions.size}", q.accept.joinToString("; ") { fmt(it) }, "Accepted answer(s), separated by ;", numeric = true) { v ->
-                        update(q.copy(accept = lines(v).mapNotNull(::numberOf)))
+                    is Question.Numeric -> {
+                        ListField("n-${q.q}-${questions.size}", q.accept.joinToString("; ") { fmt(it) }, "Accepted answer(s), separated by ;", numeric = true) { v ->
+                            update(q.copy(accept = lines(v).mapNotNull(::numberOf)))
+                        }
+                        // Once sheets are printed, a question keeps (or keeps not having) method marks: its box size depends on it.
+                        if (!locked || q.methodPoints.isNotEmpty()) {
+                            ListField("nm-${q.q}-${questions.size}", q.methodPoints.joinToString("\n"), "Method marks — for working when the answer is wrong (one per line)", minLines = 2) { v ->
+                                val m = lines(v)
+                                if (!(locked && m.isEmpty())) update(q.copy(methodPoints = m))
+                            }
+                        }
                     }
                     is Question.Short -> {
                         ListField("sa-${q.q}-${questions.size}", q.accept.joinToString("\n"), "Accept (one per line)", minLines = 2) { update(q.copy(accept = lines(it))) }

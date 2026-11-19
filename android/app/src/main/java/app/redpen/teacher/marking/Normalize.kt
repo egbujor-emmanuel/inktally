@@ -17,9 +17,23 @@ data class NumericParse(val value: Double?, val clean: Boolean, val signAfterEqu
 // "#" before a number is how many Nigerian teachers and pupils write ₦ (same as web normalize.ts).
 private val CURRENCY_AND_SPACING = Regex("[₦$£€,$WS]|(?<![a-zA-Z])N(?=\\d)|#(?=\\d)", RegexOption.IGNORE_CASE)
 
+/** Written fractions ("4⅜") become "4 3/8" so the mixed-number rule reads them (same as web normalize.ts). */
+private val VULGAR = mapOf(
+    '½' to "1/2", '⅓' to "1/3", '⅔' to "2/3", '¼' to "1/4", '¾' to "3/4", '⅕' to "1/5", '⅖' to "2/5", '⅗' to "3/5", '⅘' to "4/5",
+    '⅙' to "1/6", '⅚' to "5/6", '⅛' to "1/8", '⅜' to "3/8", '⅝' to "5/8", '⅞' to "7/8",
+)
+private val VULGAR_CHAR = Regex("""\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])""")
+
+/**
+ * A unit after the answer ("50 km/h", "8 g/cm³") is dropped BEFORE look-alike letters are mapped to digits. Multi-letter
+ * units may touch the number; one-letter units ("50 s") only count after a space, so "1s" (a misread 15) is never cut short.
+ */
+private val UNIT = Regex("""(?:\s*(?:km\/hr?|kmh|kph|m\/s²|m\/s2|m\/s|ms-1|g\/cm³|g\/cm3|kg\/m³|kg\/m3|cm³|cm3|cm²|cm2|m³|m²|mm|cm|km|kg|mg|ml|litres?|liters?|secs?|seconds?|mins?|minutes?|hrs?|hours?|°c|°f|°|pa|units?)|\s+(?:s|m|g|h|l|k|n|j|w|v|a))\.?\s*$""", RegexOption.IGNORE_CASE)
+
 fun parseNumericAnswer(raw: String): NumericParse {
     val hasEquals = raw.contains('=')
-    val afterEquals = if (hasEquals) raw.substring(raw.lastIndexOf('=') + 1) else raw
+    val lastPart = if (hasEquals) raw.substring(raw.lastIndexOf('=') + 1) else raw
+    val afterEquals = lastPart.replace(UNIT, "").replace(VULGAR_CHAR) { m -> " " + VULGAR.getValue(m.groupValues[1][0]) }
     val signAfterEquals = hasEquals && Regex("""^\s*[-−–]""").containsMatchIn(afterEquals)
     var clean = true
     val mapped = afterEquals.map { ch -> DIGIT_LOOKALIKES[ch]?.also { clean = false } ?: ch }.joinToString("")

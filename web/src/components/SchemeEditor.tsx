@@ -68,8 +68,15 @@ export function SchemeEditor({ questions, onChange, locked = false }: Props) {
               onParsed={(v) => update({ ...q, correct: v.toUpperCase().split(/[,\s]+/).filter(Boolean) })} />
           )}
           {q.type === 'numeric' && (
-            <ListField key={k(q, 'n')} initial={q.accept.join('; ')} label="Accepted answer(s), separated by ;"
-              onParsed={(v) => update({ ...q, accept: lines(v).map(numberOf).filter((n): n is number => n !== null) })} />
+            <>
+              <ListField key={k(q, 'n')} initial={q.accept.join('; ')} label="Accepted answer(s), separated by ;"
+                onParsed={(v) => update({ ...q, accept: lines(v).map(numberOf).filter((n): n is number => n !== null) })} />
+              {/* Once sheets are printed, a question keeps (or keeps not having) method marks: its answer box size depends on it. */}
+              {(!locked || (q.methodPoints?.length ?? 0) > 0) && (
+                <ListField key={k(q, 'nm')} initial={(q.methodPoints ?? []).join('\n')} label="Method marks — for working when the answer is wrong (one per line)" multiline rows={2}
+                  onParsed={(v) => { const m = lines(v); if (locked && !m.length) return; update(m.length ? { ...q, methodPoints: m } : (({ methodPoints: _, ...rest }) => rest)(q)); }} />
+              )}
+            </>
           )}
           {q.type === 'short' && (
             <>

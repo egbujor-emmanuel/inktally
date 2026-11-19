@@ -353,8 +353,9 @@ object Ai {
             "type" to Schema.enumeration(listOf("objective", "numeric", "short", "points")),
             "correctOptions" to Schema.array(Schema.string()), "acceptNumbers" to Schema.array(Schema.double()),
             "acceptText" to Schema.array(Schema.string()), "points" to Schema.array(Schema.string()), "reject" to Schema.array(Schema.string()),
+            "methodPoints" to Schema.array(Schema.string()),
         ),
-        optionalProperties = listOf("correctOptions", "acceptNumbers", "acceptText", "points", "reject"),
+        optionalProperties = listOf("correctOptions", "acceptNumbers", "acceptText", "points", "reject", "methodPoints"),
     ))), optionalProperties = listOf("subject", "level"))
 
     private fun JSONObject.strings(key: String): List<String> = optJSONArray(key)?.let { a -> (0 until a.length()).map { a.optString(it).trim() }.filter { it.isNotEmpty() } } ?: emptyList()
@@ -367,7 +368,7 @@ object Ai {
         return when (o.optString("type")) {
             "objective" -> o.strings("correctOptions").map { it.uppercase() }.takeIf { it.isNotEmpty() }?.let { Question.Objective(q, prompt, max, it) }
             "numeric" -> o.optJSONArray("acceptNumbers")?.let { a -> (0 until a.length()).mapNotNull { a.optDouble(it).takeIf { d -> !d.isNaN() } } }
-                ?.takeIf { it.isNotEmpty() }?.let { Question.Numeric(q, prompt, max, it) }
+                ?.takeIf { it.isNotEmpty() }?.let { Question.Numeric(q, prompt, max, it, methodPoints = if (max > 1) o.strings("methodPoints") else emptyList()) }
             "short" -> o.strings("acceptText").takeIf { it.isNotEmpty() }?.let { Question.Short(q, prompt, max, it, o.strings("reject")) }
             "points" -> o.strings("points").takeIf { it.isNotEmpty() }?.let { Question.Points(q, prompt, max, it, o.strings("reject")) }
             else -> null
@@ -388,6 +389,7 @@ object Ai {
             text(fill(cfg("prompt_scheme_draft"), mapOf("subject" to subject.ifBlank { "the subject shown on the paper" },
                 "level" to level.ifBlank { "the class or level shown on the paper" })))
             text(DETECT_LABELS_NOTE)
+            text(METHOD_MARKS_NOTE)
             if (isStudentPage) text(STUDENT_PAGE_NOTE)
             if (guide.isPresent) text(cfg("prompt_scheme_from_guide"))
             if (hasPaper) {

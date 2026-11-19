@@ -20,6 +20,19 @@ class EngineTest {
 
     @Test fun readsValueAfterLastEquals() = assertEquals(23.0, parseNumericAnswer("15 + 9 = 23").value!!, 0.0)
     @Test fun stripsNairaAndCommas() = assertEquals(27000.0, parseNumericAnswer("= ₦27,000").value!!, 0.0)
+    @Test fun dropsUnitsWithoutMisreadingTheirLetters() {
+        assertEquals(50.0, parseNumericAnswer("speed = 150 ÷ 3 = 50 km/h").value!!, 0.0)
+        assertEquals(50.0, parseNumericAnswer("= 50km/hr").value!!, 0.0)
+        assertEquals(8.0, parseNumericAnswer("240/30 = 8 g/cm³").value!!, 0.0)
+        assertEquals(8.0, parseNumericAnswer("8g/cm3").value!!, 0.0)
+        assertEquals(12.0, parseNumericAnswer("12 cm²").value!!, 0.0)
+        assertEquals(20.0, parseNumericAnswer("20 s").value!!, 0.0)
+        assertEquals(15.0, parseNumericAnswer("1s").value!!, 0.0)
+    }
+    @Test fun readsWrittenFractions() {
+        assertEquals(4.375, parseNumericAnswer("35/8 = 4⅜").value!!, 0.0)
+        assertEquals(2.75, parseNumericAnswer("2¾").value!!, 0.0)
+    }
     @Test fun readsHashAsNaira() = assertEquals(27000.0, parseNumericAnswer("Answer = #27,000").value!!, 0.0)
     @Test fun mapsCyrillicLookalike() { val r = parseNumericAnswer("5б"); assertEquals(56.0, r.value!!, 0.0); assertTrue(!r.clean) }
     @Test fun parsesFractions() = assertEquals(0.75, parseNumericAnswer("3/4").value!!, 1e-9)

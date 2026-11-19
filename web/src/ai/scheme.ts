@@ -25,8 +25,9 @@ const DRAFT_SCHEMA = Schema.object({
           acceptText: Schema.array({ items: Schema.string() }),
           points: Schema.array({ items: Schema.string() }),
           reject: Schema.array({ items: Schema.string() }),
+          methodPoints: Schema.array({ items: Schema.string() }),
         },
-        optionalProperties: ['correctOptions', 'acceptNumbers', 'acceptText', 'points', 'reject'],
+        optionalProperties: ['correctOptions', 'acceptNumbers', 'acceptText', 'points', 'reject', 'methodPoints'],
       }),
     }),
   },
@@ -43,6 +44,7 @@ const DraftQuestion = z.object({
   acceptText: z.array(z.string()).optional(),
   points: z.array(z.string()).optional(),
   reject: z.array(z.string()).optional(),
+  methodPoints: z.array(z.string()).optional(),
 });
 const Draft = z.object({ subject: z.string().optional(), level: z.string().optional(), questions: z.array(DraftQuestion).min(1) });
 
@@ -55,7 +57,8 @@ export function toQuestion(d: z.infer<typeof DraftQuestion>): Question | null {
     case 'objective':
       return d.correctOptions?.length ? { ...base, type: 'objective', correct: d.correctOptions.map((c) => c.trim().toUpperCase()) } : null;
     case 'numeric':
-      return d.acceptNumbers?.length ? { ...base, type: 'numeric', accept: d.acceptNumbers } : null;
+      return d.acceptNumbers?.length
+        ? { ...base, type: 'numeric', accept: d.acceptNumbers, ...(d.methodPoints?.length && d.max > 1 ? { methodPoints: d.methodPoints } : {}) } : null;
     case 'short':
       return d.acceptText?.length ? { ...base, type: 'short', accept: d.acceptText, ...reject } : null;
     case 'points':
@@ -82,6 +85,9 @@ const PUPIL_PAGE_NOTE = "IMPORTANT: this photo shows a student's exercise page โ
   + "Work out the correct answers yourself from the QUESTIONS only. The student's answers may be wrong: never copy them into the marking scheme. "
   + 'Each numbered item is ONE question: lines under it such as "Answer = ..." or working are part of that same question, never a new one.';
 
+/** Marks for working on calculations (WAEC-style partial credit). Same text on Android. */
+export const METHOD_MARKS_NOTE = 'For a calculation worth more than 1 mark, list what earns marks for working in "methodPoints" (for example "uses speed = distance รท time" or "finds the profit, 9,000"), one item per mark, and put only the final answer in "acceptNumbers". When the teacher\'s scheme gives method marks, copy them exactly.';
+
 /** Asks the model to name the subject and level so an untouched form never prints the wrong ones. Same text on Android. */
 export const DETECT_LABELS_NOTE = 'Also return "subject" and "level": the subject and the class or level this paper is for, as short labels '
   + '(for example "Mathematics", "JSS 2"). Use an empty string for either one if the paper does not show it.';
@@ -100,7 +106,7 @@ export async function draftScheme(source: SchemeSource, subject: string, level: 
   if (!hasPaper(source) && !hasGuide(source)) throw new Error('Add the question paper or your marking scheme (photo, PDF or typed) first.');
   const parts: (string | Part)[] = [fillTemplate(config('prompt_scheme_draft'), {
     subject: subject.trim() || 'the subject shown on the paper', level: level.trim() || 'the class or level shown on the paper',
-  }), DETECT_LABELS_NOTE];
+  }), DETECT_LABELS_NOTE, METHOD_MARKS_NOTE];
   if (source.isPupilPage) parts.push(PUPIL_PAGE_NOTE);
   if (hasGuide(source)) parts.push(config('prompt_scheme_from_guide'));
   if (hasPaper(source)) {

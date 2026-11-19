@@ -10,6 +10,23 @@ describe('parseNumericAnswer', () => {
     expect(parseNumericAnswer('12').value).toBe(12);
   });
 
+  it('drops a unit after the answer without misreading its letters as digits', () => {
+    expect(parseNumericAnswer('speed = 150 ÷ 3 = 50 km/h').value).toBe(50);
+    expect(parseNumericAnswer('= 50km/hr').value).toBe(50);
+    expect(parseNumericAnswer('240/30 = 8 g/cm³').value).toBe(8);
+    expect(parseNumericAnswer('8g/cm3').value).toBe(8);
+    expect(parseNumericAnswer('50 m/s').value).toBe(50);
+    expect(parseNumericAnswer('12 cm²').value).toBe(12);
+    expect(parseNumericAnswer('= 100 °C').value).toBe(100);
+    expect(parseNumericAnswer('20 s').value).toBe(20);
+    expect(parseNumericAnswer('1s').value).toBe(15); // a misread 15, not "1 second"
+  });
+
+  it('reads written fractions such as 4⅜', () => {
+    expect(parseNumericAnswer('35/8 = 4⅜').value).toBe(4.375);
+    expect(parseNumericAnswer('2¾').value).toBe(2.75);
+  });
+
   it('strips thousands separators and naira signs', () => {
     expect(parseNumericAnswer('= ₦27,000').value).toBe(27000);
     expect(parseNumericAnswer('N27,000').value).toBe(27000);
