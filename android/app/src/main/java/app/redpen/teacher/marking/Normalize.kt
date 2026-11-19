@@ -28,11 +28,18 @@ private val VULGAR_CHAR = Regex("""\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝�
  * A unit after the answer ("50 km/h", "8 g/cm³") is dropped BEFORE look-alike letters are mapped to digits. Multi-letter
  * units may touch the number; one-letter units ("50 s") only count after a space, so "1s" (a misread 15) is never cut short.
  */
-private val UNIT = Regex("""(?:\s*(?:km\/hr?|kmh|kph|m\/s²|m\/s2|m\/s|ms-1|g\/cm³|g\/cm3|kg\/m³|kg\/m3|cm³|cm3|cm²|cm2|m³|m²|mm|cm|km|kg|mg|ml|litres?|liters?|secs?|seconds?|mins?|minutes?|hrs?|hours?|°c|°f|°|pa|units?)|\s+(?:s|m|g|h|l|k|n|j|w|v|a))\.?\s*$""", RegexOption.IGNORE_CASE)
+private val UNIT = Regex("""(?:\s*(?:g\/cm\^3|kg\/m\^3|cm\^3|cm\^2|m\^3|m\^2|m\/s\^2|km\/hr?|kmh|kph|m\/s²|m\/s2|m\/s|ms-1|g\/cm³|g\/cm3|kg\/m³|kg\/m3|cm³|cm3|cm²|cm2|m³|m²|mm|cm|km|kg|mg|ml|litres?|liters?|secs?|seconds?|mins?|minutes?|hrs?|hours?|°c|°f|°|pa|units?)|\s+(?:s|m|g|h|l|k|n|j|w|v|a))\.?\s*$""", RegexOption.IGNORE_CASE)
+
+/** Superscript/subscript digits and the fraction slash ("4³/₈") become ordinary "4 3/8" (same as web normalize.ts). */
+private val SMALL_DIGITS = Regex("""([0-9])?([⁰¹²³⁴⁵⁶⁷⁸⁹]+)\s*[/⁄]\s*([₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹0-9]+)""")
+private fun plainDigits(s: String) = s.map { c -> "⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(c).takeIf { it >= 0 }?.digitToChar() ?: "₀₁₂₃₄₅₆₇₈₉".indexOf(c).takeIf { it >= 0 }?.digitToChar() ?: c }.joinToString("")
 
 fun parseNumericAnswer(raw: String): NumericParse {
     val hasEquals = raw.contains('=')
-    val lastPart = if (hasEquals) raw.substring(raw.lastIndexOf('=') + 1) else raw
+    val lastPart = (if (hasEquals) raw.substring(raw.lastIndexOf('=') + 1) else raw).replace(SMALL_DIGITS) { m ->
+        val whole = m.groupValues[1]
+        (if (whole.isNotEmpty()) "$whole " else "") + plainDigits(m.groupValues[2]) + "/" + plainDigits(m.groupValues[3])
+    }
     val afterEquals = lastPart.replace(UNIT, "").replace(VULGAR_CHAR) { m -> " " + VULGAR.getValue(m.groupValues[1][0]) }
     val signAfterEquals = hasEquals && Regex("""^\s*[-−–]""").containsMatchIn(afterEquals)
     var clean = true
@@ -54,6 +61,10 @@ fun parseNumericAnswer(raw: String): NumericParse {
     }
     return NumericParse(null, clean, signAfterEquals)
 }
+
+/** Method marks are for working: an entry that is just "the answer" is not one (same as web workingSteps). */
+private val ANSWER_ONLY = Regex("""^(the\s+)?(correct\s+|final\s+)?answers?\b[\s.:()0-9a-z-]*$""", RegexOption.IGNORE_CASE)
+fun workingSteps(points: List<String>): List<String> = points.map { it.trim() }.filter { it.isNotEmpty() && !ANSWER_ONLY.matches(it) }
 
 fun normalizeOptionLetter(raw: String): String? {
     val withoutLabel = raw.replace(Regex("""^\s*Q?\d+\s*[:.)-]?\s*""", RegexOption.IGNORE_CASE), "")

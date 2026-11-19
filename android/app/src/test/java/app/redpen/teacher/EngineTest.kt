@@ -29,6 +29,13 @@ class EngineTest {
         assertEquals(20.0, parseNumericAnswer("20 s").value!!, 0.0)
         assertEquals(15.0, parseNumericAnswer("1s").value!!, 0.0)
     }
+    @Test fun readsSuperscriptFractionsAndCaretUnits() {
+        assertEquals(4.375, parseNumericAnswer("22/8 + 13/8 = 35/8 = 4³/₈").value!!, 0.0)
+        assertEquals(80.0, parseNumericAnswer("Density = 240 / 30 = 80 g/cm^3").value!!, 0.0)
+    }
+    @Test fun workingStepsDropAnAnswerEntry() {
+        assertEquals(listOf("uses speed = distance ÷ time"), app.redpen.teacher.marking.workingSteps(listOf("uses speed = distance ÷ time", "answer", "Correct answer (1 mark)")))
+    }
     @Test fun readsWrittenFractions() {
         assertEquals(4.375, parseNumericAnswer("35/8 = 4⅜").value!!, 0.0)
         assertEquals(2.75, parseNumericAnswer("2¾").value!!, 0.0)

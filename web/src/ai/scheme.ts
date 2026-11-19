@@ -6,6 +6,7 @@ import type { MarkingScheme, Question } from '../domain/types';
 import { fillTemplate } from './config';
 import { authorGenerate, blobToPart, config } from './models';
 import { recordInference } from './telemetry';
+import { workingSteps } from '../marking/normalize';
 
 const QUESTION_TYPES = ['objective', 'numeric', 'short', 'points'] as const;
 
@@ -58,7 +59,7 @@ export function toQuestion(d: z.infer<typeof DraftQuestion>): Question | null {
       return d.correctOptions?.length ? { ...base, type: 'objective', correct: d.correctOptions.map((c) => c.trim().toUpperCase()) } : null;
     case 'numeric':
       return d.acceptNumbers?.length
-        ? { ...base, type: 'numeric', accept: d.acceptNumbers, ...(d.methodPoints?.length && d.max > 1 ? { methodPoints: d.methodPoints } : {}) } : null;
+        ? { ...base, type: 'numeric', accept: d.acceptNumbers, ...(workingSteps(d.methodPoints).length && d.max > 1 ? { methodPoints: workingSteps(d.methodPoints) } : {}) } : null;
     case 'short':
       return d.acceptText?.length ? { ...base, type: 'short', accept: d.acceptText, ...reject } : null;
     case 'points':
@@ -86,7 +87,7 @@ const PUPIL_PAGE_NOTE = "IMPORTANT: this photo shows a student's exercise page �
   + 'Each numbered item is ONE question: lines under it such as "Answer = ..." or working are part of that same question, never a new one.';
 
 /** Marks for working on calculations (WAEC-style partial credit). Same text on Android. */
-export const METHOD_MARKS_NOTE = 'For a calculation worth more than 1 mark, list what earns marks for working in "methodPoints" (for example "uses speed = distance ÷ time" or "finds the profit, 9,000"), one item per mark, and put only the final answer in "acceptNumbers". When the teacher\'s scheme gives method marks, copy them exactly.';
+export const METHOD_MARKS_NOTE = 'For a calculation worth more than 1 mark, list what earns marks for working in "methodPoints" (for example "uses speed = distance ÷ time" or "finds the profit, 9,000"), one item per mark, never the final answer itself, and put only the final answer in "acceptNumbers". When the teacher\'s scheme gives method marks, copy them exactly.';
 
 /** Asks the model to name the subject and level so an untouched form never prints the wrong ones. Same text on Android. */
 export const DETECT_LABELS_NOTE = 'Also return "subject" and "level": the subject and the class or level this paper is for, as short labels '

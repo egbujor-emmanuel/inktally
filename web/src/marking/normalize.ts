@@ -30,11 +30,18 @@ const VULGAR: Record<string, string> = {
  * unit's letters are never misread as digits. Multi-letter units may touch the number; one-letter units ("50 s") only
  * count after a space, so a misread digit such as "1s" (15) is never cut short.
  */
-const UNIT = /(?:\s*(?:km\/hr?|kmh|kph|m\/s²|m\/s2|m\/s|ms-1|g\/cm³|g\/cm3|kg\/m³|kg\/m3|cm³|cm3|cm²|cm2|m³|m²|mm|cm|km|kg|mg|ml|litres?|liters?|secs?|seconds?|mins?|minutes?|hrs?|hours?|°c|°f|°|pa|units?)|\s+(?:s|m|g|h|l|k|n|j|w|v|a))\.?\s*$/i;
+const UNIT = /(?:\s*(?:g\/cm\^3|kg\/m\^3|cm\^3|cm\^2|m\^3|m\^2|m\/s\^2|km\/hr?|kmh|kph|m\/s²|m\/s2|m\/s|ms-1|g\/cm³|g\/cm3|kg\/m³|kg\/m3|cm³|cm3|cm²|cm2|m³|m²|mm|cm|km|kg|mg|ml|litres?|liters?|secs?|seconds?|mins?|minutes?|hrs?|hours?|°c|°f|°|pa|units?)|\s+(?:s|m|g|h|l|k|n|j|w|v|a))\.?\s*$/i;
+
+/** Superscript/subscript digits and the fraction slash ("4³/₈", "4³⁄₈") become ordinary "4 3/8". */
+const SMALL_DIGITS = /([0-9])?([⁰¹²³⁴⁵⁶⁷⁸⁹]+)\s*[\/⁄]\s*([₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹0-9]+)/g;
+const smallToDigits = (_: string, whole: string | undefined, top: string, bottom: string): string => {
+  const plain = (s: string) => [...s].map((c) => { const i = '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(c); const j = '₀₁₂₃₄₅₆₇₈₉'.indexOf(c); return i >= 0 ? String(i) : j >= 0 ? String(j) : c; }).join('');
+  return `${whole ? whole + ' ' : ''}${plain(top)}/${plain(bottom)}`;
+};
 
 /** Reads the numeric answer a pupil wrote, preferring whatever follows the last "=". */
 export function parseNumericAnswer(raw: string): NumericParse {
-  const lastPart = raw.includes('=') ? raw.slice(raw.lastIndexOf('=') + 1) : raw;
+  const lastPart = (raw.includes('=') ? raw.slice(raw.lastIndexOf('=') + 1) : raw).replace(SMALL_DIGITS, smallToDigits);
   const afterEquals = lastPart.replace(UNIT, '').replace(/\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (_, f: string) => ` ${VULGAR[f]}`);
   const signAfterEquals = /^\s*[-−–]/.test(afterEquals) && raw.includes('=');
   let clean = true;
@@ -59,6 +66,10 @@ export function parseNumericAnswer(raw: string): NumericParse {
   if (number) return { value: Number(stripped.replace('%', '')), clean, signAfterEquals };
   return { value: null, clean, signAfterEquals };
 }
+
+/** Method marks are for working: an entry that is just "the answer" (a copied guide's answer mark) is not one. */
+export const workingSteps = (points: readonly string[] | undefined): string[] =>
+  (points ?? []).map((p) => p.trim()).filter((p) => p && !/^(the\s+)?(correct\s+|final\s+)?answers?\b[\s.:()0-9a-z-]*$/i.test(p));
 
 /** Extracts exactly one option letter A–E, or null if none or several are present. */
 export function normalizeOptionLetter(raw: string): string | null {

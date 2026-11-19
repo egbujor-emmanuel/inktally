@@ -21,20 +21,25 @@ object Marker {
         return markFromRead(question, read.text, read.source, force)
     }
 
+    /** One request for all of a question's points when read in the cloud; one small request per point on the device (same as web judgePoints). */
+    private suspend fun judgePoints(read: String, points: List<String>, reject: List<String>, source: ReadSource, force: InferenceMode?): Pair<List<String>, List<String>> =
+        if (source == ReadSource.IN_CLOUD && Ai.batchingEnabled()) Ai.checkPointsBatch(read, points, reject) else Ai.checkPoints(read, points, reject, force)
+
     private suspend fun markFromRead(question: Question, read: String, source: ReadSource, force: InferenceMode?): Mark = when (question) {
         is Question.Objective -> markObjective(question, read, source)
         is Question.Short -> markShort(question, read, source)
         is Question.Numeric -> {
             val base = markNumeric(question, read, source)
-            if (base.awarded > 0 || question.methodPoints.isEmpty() || base.status == MarkStatus.FLAGGED) base
+            val steps = workingSteps(question.methodPoints)
+            if (base.awarded > 0 || steps.isEmpty() || base.status == MarkStatus.FLAGGED) base
             else {
-                val (found, _) = Ai.checkPoints(read, question.methodPoints, emptyList(), force)
+                val (found, _) = judgePoints(read, steps, emptyList(), source, force)
                 if (found.isEmpty()) base else base.copy(awarded = minOf(found.size, question.max - 1), engine = app.redpen.teacher.domain.MarkEngine.AI_POINTS, pointsFound = found,
                     reasons = base.reasons + "Method marks for: ${found.joinToString("; ")}.")
             }
         }
         is Question.Points -> {
-            val (found, rejected) = Ai.checkPoints(read, question.points, question.reject, force)
+            val (found, rejected) = judgePoints(read, question.points, question.reject, source, force)
             markPoints(question, read, source, found, rejected)
         }
     }
@@ -50,8 +55,8 @@ object Marker {
                 is Question.Points -> Ai.checkPointsBatch(read, q.points, q.reject).let { (found, rejected) -> markPoints(q, read, ReadSource.IN_CLOUD, found, rejected) }
                 is Question.Numeric -> {
                     val base = markNumeric(q, read, ReadSource.IN_CLOUD)
-                    if (base.awarded > 0 || q.methodPoints.isEmpty() || base.status == MarkStatus.FLAGGED) base
-                    else Ai.checkPointsBatch(read, q.methodPoints, emptyList()).first.let { found ->
+                    if (base.awarded > 0 || workingSteps(q.methodPoints).isEmpty() || base.status == MarkStatus.FLAGGED) base
+                    else Ai.checkPointsBatch(read, workingSteps(q.methodPoints), emptyList()).first.let { found ->
                         if (found.isEmpty()) base else base.copy(awarded = minOf(found.size, q.max - 1), engine = app.redpen.teacher.domain.MarkEngine.AI_POINTS, pointsFound = found,
                             reasons = base.reasons + "Method marks for: ${found.joinToString("; ")}.")
                     }

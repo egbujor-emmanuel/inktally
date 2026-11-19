@@ -8,8 +8,19 @@ import { readPage } from '../ai/readPage';
 import { checkPointsBatch, readAnswersBatch, type CropToRead } from '../ai/batch';
 import type { ReadMode } from '../ai/models';
 import { markNumeric, markObjective, markPoints, markShort } from './engine';
-import { textSimilarity } from './normalize';
+import { textSimilarity, workingSteps } from './normalize';
+import { batchingEnabled } from '../ai/batch';
 import { isHeld } from './learning';
+
+/**
+ * Marking-point checks: one request for all of a question's points when the answer was read in the cloud (fast, and
+ * the cloud model handles the longer prompt); one small request per point on the device (Gemini Nano's limits).
+ */
+async function judgePoints(read: string, points: readonly string[], reject: readonly string[], source: ReadSource, mode?: ReadMode): Promise<{ found: string[]; rejected: string[] }> {
+  if (source === 'in_cloud' && batchingEnabled()) return checkPointsBatch(read, points, reject);
+  const { found, rejected } = await checkPoints(read, points, reject, mode);
+  return { found, rejected };
+}
 
 async function markFromRead(question: Question, read: string, source: ReadSource, mode?: ReadMode): Promise<Mark> {
   switch (question.type) {
@@ -17,7 +28,7 @@ async function markFromRead(question: Question, read: string, source: ReadSource
     case 'short': return markShort(question, read, source);
     case 'numeric': return markNumericWithMethod(question, read, source, mode);
     case 'points': {
-      const { found, rejected } = await checkPoints(read, question.points, question.reject, mode);
+      const { found, rejected } = await judgePoints(read, question.points, question.reject ?? [], source, mode);
       return markPoints(question, read, source, found, rejected);
     }
   }
@@ -26,8 +37,9 @@ async function markFromRead(question: Question, read: string, source: ReadSource
 /** Wrong final answer but correct working still earns method marks (WAEC-style). */
 async function markNumericWithMethod(question: NumericQuestion, read: string, source: ReadSource, mode?: ReadMode): Promise<Mark> {
   const base = markNumeric(question, read, source);
-  if (base.awarded > 0 || !question.methodPoints?.length || base.status === 'flagged') return base;
-  const { found } = await checkPoints(read, question.methodPoints, [], mode);
+  const steps = workingSteps(question.methodPoints);
+  if (base.awarded > 0 || !steps.length || base.status === 'flagged') return base;
+  const { found } = await judgePoints(read, steps, [], source, mode);
   if (!found.length) return base;
   const methodMarks = Math.min(found.length, question.max - 1);
   return {
@@ -51,8 +63,9 @@ export async function markAnswersBatch(questions: Question[], crops: CropToRead[
       marks.push(markPoints(question, read, 'in_cloud', found, rejected));
     } else if (question.type === 'numeric') {
       const base = markNumeric(question, read, 'in_cloud');
-      if (base.awarded > 0 || !question.methodPoints?.length || base.status === 'flagged') { marks.push(base); continue; }
-      const { found } = await checkPointsBatch(read, question.methodPoints);
+      const steps = workingSteps(question.methodPoints);
+      if (base.awarded > 0 || !steps.length || base.status === 'flagged') { marks.push(base); continue; }
+      const { found } = await checkPointsBatch(read, steps);
       marks.push(found.length ? { ...base, awarded: Math.min(found.length, question.max - 1), engine: 'ai-points', pointsFound: found,
         reasons: [...base.reasons, `Method marks for: ${found.join('; ')}.`] } : base);
     } else {

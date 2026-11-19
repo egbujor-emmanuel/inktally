@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseNumericAnswer, normalizeOptionLetter, textSimilarity } from './normalize';
+import { parseNumericAnswer, normalizeOptionLetter, textSimilarity, workingSteps } from './normalize';
 
 describe('parseNumericAnswer', () => {
   it('reads the value after the last equals sign', () => {
@@ -20,6 +20,11 @@ describe('parseNumericAnswer', () => {
     expect(parseNumericAnswer('= 100 °C').value).toBe(100);
     expect(parseNumericAnswer('20 s').value).toBe(20);
     expect(parseNumericAnswer('1s').value).toBe(15); // a misread 15, not "1 second"
+  });
+
+  it('reads superscript fractions and caret units the way models write them', () => {
+    expect(parseNumericAnswer('22/8 + 13/8 = 35/8 = 4³/₈').value).toBe(4.375);
+    expect(parseNumericAnswer('Density = 240 / 30 = 80 g/cm^3').value).toBe(80);
   });
 
   it('reads written fractions such as 4⅜', () => {
@@ -84,5 +89,13 @@ describe('textSimilarity', () => {
 
   it('keeps different words apart', () => {
     expect(textSimilarity('runned', 'ran')).toBeLessThan(0.6);
+  });
+});
+
+describe('workingSteps', () => {
+  it('drops an "answer" entry copied from a guide, keeps real working', () => {
+    expect(workingSteps(['uses speed = distance ÷ time (150 ÷ 3)', 'answer', 'Correct answer (1 mark)', 'final answer'])).toEqual(['uses speed = distance ÷ time (150 ÷ 3)']);
+    expect(workingSteps(['finds the profit, ₦9,000'])).toEqual(['finds the profit, ₦9,000']);
+    expect(workingSteps(undefined)).toEqual([]);
   });
 });
