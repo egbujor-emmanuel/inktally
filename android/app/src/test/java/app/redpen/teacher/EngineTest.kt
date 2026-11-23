@@ -99,19 +99,9 @@ class EngineTest {
     }
     @Test fun printedLabelsFromTypedGuide() {
         assertEquals(listOf("1", "2(a)", "2(b)(i)", "2(b)(ii)", "3"),
-            app.redpen.teacher.ai.printedLabels("1. Define work.
-2. (a) State Newton's first law.
-(b) A 2 kg mass...
-(i) Find the force.
-(ii) Find the work done.
-3. B"))
-        assertEquals(listOf("6(a)", "6(b)(i)", "7"), app.redpen.teacher.ai.printedLabels("6(a) Define acceleration. 1 mark
-6(b)(i) A car starts from rest
-7. A 2 kg mass"))
-        assertEquals(listOf("1", "2"), app.redpen.teacher.ai.printedLabels("1. B
-2 marks for the method
-2. C
-10 m is the height"))
+            app.redpen.teacher.ai.printedLabels(listOf("1. Define work.", "2. (a) State Newton's first law.", "(b) A 2 kg mass...", "(i) Find the force.", "(ii) Find the work done.", "3. B").joinToString("\n")))
+        assertEquals(listOf("6(a)", "6(b)(i)", "7"), app.redpen.teacher.ai.printedLabels(listOf("6(a) Define acceleration. 1 mark", "6(b)(i) A car starts from rest", "7. A 2 kg mass").joinToString("\n")))
+        assertEquals(listOf("1", "2"), app.redpen.teacher.ai.printedLabels(listOf("1. B", "2 marks for the method", "2. C", "10 m is the height").joinToString("\n")))
     }
     @Test fun missingSubpartLabelsInferred() {
         fun o(n: Int, l: String? = null) = Question.Objective(n, "", 1, listOf("A"), l)
