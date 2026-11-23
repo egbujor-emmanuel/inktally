@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { draftScheme, resolveLabels } from '../ai/scheme';
+import { draftScheme, missingNotice, resolveLabels } from '../ai/scheme';
 import { PAGE_KEY, createAssignment, createSubmission, saveCrop, saveMarks } from '../data/store';
 import type { Mark, Question } from '../domain/types';
 import { markPage } from '../marking/markAnswer';
@@ -45,6 +45,7 @@ export function QuickMark() {
       if (!scheme.questions.length) throw new Error('No questions could be found on that page. Make sure the questions are visible.');
       if (!subject.trim()) setSubject(scheme.subject);
       if (!level.trim()) setLevel(scheme.level);
+      if (scheme.missing.length) setError(missingNotice(scheme.missing));
       setStep({ kind: 'confirm', questions: scheme.questions });
     } catch (e: unknown) {
       setError(friendlyCloudError(e).message);

@@ -347,7 +347,7 @@ object Ai {
         "Work out the correct answers yourself from the QUESTIONS only. The student's answers may be wrong: never copy them into the marking scheme. " +
         "Each numbered item is ONE question: lines under it such as \"Answer = ...\" or working are part of that same question, never a new one."
 
-    private val DRAFT_SCHEMA = Schema.obj(mapOf("subject" to Schema.string(), "level" to Schema.string(), "questions" to Schema.array(Schema.obj(
+    private val DRAFT_SCHEMA = Schema.obj(mapOf("subject" to Schema.string(), "level" to Schema.string(), "questionCount" to Schema.integer(), "questions" to Schema.array(Schema.obj(
         mapOf(
             "q" to Schema.integer(), "prompt" to Schema.string(), "max" to Schema.integer(),
             "type" to Schema.enumeration(listOf("objective", "numeric", "short", "points")),
@@ -356,7 +356,7 @@ object Ai {
             "methodPoints" to Schema.array(Schema.string()),
         ),
         optionalProperties = listOf("correctOptions", "acceptNumbers", "acceptText", "points", "reject", "methodPoints"),
-    ))), optionalProperties = listOf("subject", "level"))
+    ))), optionalProperties = listOf("subject", "level", "questionCount"))
 
     private fun JSONObject.strings(key: String): List<String> = optJSONArray(key)?.let { a -> (0 until a.length()).map { a.optString(it).trim() }.filter { it.isNotEmpty() } } ?: emptyList()
 
@@ -405,6 +405,27 @@ object Ai {
                 guide.pdf?.let { inlineData(it, "application/pdf") }
             }
         }
+        val (draft, firstQs) = draftOnce(request)
+        var questions = firstQs
+        var missing = missingQuestions(questions.map { it.q }, draft.optInt("questionCount", 0))
+        // A long paper sometimes comes back with questions left out: ask once more, naming them (same as web).
+        if (missing.isNotEmpty()) {
+            runCatching {
+                val note = "IMPORTANT: your previous answer left out question(s) ${missing.joinToString(", ")}. Return the complete list, including every question."
+                val again = content(request.role) { request.parts.forEach { part(it) }; text(note) }
+                val (retryDraft, retryQs) = draftOnce(again)
+                val byNumber = questions.associateBy { it.q }.toMutableMap()
+                retryQs.forEach { if (it.q !in byNumber) byNumber[it.q] = it }
+                questions = byNumber.values.sortedBy { it.q }
+                missing = missingQuestions(questions.map { it.q }, maxOf(draft.optInt("questionCount", 0), retryDraft.optInt("questionCount", 0)))
+            }
+        }
+        if (questions.isEmpty()) throw IllegalStateException("No questions could be found. Make sure the questions are visible, or type them.")
+        val (s, l) = resolveLabels(subject, level, draft.optString("subject"), draft.optString("level"))
+        return MarkingScheme(s, l, questions, missing)
+    }
+
+    private suspend fun draftOnce(request: Content): Pair<JSONObject, List<Question>> {
         val started = System.currentTimeMillis()
         val r = authorGenerate(DRAFT_SCHEMA, request)
         Telemetry.record("author", ReadSource.IN_CLOUD, System.currentTimeMillis() - started)
@@ -412,10 +433,7 @@ object Ai {
             .getOrElse { throw IllegalStateException("The drafted marking scheme was incomplete. Try a clearer photo or type the questions.") }
         val arr: JSONArray = runCatching { draft.getJSONArray("questions") }
             .getOrElse { throw IllegalStateException("The drafted marking scheme was incomplete. Try a clearer photo or type the questions.") }
-        val questions = (0 until arr.length()).mapNotNull { toQuestion(arr.getJSONObject(it)) }.sortedBy { it.q }
-        if (questions.isEmpty()) throw IllegalStateException("No questions could be found. Make sure the questions are visible, or type them.")
-        val (s, l) = resolveLabels(subject, level, draft.optString("subject"), draft.optString("level"))
-        return MarkingScheme(s, l, questions)
+        return draft to (0 until arr.length()).mapNotNull { toQuestion(arr.getJSONObject(it)) }.sortedBy { it.q }
     }
 
     /** Turns the class's actual mistakes on one question into a short catch-up activity. No names, no images. */

@@ -6,6 +6,19 @@ const numeric = (accept: number[], extra: Partial<NumericQuestion> = {}): Numeri
   q: 2, prompt: '15 + 9', max: 1, type: 'numeric', accept, ...extra,
 });
 
+describe('short answers that are really numbers', () => {
+  const q = { q: 8, type: 'short' as const, prompt: 'Solve', max: 2, accept: ['x = 8', '8'] };
+  const frac = { q: 10, type: 'short' as const, prompt: 'Simplify', max: 2, accept: ['4⅜', '35/8', '4.375'] };
+  it('marks the final answer after working', () => {
+    expect(markShort(q as never, '4x - 2x = 9 + 7, 2x = 16, x = 8', 'in_cloud').awarded).toBe(2);
+    expect(markShort(q as never, '2x = 16, x = 8', 'in_cloud').awarded).toBe(2);
+  });
+  it('accepts the same number written another way', () => {
+    expect(markShort(frac as never, '22/8 + 13/8 = 35/8 = 4 3/8', 'in_cloud').awarded).toBe(2);
+    expect(markShort(q as never, '2x = 2, x = 1', 'in_cloud').awarded).toBe(0);
+  });
+});
+
 describe('markNumeric (code decides, never the model)', () => {
   it('marks the pupil wrong when they wrote 23 for 15 + 9', () => {
     const m = markNumeric(numeric([24]), '= 23', 'on_device');

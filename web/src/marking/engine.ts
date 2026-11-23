@@ -69,9 +69,16 @@ export function markShort(question: ShortQuestion, read: string, readSource: Rea
   if (rejected) return result(input, 0, settled(readSource), [`"${read}" is listed as not acceptable.`]);
 
   const tolerant = question.spellingTolerant ?? true;
-  const best = Math.max(...question.accept.map((a) => textSimilarity(read, a)));
   const threshold = tolerant ? SHORT_MATCH : 1;
+  // Working before the answer ("4x − 2x = 16, x = 8"): the final answer is what follows the last "=" or comma.
+  const tail = read.includes('=') ? read.slice(read.lastIndexOf('=') + 1).trim() : read;
+  const best = Math.max(...question.accept.map((a) => Math.max(textSimilarity(read, a), tail !== read ? textSimilarity(tail, a) : 0)));
   if (best >= threshold) return result(input, question.max, settled(readSource), [`"${read}" matches an accepted answer.`]);
+  // The same number written another way ("4 3/8" for "4⅜", "8" for "x = 8").
+  const value = parseNumericAnswer(read).value;
+  if (value !== null && question.accept.some((a) => { const v = parseNumericAnswer(a).value; return v !== null && Math.abs(v - value) < DEFAULT_TOLERANCE; })) {
+    return result(input, question.max, settled(readSource), [`"${read}" is the same number as an accepted answer.`]);
+  }
   const truncated = question.accept.find((a) => isTruncationOf(read, a));
   if (best >= SHORT_UNSURE || truncated) {
     return result(input, 0, 'flagged', [`"${read}" is close to "${truncated ?? question.accept[0]}" — accept it?`]);

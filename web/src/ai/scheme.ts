@@ -14,6 +14,7 @@ const DRAFT_SCHEMA = Schema.object({
   properties: {
     subject: Schema.string(),
     level: Schema.string(),
+    questionCount: Schema.integer(),
     questions: Schema.array({
       items: Schema.object({
         properties: {
@@ -32,7 +33,7 @@ const DRAFT_SCHEMA = Schema.object({
       }),
     }),
   },
-  optionalProperties: ['subject', 'level'],
+  optionalProperties: ['subject', 'level', 'questionCount'],
 });
 
 const DraftQuestion = z.object({
@@ -47,7 +48,7 @@ const DraftQuestion = z.object({
   reject: z.array(z.string()).optional(),
   methodPoints: z.array(z.string()).optional(),
 });
-const Draft = z.object({ subject: z.string().optional(), level: z.string().optional(), questions: z.array(DraftQuestion).min(1) });
+const Draft = z.object({ subject: z.string().optional(), level: z.string().optional(), questionCount: z.number().int().optional(), questions: z.array(DraftQuestion).min(1) });
 
 /** Converts the flat model output into the strongly-typed domain question, dropping unusable ones. */
 export function toQuestion(d: z.infer<typeof DraftQuestion>): Question | null {
@@ -87,10 +88,10 @@ const PUPIL_PAGE_NOTE = "IMPORTANT: this photo shows a student's exercise page �
   + 'Each numbered item is ONE question: lines under it such as "Answer = ..." or working are part of that same question, never a new one.';
 
 /** Marks for working on calculations (WAEC-style partial credit). Same text on Android. */
-export const METHOD_MARKS_NOTE = 'For a calculation worth more than 1 mark, list what earns marks for working in "methodPoints" (for example "uses speed = distance ÷ time" or "finds the profit, 9,000"), one item per mark, never the final answer itself, and put only the final answer in "acceptNumbers". When the teacher\'s scheme gives method marks, copy them exactly.';
+export const METHOD_MARKS_NOTE = 'Method marks: only when the question paper or the teacher’s scheme itself gives a calculation more than 1 mark, list what earns marks for working in "methodPoints" (for example "uses speed = distance ÷ time" or "finds the profit, 9,000"), one item per mark, never the final answer itself, and put only the final answer in "acceptNumbers". Never give a question more marks than the paper or scheme shows. When the teacher’s scheme gives method marks, copy them exactly.';
 
 /** Asks the model to name the subject and level so an untouched form never prints the wrong ones. Same text on Android. */
-export const DETECT_LABELS_NOTE = 'Also return "subject" and "level": the subject and the class or level this paper is for, as short labels '
+export const DETECT_LABELS_NOTE = 'Also return "questionCount": how many numbered questions the paper or scheme has in total. Also return "subject" and "level": the subject and the class or level this paper is for, as short labels '
   + '(for example "Mathematics", "JSS 2"). Use an empty string for either one if the paper does not show it.';
 const MAX_LABEL = 60;
 const cleanLabel = (text: string | undefined): string => (text ?? '').replace(/[<>"]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, MAX_LABEL);
@@ -103,7 +104,17 @@ export function resolveLabels(typedSubject: string, typedLevel: string, detected
   };
 }
 
-export async function draftScheme(source: SchemeSource, subject: string, level: string): Promise<MarkingScheme> {
+/** Question numbers a draft left out: gaps in 1..N, where N is the highest number found or the count the model saw. */
+export function missingQuestions(found: number[], declaredCount = 0): number[] {
+  const last = Math.min(100, Math.max(declaredCount, ...found, 0));
+  const have = new Set(found);
+  return Array.from({ length: last }, (_, i) => i + 1).filter((n) => !have.has(n));
+}
+
+/** A drafted key plus any question numbers REDPEN could not find even after asking again (shown to the teacher). */
+export interface DraftedScheme extends MarkingScheme { missing: number[] }
+
+export async function draftScheme(source: SchemeSource, subject: string, level: string): Promise<DraftedScheme> {
   if (!hasPaper(source) && !hasGuide(source)) throw new Error('Add the question paper or your marking scheme (photo, PDF or typed) first.');
   const parts: (string | Part)[] = [fillTemplate(config('prompt_scheme_draft'), {
     subject: subject.trim() || 'the subject shown on the paper', level: level.trim() || 'the class or level shown on the paper',
@@ -123,11 +134,32 @@ export async function draftScheme(source: SchemeSource, subject: string, level: 
     if (source.guidePdf) parts.push(await blobToPart(source.guidePdf));
   }
 
+  const first = await draftOnce(parts);
+  let questions = first.questions;
+  let missing = missingQuestions(questions.map((q) => q.q), first.count);
+  // A long paper sometimes comes back with questions left out: ask once more, naming them, and keep what was found.
+  if (missing.length) {
+    try {
+      const retry = await draftOnce([...parts, `IMPORTANT: your previous answer left out question(s) ${missing.join(', ')}. Return the complete list, including every question.`]);
+      const byNumber = new Map(questions.map((q) => [q.q, q]));
+      for (const q of retry.questions) if (!byNumber.has(q.q)) byNumber.set(q.q, q);
+      questions = [...byNumber.values()].sort((a, b) => a.q - b.q);
+      missing = missingQuestions(questions.map((q) => q.q), Math.max(first.count, retry.count));
+    } catch { /* keep the first draft; the teacher is told what is missing */ }
+  }
+  return { ...resolveLabels(subject, level, first.labels), questions, missing };
+}
+
+async function draftOnce(parts: (string | Part)[]): Promise<{ questions: Question[]; count: number; labels: { subject?: string; level?: string } }> {
   const started = performance.now();
   const { text } = await authorGenerate(DRAFT_SCHEMA, parts);
   recordInference({ kind: 'author', source: 'in_cloud', ms: Math.round(performance.now() - started) });
   const parsed = Draft.safeParse(JSON.parse(text));
   if (!parsed.success) throw new Error('The drafted marking scheme was incomplete. Try a clearer photo or type the questions.');
   const questions = parsed.data.questions.map(toQuestion).filter((q): q is Question => q !== null).sort((a, b) => a.q - b.q);
-  return { ...resolveLabels(subject, level, parsed.data), questions };
+  return { questions, count: parsed.data.questionCount ?? 0, labels: parsed.data };
 }
+
+/** The sentence shown when questions are still missing after the second try. */
+export const missingNotice = (missing: number[]): string =>
+  `REDPEN could not find question${missing.length === 1 ? '' : 's'} ${missing.join(', ')}. Check the paper, and add ${missing.length === 1 ? 'it' : 'them'} with "+ Add question".`;

@@ -26,7 +26,8 @@ sealed interface Question {
     ) : Question
 }
 
-data class MarkingScheme(val subject: String, val level: String, val questions: List<Question>)
+data class MarkingScheme(val subject: String, val level: String, val questions: List<Question>,
+    /** Question numbers a draft could not find (shown to the teacher; never saved). */ val missing: List<Int> = emptyList())
 
 data class Mark(
     val q: Int,

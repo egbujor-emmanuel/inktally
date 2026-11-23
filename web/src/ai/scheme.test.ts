@@ -41,6 +41,18 @@ describe('toQuestion', () => {
   });
 });
 
+describe('drafts that leave questions out', async () => {
+  const { missingQuestions, missingNotice } = await import('./scheme');
+  test('gaps and a too-short list are both found', () => {
+    expect(missingQuestions([1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13])).toEqual([6, 7]);
+    expect(missingQuestions([1, 2, 3, 4, 5], 6)).toEqual([6]);
+    expect(missingQuestions([1, 2, 3], 0)).toEqual([]);
+  });
+  test('the teacher is told exactly which questions to add', () => {
+    expect(missingNotice([6, 7])).toBe('REDPEN could not find questions 6, 7. Check the paper, and add them with "+ Add question".');
+  });
+});
+
 describe('subject and level labels', async () => {
   const { resolveLabels } = await import('./scheme');
   test('what the teacher typed wins over what the paper says', () => {

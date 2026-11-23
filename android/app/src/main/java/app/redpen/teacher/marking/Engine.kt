@@ -57,9 +57,16 @@ fun markShort(q: Question.Short, read: String, source: ReadSource): Mark {
     if (q.reject.any { textSimilarity(read, it) >= SHORT_MATCH }) {
         return result(q, read, source, 0, settled(source), listOf("\"$read\" is listed as not acceptable."))
     }
-    val best = q.accept.maxOfOrNull { textSimilarity(read, it) } ?: 0.0
     val threshold = if (q.spellingTolerant) SHORT_MATCH else 1.0
+    // Working before the answer ("4x − 2x = 16, x = 8"): the final answer is what follows the last "=" (same as web).
+    val tail = if (read.contains('=')) read.substring(read.lastIndexOf('=') + 1).trim() else read
+    val best = q.accept.maxOfOrNull { a -> maxOf(textSimilarity(read, a), if (tail != read) textSimilarity(tail, a) else 0.0) } ?: 0.0
     if (best >= threshold) return result(q, read, source, q.max, settled(source), listOf("\"$read\" matches an accepted answer."))
+    // The same number written another way ("4 3/8" for "4⅜", "8" for "x = 8").
+    val value = parseNumericAnswer(read).value
+    if (value != null && q.accept.any { a -> parseNumericAnswer(a).value?.let { kotlin.math.abs(it - value) < 1e-9 } == true }) {
+        return result(q, read, source, q.max, settled(source), listOf("\"$read\" is the same number as an accepted answer."))
+    }
     val truncated = q.accept.firstOrNull { isTruncationOf(read, it) }
     if (best >= SHORT_UNSURE || truncated != null) {
         return result(q, read, source, 0, MarkStatus.FLAGGED, listOf("\"$read\" is close to \"${truncated ?: q.accept.first()}\" — accept it?"))

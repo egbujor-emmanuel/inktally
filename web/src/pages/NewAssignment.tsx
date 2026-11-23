@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { draftScheme, resolveLabels } from '../ai/scheme';
+import { draftScheme, missingNotice, resolveLabels } from '../ai/scheme';
 import { createAssignment } from '../data/store';
 import type { Question } from '../domain/types';
 import { SchemeEditor, isComplete } from '../components/SchemeEditor';
@@ -86,6 +86,7 @@ export function NewAssignment() {
         guideImages: guidePhotos, guidePdf: guidePdf ?? undefined, guideText: guideText || undefined,
       }, subject, level);
       setQuestions(scheme.questions);
+      if (scheme.missing.length) setError(missingNotice(scheme.missing));
       if (!subject.trim()) setSubject(scheme.subject);
       if (!level.trim()) setLevel(scheme.level);
     } catch (e: unknown) {
