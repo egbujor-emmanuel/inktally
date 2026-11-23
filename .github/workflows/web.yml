@@ -1,0 +1,27 @@
+name: web
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['web/**', 'evidence/**', 'bench/evidence/**', 'bench/out-cloud/**', 'README.md', 'JUDGES.md', 'firebase.json', 'docs/real-test/**', '.github/workflows/web.yml']
+  pull_request:
+    paths: ['web/**', 'evidence/**', 'README.md', 'JUDGES.md']
+
+jobs:
+  ci-clean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      # Lint, every unit test, the production build with its secret scan, and every README number re-checked
+      # against its evidence file (evidence/claims.json). No Firebase project needed.
+      - run: npm run ci:clean
