@@ -62,7 +62,7 @@ fun QuickMarkScreen(onOpenAssignment: (String) -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val online by Connectivity.online.collectAsState()
-    // Empty by default: REDPEN reads the subject and level from the page (same as web).
+    // Empty by default: InkTally reads the subject and level from the page (same as web).
     var subject by remember { mutableStateOf("") }
     var level by remember { mutableStateOf("") }
     var pupil by remember { mutableStateOf("") }
@@ -103,10 +103,10 @@ fun QuickMarkScreen(onOpenAssignment: (String) -> Unit) {
     }
 
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { PageTitle("no preparation needed", "Quick mark", "Photograph one student’s page with the questions on it. REDPEN works out the answers from the questions, you check them in seconds, then it marks the page. The answer key is saved so you can mark the rest of the class.") }
+        item { PageTitle("no preparation needed", "Quick mark", "Photograph one student’s page with the questions on it. InkTally works out the answers from the questions, you check them in seconds, then it marks the page. The answer key is saved so you can mark the rest of the class.") }
         if (step == QuickStep.Snap) item {
             Paper {
-                Field(subject, { subject = it }, "Subject", placeholder = "Leave empty: REDPEN reads it from the page")
+                Field(subject, { subject = it }, "Subject", placeholder = "Leave empty: InkTally reads it from the page")
                 LevelField(level) { level = it }
                 Field(pupil, { pupil = it }, "Student", placeholder = "Name or number")
                 if (online) PhotoButtons(input, "Photograph the page") else Text("Quick mark needs internet (the cloud writes the answer key).", color = RP.Pen)
@@ -122,7 +122,7 @@ fun QuickMarkScreen(onOpenAssignment: (String) -> Unit) {
                 item {
                     Paper(borderColor = RP.Flag) {
                         Text("Does this answer key look right?", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
-                        Text("REDPEN worked these answers out from the questions. Every mark depends on them, so fix anything that is wrong.", color = RP.InkSoft, fontSize = 14.sp)
+                        Text("InkTally worked these answers out from the questions. Every mark depends on them, so fix anything that is wrong.", color = RP.InkSoft, fontSize = 14.sp)
                     }
                 }
                 item {

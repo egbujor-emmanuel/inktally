@@ -1,4 +1,4 @@
-// Live watch: marks the sample pages on the live site and fails loudly if REDPEN does not give the true scores.
+// Live watch: marks the sample pages on the live site and fails loudly if InkTally does not give the true scores.
 // Run by .github/workflows/live-watch.yml every 6 hours (GitHub emails the repo owner when it fails).
 // Usage: [REDPEN_CODE=...] node e2e/smoke.mjs [url]
 import { chromium } from '@playwright/test';
@@ -19,7 +19,7 @@ const page = await (await browser.newContext({ viewport: { width: 412, height: 9
 await check('site opens', async () => {
   const res = await page.goto(URL_, { waitUntil: 'load' });
   if (!res?.ok()) throw new Error(`HTTP ${res?.status()}`);
-  if (await page.getByText('REDPEN preview').count()) {
+  if (await page.getByText('InkTally preview').count()) {
     if (!process.env.REDPEN_CODE) { console.log('NOTICE: preview gate is on and no REDPEN_CODE is set; skipping the marking checks.'); await browser.close(); process.exit(0); }
     await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]');
   }

@@ -22,9 +22,9 @@ type Boot = { state: 'loading' } | { state: 'ready' } | { state: 'error'; messag
 /** Turns Firebase start-up errors into something a teacher can act on. */
 function friendlyStartError(e: unknown): string {
   const code = (e as { code?: string })?.code ?? '';
-  if (code === 'auth/network-request-failed') return 'You seem to be offline and this device has not signed in before. Connect once to set up REDPEN.';
+  if (code === 'auth/network-request-failed') return 'You seem to be offline and this device has not signed in before. Connect once to set up InkTally.';
   if (code === 'auth/configuration-not-found' || code === 'auth/operation-not-allowed' || code === 'auth/admin-restricted-operation') {
-    return 'Sign-in is not switched on for this REDPEN project yet (Firebase Authentication > Anonymous).';
+    return 'Sign-in is not switched on for this InkTally project yet (Firebase Authentication > Anonymous).';
   }
   return e instanceof Error ? e.message : 'Could not start';
 }
@@ -74,9 +74,9 @@ export function App() {
       <header className="z-20 border-b border-border bg-paper sm:sticky sm:top-0">
         <div className="mx-auto max-w-3xl lg:max-w-5xl">
           <div className="flex items-center px-4 pt-2.5 lg:gap-3">
-            <Link to="/" className="flex items-center gap-2 font-display text-2xl font-bold" aria-label="REDPEN home">
+            <Link to="/" className="flex items-center gap-2 font-display text-2xl font-bold" aria-label="InkTally home">
               <img src="/logo-mark.svg" alt="" width={36} height={36} className="size-9" />
-              <span>RED<span className="text-pen">PEN</span></span>
+              <span>Ink<span className="text-pen">Tally</span></span>
             </Link>
             <span className="flex-1" />
             {/* Desktop: the two main actions sit in the header row instead of two full-width buttons. */}
@@ -107,7 +107,7 @@ export function App() {
           </p>
         )}
         {boot.state === 'error' && (
-          <p className="py-20 text-center text-pen" role="alert">REDPEN could not start: {boot.message}</p>
+          <p className="py-20 text-center text-pen" role="alert">InkTally could not start: {boot.message}</p>
         )}
         {/* The home page paints immediately; screens that read or save data wait for sign-in. */}
         {boot.state !== 'error' && (

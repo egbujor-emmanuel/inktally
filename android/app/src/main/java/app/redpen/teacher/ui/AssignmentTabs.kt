@@ -165,7 +165,7 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Column(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                ModeOption(sheetMode, "Printed REDPEN sheet", "Names never leave the device · works fully offline") { sheetMode = true }
+                ModeOption(sheetMode, "Printed InkTally sheet", "Names never leave the device · works fully offline") { sheetMode = true }
                 ModeOption(!sheetMode, "Exercise book page", "No printer needed · best when online") { sheetMode = false }
             }
         }
@@ -189,14 +189,14 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
             Paper {
                 Text("Marked: ${queuedNowMarked.pupil} · ${queuedNowMarked.marks.sumOf { it.awarded }}/${queuedNowMarked.marks.sumOf { it.max }}",
                     fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                Text("The connection came back and REDPEN marked the saved photo. It is in the Mark register with everyone else.", color = RP.InkSoft, fontSize = 14.sp)
+                Text("The connection came back and InkTally marked the saved photo. It is in the Mark register with everyone else.", color = RP.InkSoft, fontSize = 14.sp)
             }
         }
         queuedFor?.takeIf { queuedNowMarked == null }?.let { who ->
             item {
                 Paper(borderColor = RP.Flag) {
                     Text("Saved for marking: $who", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                    Text("You’re offline and this phone can’t read handwriting without a connection. The photo stays on this phone and REDPEN marks it automatically as soon as you’re back online. Keep photographing the rest of the class.",
+                    Text("You’re offline and this phone can’t read handwriting without a connection. The photo stays on this phone and InkTally marks it automatically as soon as you’re back online. Keep photographing the rest of the class.",
                         color = RP.InkSoft, fontSize = 14.sp)
                 }
             }
@@ -205,7 +205,7 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
             item {
                 Paper(borderColor = RP.Flag) {
                     Text("$n scripts added", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                    Text("REDPEN is marking them one by one below. You can keep photographing, and rename students in the Mark register afterwards.",
+                    Text("InkTally is marking them one by one below. You can keep photographing, and rename students in the Mark register afterwards.",
                         color = RP.InkSoft, fontSize = 14.sp)
                 }
             }
@@ -384,8 +384,8 @@ fun ReviewTab(a: Assignment, submissions: List<Submission>, check: CloudCheckSta
 @Composable
 private fun LearnedCard(a: Assignment) {
     Paper {
-        Text("What REDPEN learned about on-device reading here", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Text("When the cloud check found Gemini Nano misreading an answer, REDPEN kept it. From now on, an offline reading that matches one of these is held as “Check this” and listed here, so you see the shaky marks before you are back online. REDPEN never changes what the device read, so it cannot push an answer towards the key.",
+        Text("What InkTally learned about on-device reading here", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text("When the cloud check found Gemini Nano misreading an answer, InkTally kept it. From now on, an offline reading that matches one of these is held as “Check this” and listed here, so you see the shaky marks before you are back online. InkTally never changes what the device read, so it cannot push an answer towards the key.",
             color = RP.InkSoft, fontSize = 14.sp)
         a.readingHints.reversed().forEach { h ->
             Text(buildAnnotatedString {

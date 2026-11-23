@@ -1,4 +1,4 @@
-"""Writes handwritten-style answers onto a blank REDPEN sheet and fakes a tilted phone photo.
+"""Writes handwritten-style answers onto a blank InkTally sheet and fakes a tilted phone photo.
 Synthetic test data for the scanner + on-device reading path (clearly not real pupil work).
 Usage: python make_sheet_photo.py blank.png out.jpg [answers name seed]
   answers: comma-separated, one per box (default: the sample sheet's B,D,B,Abuja,runned); name and seed are optional."""

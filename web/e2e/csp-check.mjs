@@ -10,7 +10,7 @@ const violations = [];
 page.on('console', (m) => { if (/Content Security Policy|Refused to/i.test(m.text())) violations.push(m.text().slice(0, 220)); });
 const resp = await page.goto(U);
 console.log('CSP header present:', Boolean((await resp.allHeaders())['content-security-policy']));
-if (await page.getByText('REDPEN preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
+if (await page.getByText('InkTally preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
 await page.getByText('Try it with a sample').waitFor({ timeout: 60000 });
 const fontsOk = await page.evaluate(async () => { await document.fonts.ready; return document.fonts.check('700 20px Fraunces'); });
 await page.locator('#samples button', { hasText: 'English' }).click(); await page.waitForURL(/\/print$/);

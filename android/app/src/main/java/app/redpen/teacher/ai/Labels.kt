@@ -21,7 +21,7 @@ fun missingQuestions(found: List<Int>, declaredCount: Int = 0): List<Int> {
 
 /** The sentence shown when questions are still missing after the second try (same as web). */
 fun missingNotice(missing: List<Any>) =
-    "REDPEN could not find question${if (missing.size == 1) "" else "s"} ${missing.joinToString(", ")}. Check the paper, and add ${if (missing.size == 1) "it" else "them"} with \"+ Add question\"."
+    "InkTally could not find question${if (missing.size == 1) "" else "s"} ${missing.joinToString(", ")}. Check the paper, and add ${if (missing.size == 1) "it" else "them"} with \"+ Add question\"."
 
 private val SUBPART = Regex("""^(\d+)\(([a-z])\)""", RegexOption.IGNORE_CASE)
 

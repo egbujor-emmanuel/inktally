@@ -1,4 +1,4 @@
-// The cloud teaches REDPEN where the device goes wrong. When the cloud check reads an answer differently from Gemini
+// The cloud teaches InkTally where the device goes wrong. When the cloud check reads an answer differently from Gemini
 // Nano, the pair ("the device read A" -> "it was D") is saved on the assignment. From then on, an offline on-device
 // reading that matches a known misread is HELD for the teacher ("Check this", listed in Review) so it is checked before the marks go back.
 //
@@ -6,7 +6,7 @@
 // that adding the corrections to the read prompt made no measurable difference on unseen students (19/25, 19/25,
 // 20/25 exact reads), while a letter hint such as "A was really D" could turn a student who truly wrote A into D.
 // The same corrections, used to hold matching readings, flagged every one of the device's misreads on those unseen
-// students. REDPEN never changes what the device read, so it cannot push an answer towards the key.
+// students. InkTally never changes what the device read, so it cannot push an answer towards the key.
 import type { Mark, Question, QuestionType } from '../domain/types';
 
 export interface ReadingHint {

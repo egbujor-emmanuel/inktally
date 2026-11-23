@@ -78,7 +78,7 @@ fun HomeScreen(onOpen: (String) -> Unit, onQuick: () -> Unit, onNew: () -> Unit)
                     modifier = Modifier.padding(top = 4.dp),
                 )
                 Text(
-                    "REDPEN reads students’ handwriting with the AI on your phone and marks it against your marking scheme. " +
+                    "InkTally reads students’ handwriting with the AI on your phone and marks it against your marking scheme. " +
                         "Students’ work stays with you; the cloud double-checks every mark when you’re back online.",
                     color = RP.InkSoft, fontSize = 16.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 14.dp),
                 )

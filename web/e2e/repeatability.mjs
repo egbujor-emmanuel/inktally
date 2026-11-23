@@ -15,7 +15,7 @@ mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const page = await (await browser.newContext({ viewport: { width: 412, height: 915 } })).newPage();
 await page.goto(URL_);
-if (await page.getByText('REDPEN preview').count()) { await page.fill('input', process.env.REDPEN_CODE ?? ''); await page.click('button[type=submit]'); }
+if (await page.getByText('InkTally preview').count()) { await page.fill('input', process.env.REDPEN_CODE ?? ''); await page.click('button[type=submit]'); }
 await page.getByText('Try it with a sample').waitFor({ timeout: 60_000 });
 
 const result = { at: new Date().toISOString(), site: URL_, quickMark: [], ownScheme: [] };

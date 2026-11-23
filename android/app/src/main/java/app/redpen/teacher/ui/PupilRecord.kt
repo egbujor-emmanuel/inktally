@@ -70,7 +70,7 @@ fun PupilRecord(a: Assignment, s: Submission, profile: Profile, fresh: Bitmap? =
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     PenButton("Share", { scope.launch {
                         val f = withContext(Dispatchers.IO) { Render.savePng(ctx, lettered!!, "${s.pupil}-marked") }
-                        shareFile(ctx, f, "image/png", "${s.pupil} — marked by REDPEN")
+                        shareFile(ctx, f, "image/png", "${s.pupil} — marked by InkTally")
                     } }, Modifier.weight(1f))
                     GhostButton("Print", { printBitmap(ctx, lettered!!, "${s.pupil} marked copy") }, Modifier.weight(1f))
                 }

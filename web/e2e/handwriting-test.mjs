@@ -1,4 +1,4 @@
-// Runs the REDPEN handwriting test pack (docs/real-test/) on the live site and compares every mark with the truth.
+// Runs the InkTally handwriting test pack (docs/real-test/) on the live site and compares every mark with the truth.
 // 1) creates the assignment from the typed marking guide, 2) marks each script photo as an exercise-book page,
 // 3) prints a per-question comparison and writes e2e/out/handwriting-test.json.
 // Usage: REDPEN_CODE=... node e2e/handwriting-test.mjs <folder with script-1..N images> [url]
@@ -18,7 +18,7 @@ const GUIDE = readFileSync(resolve(import.meta.dirname, '../../docs/real-test/gu
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
 await page.goto(URL_);
-if (await page.getByText('REDPEN preview').count()) { await page.fill('input', process.env.REDPEN_CODE ?? ''); await page.click('button[type=submit]'); }
+if (await page.getByText('InkTally preview').count()) { await page.fill('input', process.env.REDPEN_CODE ?? ''); await page.click('button[type=submit]'); }
 await page.getByText('Try it with a sample').waitFor({ timeout: 60_000 });
 
 // 1) The assignment, from the teacher's own marking guide.
@@ -72,13 +72,13 @@ ${name}: NO RESULT after 300 s. On screen: ${(await page.locator('main').innerTe
   for (const m of marks) m.index = labels.indexOf(norm(m.label));
   const unmatched = marks.filter((m) => m.index < 0);
   const diffs = marks.filter((m) => m.index >= 0 && want[m.index] !== m.got).map((m) => ({ ...m, want: want[m.index] }));
-  if (unmatched.length) console.log(`  labels REDPEN used that the truth does not have: ${unmatched.map((m) => m.label).join(', ')}`);
+  if (unmatched.length) console.log(`  labels InkTally used that the truth does not have: ${unmatched.map((m) => m.label).join(', ')}`);
   results.push({ name, total, seconds: Math.round((Date.now() - started) / 1000), truthTotal: truth.scripts[name]?.total, marks, diffs });
-  console.log(`\n${name}: REDPEN ${total} · truth ${truth.scripts[name]?.total}/${truth.total} · ${Math.round((Date.now() - started) / 1000)} s · ${diffs.length} question(s) differ`);
-  diffs.forEach((d) => console.log(`  Q${d.label}: REDPEN ${d.got}/${d.max}, truth ${d.want} — ${d.row}`));
+  console.log(`\n${name}: InkTally ${total} · truth ${truth.scripts[name]?.total}/${truth.total} · ${Math.round((Date.now() - started) / 1000)} s · ${diffs.length} question(s) differ`);
+  diffs.forEach((d) => console.log(`  Q${d.label}: InkTally ${d.got}/${d.max}, truth ${d.want} — ${d.row}`));
 }
 const agree = results.reduce((n, r) => n + r.marks.filter((m) => m.index >= 0).length - r.diffs.length, 0);
 const all = results.filter((r) => !r.stuck).length * truth.labels.length;
-console.log(`\nquestions where REDPEN = truth: ${agree}/${all}`);
+console.log(`\nquestions where InkTally = truth: ${agree}/${all}`);
 writeFileSync(`${OUT}/handwriting-test.json`, JSON.stringify({ at: new Date().toISOString(), site: URL_, key, results, agree, all }, null, 2));
 await browser.close();

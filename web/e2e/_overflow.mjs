@@ -3,7 +3,7 @@ import { chromium } from '@playwright/test';
 const U = 'http://localhost:5173';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const page = await (await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();
-await page.goto(U); if (await page.getByText('REDPEN preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
+await page.goto(U); if (await page.getByText('InkTally preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
 await page.getByText('Try it with a sample').waitFor({ timeout: 60000 });
 await page.locator('#samples button', { hasText: 'English' }).click(); await page.waitForURL(/\/print$/);
 const base = page.url().replace(/\/print$/, '');

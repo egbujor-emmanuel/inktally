@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" role="img" aria-labelledby="t">
-  <title id="t">REDPEN</title>
+  <title id="t">InkTally</title>
   <g transform="translate(20 20) scale(0.625)">
     <rect width="512" height="512" rx="116" fill="#1f2a44"/>
     <g transform="rotate(-7 256 266)">
@@ -12,6 +12,6 @@
     </g>
     <path d="M138 290 C166 312 200 344 226 372 C270 292 334 206 410 138" fill="none" stroke="#d7263d" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <text x="380" y="222" font-family="Fraunces, Georgia, serif" font-size="176" font-weight="700" letter-spacing="-4" fill="#1f2a44">RED<tspan fill="#d7263d">PEN</tspan></text>
+  <text x="380" y="222" font-family="Fraunces, Georgia, serif" font-size="150" font-weight="700" letter-spacing="-3" fill="#1f2a44">Ink<tspan fill="#d7263d">Tally</tspan></text>
   <text x="386" y="290" font-family="Inter Tight, Arial, sans-serif" font-size="40" fill="#5a6378">Marked in minutes. Even offline.</text>
 </svg>

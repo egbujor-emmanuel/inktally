@@ -1,4 +1,4 @@
-// The Firebase console's AI monitoring does not show on-device inference, so REDPEN records
+// The Firebase console's AI monitoring does not show on-device inference, so InkTally records
 // where each inference ran (and how long it took) in Firestore: one counter doc per teacher per day.
 import { doc, increment, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/app';

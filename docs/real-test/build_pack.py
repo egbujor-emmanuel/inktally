@@ -40,17 +40,17 @@ guide_rows = [
     ('10', '100 J. Method (1 mark): uses PE = mgh.', 2),
 ]
 
-pack = [HEAD.format(title='REDPEN WAEC Physics Test Pack', orient='')]
-pack.append('''<section class="page"><div class="kicker">redpen · handwriting test · waec standard</div><h1>How to run this test</h1>
-<p>This pack tests REDPEN end to end on <b>real handwriting</b> at <b>WAEC SSCE standard</b> (also first-year A-level physics): objective questions, structured questions with sub-parts like 6(b)(ii), calculations with units and standard form, method marks for wrong answers, and theory answers marked point by point. We know the correct mark for every answer, so every difference shows.</p>
+pack = [HEAD.format(title='InkTally WAEC Physics Test Pack', orient='')]
+pack.append('''<section class="page"><div class="kicker">inktally · handwriting test · waec standard</div><h1>How to run this test</h1>
+<p>This pack tests InkTally end to end on <b>real handwriting</b> at <b>WAEC SSCE standard</b> (also first-year A-level physics): objective questions, structured questions with sub-parts like 6(b)(ii), calculations with units and standard form, method marks for wrong answers, and theory answers marked point by point. We know the correct mark for every answer, so every difference shows.</p>
 <ol>
 <li><b>Find 4 people</b> (different handwriting is the point). Give each person <b>one</b> script page: Script 1, 2, 3 or 4.</li>
 <li>Each person copies their script <b>by hand, in pen, onto one clean exercise-book page</b>, in their normal handwriting: the question label first (1, 2 … 6(a), 6(b)(i) …), then the answer exactly as printed, mistakes included. If they run out of space, they may use small writing, but keep it to one page.</li>
 <li>At the top they write only <b>“Script 1”</b> (or 2, 3, 4). No real names.</li>
 <li>Photograph each page <b>flat, in good light, one page per photo</b>.</li>
-<li>Put the photos in Google Drive, in a folder called <b>REDPEN real scripts</b>, and tell me.</li>
+<li>Put the photos in Google Drive, in a folder called <b>InkTally real scripts</b>, and tell me.</li>
 </ol>
-<div class="box"><b>Then:</b> I create the assignment from the marking guide, mark all four scripts with REDPEN and compare every mark with the correct one. That run is also our demo footage.</div>
+<div class="box"><b>Then:</b> I create the assignment from the marking guide, mark all four scripts with InkTally and compare every mark with the correct one. That run is also our demo footage.</div>
 <p class="warn">Keep the separate “truth” file to yourself. Don’t give it to the writers.</p></section>''')
 
 pack.append('''<section class="page"><div class="kicker">question paper</div><h1>Physics — WAEC standard</h1><p class="note">22 marks. Answer all questions. Show your working in Section B. Take g = 10 m/s².</p>
@@ -86,9 +86,9 @@ body = f'<tr><td>Out of</td>{"".join(f"<td class=c>{m}</td>" for m in truth["max
 for name, s in truth['scripts'].items():
     body += f'<tr><td>{e(name)}</td>{"".join(f"<td class=c>{m}</td>" for m in s["marks"])}<td class="c tot">{s["total"]}</td></tr>'
 notes = ''.join(f'<li><b>{e(name)}</b>: ' + '; '.join(f'{e(k)}: {e(v)}' for k, v in s['notes'].items()) + '.</li>' for name, s in truth['scripts'].items())
-t = [HEAD.format(title='REDPEN WAEC Test Truth', orient='landscape'),
+t = [HEAD.format(title='InkTally WAEC Test Truth', orient='landscape'),
      f'''<div class="kicker">organiser only — do not give to writers</div><h1>Correct marks for each script</h1>
-<p class="warn">What a teacher marking with the guide would give. We compare REDPEN with these numbers.</p>
+<p class="warn">What a teacher marking with the guide would give. We compare InkTally with these numbers.</p>
 <table><tr><th>Script</th>{head}<th class="c tot">Total /{truth["total"]}</th></tr>{body}</table>
 <p><b>Why some marks are what they are:</b></p><ul>{notes}</ul>
 <p>What this tests: objectives; sub-part labels (6(a), 6(b)(i), 6(b)(ii)); calculations with units written many ways (m/s², ms⁻², 50m, 2A, 100J, 100 joules, N/m²); standard form (1.0 × 10⁵ Pa); method marks when the answer is wrong; full marks without working; a blank; theory points with an invalid one mixed in.</p></body></html>''']

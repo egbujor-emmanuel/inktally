@@ -4,7 +4,7 @@ const browser = await chromium.launch({ channel: 'chrome', headless: true });
 for (const mobile of [false, true]) {
   const ctx = await browser.newContext(mobile ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : { viewport: { width: 1280, height: 860 } });
   const page = await ctx.newPage(); const tag = mobile ? 'm' : 'd';
-  await page.goto(U); if (await page.getByText('REDPEN preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
+  await page.goto(U); if (await page.getByText('InkTally preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
   await page.getByText('Try it with a sample').waitFor({ timeout: 60000 });
   await page.goto(`${U}/school`); await page.getByLabel('Institution name').fill('Greenfield College');
   await page.getByLabel(/Details under/).fill('12 Bode Thomas St, Surulere, Lagos · First Term 2026/27'); await page.getByLabel(/Teacher or examiner/).fill('Mrs A. Okafor');

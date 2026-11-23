@@ -61,7 +61,7 @@ export function NewAssignment() {
   const isOnline = useOnline();
   const [title, setTitle] = useState('');
   const [className, setClassName] = useState('');
-  // Empty by default: REDPEN reads the subject and level from the paper (a silent default printed the wrong ones).
+  // Empty by default: InkTally reads the subject and level from the paper (a silent default printed the wrong ones).
   const [subject, setSubject] = useState('');
   const [level, setLevel] = useState('');
   const [paperPhotos, setPaperPhotos] = useState<File[]>([]);
@@ -117,11 +117,11 @@ export function NewAssignment() {
   return (
     <div className="grid gap-[14px] pb-10">
       <PageTitle eyebrow="step 1" title="New assignment"
-        intro="Give REDPEN the question paper and it works out the answer key — or give it your own marking scheme and it copies it exactly. Only these go to the cloud, never students’ work, and you check everything before marking." />
+        intro="Give InkTally the question paper and it works out the answer key — or give it your own marking scheme and it copies it exactly. Only these go to the cloud, never students’ work, and you check everything before marking." />
       <Card>
         <Field label="Title" value={title} onChange={setTitle} placeholder="Fractions quiz" />
         <Field label="Class / group" value={className} onChange={setClassName} placeholder="e.g. Primary 6A, Biology 101 group B" />
-        <Field label="Subject" value={subject} onChange={setSubject} placeholder="Leave empty: REDPEN reads it from the paper" />
+        <Field label="Subject" value={subject} onChange={setSubject} placeholder="Leave empty: InkTally reads it from the paper" />
         <LevelField level={level} onChange={setLevel} />
       </Card>
       <Card labelledBy="paper-title">
@@ -133,7 +133,7 @@ export function NewAssignment() {
       </Card>
       <Card labelledBy="guide-title">
         <h2 id="guide-title" className="font-display text-[22px]">Already have a marking scheme?</h2>
-        <p className="text-sm text-ink-soft">Optional. Give REDPEN your own marking scheme or answer key and it copies your answers and marks exactly — it never changes them.</p>
+        <p className="text-sm text-ink-soft">Optional. Give InkTally your own marking scheme or answer key and it copies your answers and marks exactly — it never changes them.</p>
         <SourceInputs name="Marking scheme" photos={guidePhotos} setPhotos={setGuidePhotos} pdf={guidePdf} setPdf={setGuidePdf}
           text={guideText} setText={setGuideText} textLabel="…or type / paste your marking scheme"
           textPlaceholder={'1. 56 (1 mark)\n2. Abuja — accept FCT (1 mark)'} onError={setError} />

@@ -134,7 +134,7 @@ export async function addReadingHints(assignmentId: string, fresh: ReadingHint[]
 
 /** Replaces the known misreads (the teacher's "Forget these"). */
 export function saveReadingHints(assignmentId: string, hints: ReadingHint[]): void {
-  queueWrite(updateDoc(doc(db, 'assignments', assignmentId), { readingHints: hints }), 'what REDPEN learned');
+  queueWrite(updateDoc(doc(db, 'assignments', assignmentId), { readingHints: hints }), 'what InkTally learned');
 }
 
 export function setAssignmentStatus(id: string, status: 'active' | 'finished'): void {

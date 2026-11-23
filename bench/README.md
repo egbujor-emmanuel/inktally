@@ -6,7 +6,7 @@ Evidence behind the design decisions in the main README. All scripts drive **rea
 |---|---|
 | `probe.mjs` + `index.html` | Does Gemini Nano download and run on this machine? Text + image prompt latency. |
 | `bench.mjs` + `bench.html` + `cases.json` | Whole-page on-device reading/marking of real handwriting (showed Nano auto-correcting wrong answers). |
-| `bench.mjs` with `PAGE=crops.html` | Answer-only crops on-device + code marking (the design REDPEN uses). |
+| `bench.mjs` with `PAGE=crops.html` | Answer-only crops on-device + code marking (the design InkTally uses). |
 | `cloud.mjs` + `cloud.html` | The same photos through Firebase AI Logic in the cloud (`ONLY_IN_CLOUD`). |
 | `e2e-ondevice.mjs` | Live site: enable Nano → offline marking of a printed sheet → back online → automatic cloud check. |
 

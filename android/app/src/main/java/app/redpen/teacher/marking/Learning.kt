@@ -6,14 +6,14 @@ import app.redpen.teacher.domain.Question
 import app.redpen.teacher.domain.ReadSource
 import app.redpen.teacher.domain.wireType
 
-// The cloud teaches REDPEN where the device goes wrong. Kotlin port of web/src/marking/learning.ts.
+// The cloud teaches InkTally where the device goes wrong. Kotlin port of web/src/marking/learning.ts.
 // When the cloud check reads an answer differently from Gemini Nano, the pair ("the device read A" -> "it was D") is
 // saved on the assignment. From then on, an offline on-device reading that matches a known misread is HELD for the
 // teacher ("Check this", listed in Review) so it is checked before the marks go back.
 // Why holding, not hinting: on real Gemini Nano, adding the corrections to the read prompt made no measurable difference
 // on unseen students, and a letter hint could turn a student who truly wrote A into D (see
 // bench/evidence/learning-heldout-2026-11-14/). Holding matching readings caught every one of the device's misreads
-// there, and REDPEN never changes what the device read, so it cannot push an answer towards the key.
+// there, and InkTally never changes what the device read, so it cannot push an answer towards the key.
 
 /** One known misread. [type] is the question type as stored in Firestore ("objective", "numeric", "short"). */
 data class ReadingHint(val type: String, val device: String, val cloud: String, /** Answers that showed this misread. */ val n: Int = 1)

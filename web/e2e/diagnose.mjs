@@ -5,7 +5,7 @@ const log = [];
 page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) log.push(`${m.type()}: ${m.text().slice(0, 400)}`); });
 page.on('response', async (r) => { if (r.status() >= 400) log.push(`HTTP ${r.status()} ${r.url().slice(0, 110)} :: ${(await r.text().catch(() => '')).slice(0, 300)}`); });
 await page.goto('https://redpen-hybrid.web.app');
-if (await page.getByText('REDPEN preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
+if (await page.getByText('InkTally preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
 await page.getByText('Try it with a sample').waitFor({ timeout: 60000 });
 // 1) AI drafting
 await page.goto('https://redpen-hybrid.web.app/new');

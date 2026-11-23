@@ -1,6 +1,6 @@
 {
-  "name": "REDPEN — offline marking for teachers",
-  "short_name": "REDPEN",
+  "name": "InkTally — offline marking for teachers",
+  "short_name": "InkTally",
   "description": "Marks handwritten classwork in minutes, on your device, even offline.",
   "start_url": "/",
   "display": "standalone",

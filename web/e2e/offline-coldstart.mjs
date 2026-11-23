@@ -1,4 +1,4 @@
-// Cold offline start of the LIVE site: visit once online, close the tab, then open REDPEN again with NO connection.
+// Cold offline start of the LIVE site: visit once online, close the tab, then open InkTally again with NO connection.
 // Proves the service worker serves the whole app offline, Firestore's cache shows the teacher's work, a stack of
 // photos can be added offline, and the queue marks them automatically when the connection returns.
 // Usage: REDPEN_CODE=... node e2e/offline-coldstart.mjs [url]
@@ -31,7 +31,7 @@ async function step(name, fn) {
 let assignmentUrl = '';
 await step('first visit online: app installs its offline copy', async () => {
   await page.goto(URL_, { waitUntil: 'load' });
-  if (await page.getByText('REDPEN preview').count()) { await page.fill('input', CODE); await page.click('button[type=submit]'); }
+  if (await page.getByText('InkTally preview').count()) { await page.fill('input', CODE); await page.click('button[type=submit]'); }
   await page.getByText('Try it with a sample').waitFor({ timeout: 60_000 });
   const controlled = await page.evaluate(async () => { await navigator.serviceWorker.ready; return true; });
   // Visit every screen once so route chunks are in the browser too (they are precached anyway).
@@ -43,7 +43,7 @@ await step('first visit online: app installs its offline copy', async () => {
   return `service worker ready: ${controlled}; sample assignment ${assignmentUrl.split('/a/')[1]}`;
 });
 
-await step('close the tab, go offline, open REDPEN again (cold start)', async () => {
+await step('close the tab, go offline, open InkTally again (cold start)', async () => {
   await page.close();
   await ctx.setOffline(true);
   page = await ctx.newPage();

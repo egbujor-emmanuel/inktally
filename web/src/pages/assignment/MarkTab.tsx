@@ -101,7 +101,7 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
   return (
     <div className="grid gap-3 pb-10">
       <div className="grid gap-1.5 px-4" role="radiogroup" aria-label="What are you photographing?">
-        <ModeOption selected={mode === 'sheet'} title="Printed REDPEN sheet" subtitle="Names never leave the device · works fully offline" onSelect={() => setMode('sheet')} />
+        <ModeOption selected={mode === 'sheet'} title="Printed InkTally sheet" subtitle="Names never leave the device · works fully offline" onSelect={() => setMode('sheet')} />
         <ModeOption selected={mode === 'page'} title="Exercise book page" subtitle="No printer needed · best when online" onSelect={() => setMode('page')} />
       </div>
       <Card>
@@ -128,14 +128,14 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
       {queuedNowMarked && (
         <Card>
           <p className="font-display text-xl font-bold" role="status">Marked: {queuedNowMarked.pupil} · {queuedNowMarked.marks.reduce((n, m) => n + m.awarded, 0)}/{queuedNowMarked.marks.reduce((n, m) => n + m.max, 0)}</p>
-          <p className="text-sm text-ink-soft">The connection came back and REDPEN marked the saved photo. It is in the Mark register with everyone else.</p>
+          <p className="text-sm text-ink-soft">The connection came back and InkTally marked the saved photo. It is in the Mark register with everyone else.</p>
         </Card>
       )}
       {phase.kind === 'queued' && !queuedNowMarked && (
         <Card flag>
           <p className="font-display text-xl font-bold" role="status">Saved for marking: {phase.pupil}</p>
           <p className="text-sm text-ink-soft">
-            You’re offline and this device can’t read handwriting without a connection. The photo stays on this device and REDPEN marks it
+            You’re offline and this device can’t read handwriting without a connection. The photo stays on this device and InkTally marks it
             automatically as soon as you’re back online. Keep photographing the rest of the class.
           </p>
         </Card>
@@ -144,7 +144,7 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
         <Card flag>
           <p className="font-display text-xl font-bold" role="status">{phase.count} scripts added</p>
           <p className="text-sm text-ink-soft">
-            REDPEN is marking them one by one below. You can keep photographing, and rename students in the Mark register afterwards.
+            InkTally is marking them one by one below. You can keep photographing, and rename students in the Mark register afterwards.
           </p>
         </Card>
       )}

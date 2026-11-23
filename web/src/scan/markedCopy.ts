@@ -77,7 +77,7 @@ function footer(ctx: OffscreenCanvasRenderingContext2D, pupil: string, height: n
   ctx.save();
   ctx.fillStyle = '#5a6378';
   ctx.font = `${11 * scale}px "Inter Tight", Arial, sans-serif`;
-  ctx.fillText(`${pupil} · marked by REDPEN · ${new Date().toLocaleDateString()}`, 16 * scale, height - 12 * scale);
+  ctx.fillText(`${pupil} · marked by InkTally · ${new Date().toLocaleDateString()}`, 16 * scale, height - 12 * scale);
   ctx.restore();
 }
 
@@ -86,7 +86,7 @@ async function toPng(c: OffscreenCanvas): Promise<Blob> {
   return c.convertToBlob({ type: 'image/png' });
 }
 
-/** Printed REDPEN sheet: draw each mark beside its own answer box on the straightened sheet. */
+/** Printed InkTally sheet: draw each mark beside its own answer box on the straightened sheet. */
 export async function markedSheetCopy(photo: Blob, sheetToPhoto: Homography, boxes: readonly BoxRect[], marks: Mark[], pupil: string): Promise<Blob> {
   const page = straightenSheet(await pixelsOf(photo), sheetToPhoto);
   const [c, ctx] = canvas(page.width, page.height);

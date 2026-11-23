@@ -63,7 +63,7 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
     val online by Connectivity.online.collectAsState()
     var title by remember { mutableStateOf("") }
     var className by remember { mutableStateOf("") }
-    // Empty by default: REDPEN reads the subject and level from the paper (same as web).
+    // Empty by default: InkTally reads the subject and level from the paper (same as web).
     var subject by remember { mutableStateOf("") }
     var level by remember { mutableStateOf("") }
     var images by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
@@ -128,12 +128,12 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
     }
 
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { PageTitle("step 1", "New assignment", "Give REDPEN the question paper and it works out the answer key — or give it your own marking scheme and it copies it exactly. Only these go to the cloud, never students’ work, and you check everything before marking.") }
+        item { PageTitle("step 1", "New assignment", "Give InkTally the question paper and it works out the answer key — or give it your own marking scheme and it copies it exactly. Only these go to the cloud, never students’ work, and you check everything before marking.") }
         item {
             Paper {
                 Field(title, { title = it }, "Title", placeholder = "Fractions quiz")
                 Field(className, { className = it }, "Class / group", placeholder = "e.g. Primary 6A, Biology 101 group B")
-                Field(subject, { subject = it }, "Subject", placeholder = "Leave empty: REDPEN reads it from the paper")
+                Field(subject, { subject = it }, "Subject", placeholder = "Leave empty: InkTally reads it from the paper")
                 LevelField(level) { level = it }
             }
         }
@@ -163,7 +163,7 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
         item {
             Paper {
                 Text("Already have a marking scheme?", fontFamily = RP.Display, fontSize = 22.sp)
-                Text("Optional. Give REDPEN your own marking scheme or answer key and it copies your answers and marks exactly — it never changes them.",
+                Text("Optional. Give InkTally your own marking scheme or answer key and it copies your answers and marks exactly — it never changes them.",
                     color = RP.InkSoft, fontSize = 14.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     PenButton("Take photo", guidePhoto.takePhoto, Modifier.weight(1f))

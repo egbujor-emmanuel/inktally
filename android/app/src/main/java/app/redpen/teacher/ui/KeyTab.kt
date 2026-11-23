@@ -24,7 +24,7 @@ import app.redpen.teacher.marking.remarkNotice
 
 /**
  * The saved answer key, editable after saving (same as the web Answer key tab). Once students are marked the questions
- * stay as printed; fixing an answer or a mark re-marks everyone from what REDPEN already read.
+ * stay as printed; fixing an answer or a mark re-marks everyone from what InkTally already read.
  */
 @Composable
 fun KeyTab(a: Assignment, submissions: List<Submission>) {
@@ -44,7 +44,7 @@ fun KeyTab(a: Assignment, submissions: List<Submission>) {
 
     LazyColumn(contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            Text(if (locked) "Students have been photographed or marked, so the questions stay as printed. Fix any answer or mark and REDPEN re-marks everyone from what it already read — no new photos, no new AI reading."
+            Text(if (locked) "Students have been photographed or marked, so the questions stay as printed. Fix any answer or mark and InkTally re-marks everyone from what it already read — no new photos, no new AI reading."
                 else "Check the answer key. You can still add or remove questions until marking starts (then reprint the sheets).",
                 color = RP.InkSoft, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 16.dp))
         }

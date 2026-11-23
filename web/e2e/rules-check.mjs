@@ -8,7 +8,7 @@ const page = await ctx.newPage();
 const problems = [];
 page.on('console', (m) => { if (/permission|insufficient/i.test(m.text())) problems.push(m.text().slice(0, 200)); });
 const banner = async (step) => { const t = await page.locator('[role=alert]').allInnerTexts(); if (t.some((x) => /could not save|permission/i.test(x))) problems.push(`${step}: ${t.join(' / ')}`); };
-await page.goto(U); if (await page.getByText('REDPEN preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
+await page.goto(U); if (await page.getByText('InkTally preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
 await page.getByText('Try it with a sample').waitFor({ timeout: 60000 });
 await page.goto(`${U}/school`); await page.getByLabel('Institution name').fill('Rules Check College'); await page.getByRole('button', { name: 'Save details' }).click(); await page.waitForTimeout(2500); await banner('profile');
 await page.goto(U); await page.locator('#samples button', { hasText: 'English' }).click(); await page.waitForURL(/\/print$/); await page.waitForTimeout(2500); await banner('assignment create');

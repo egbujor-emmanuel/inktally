@@ -117,7 +117,7 @@ fun loadPhoto(ctx: Context, uri: Uri, maxSide: Int = 2600): Bitmap {
     var sample = 1
     while (maxOf(bounds.outWidth, bounds.outHeight) / sample > maxSide) sample *= 2
     val bmp = ctx.contentResolver.openInputStream(uri).use { BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample }) }
-        ?: error("That file is not a photo REDPEN can open.")
+        ?: error("That file is not a photo InkTally can open.")
     val rotation = runCatching { ctx.contentResolver.openInputStream(uri).use { ExifInterface(it!!).rotationDegrees } }.getOrDefault(0)
     return if (rotation == 0) bmp else Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, Matrix().apply { postRotate(rotation.toFloat()) }, true)
 }

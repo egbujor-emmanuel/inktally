@@ -1,4 +1,4 @@
-# The teacher already has a marking scheme: REDPEN must copy it exactly (alternatives, "do not accept", marks), not re-solve it.
+# The teacher already has a marking scheme: InkTally must copy it exactly (alternatives, "do not accept", marks), not re-solve it.
 appId: app.redpen.teacher
 ---
 - launchApp

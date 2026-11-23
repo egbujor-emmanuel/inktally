@@ -24,7 +24,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
- * Everything REDPEN draws: the printable A4 answer sheet (PDF + preview), the marked copy of a student's work,
+ * Everything InkTally draws: the printable A4 answer sheet (PDF + preview), the marked copy of a student's work,
  * and the institution letterhead. Mirrors web/src/components/AnswerSheet.tsx, scan/markedCopy.ts and scan/letterhead.ts.
  */
 object Render {
@@ -73,7 +73,7 @@ object Render {
         val line = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = INK; strokeWidth = 0.3f * s }
         text("Name", 32.0, 41.0, label); c.drawLine(46 * s, 41.5f * s, 130 * s, 41.5f * s, line)
         text("No.", 136.0, 41.0, label); c.drawLine(146 * s, 41.5f * s, 192 * s, 41.5f * s, line)
-        text("Write each answer inside its box. Do not write on the black squares. Marked by REDPEN.", 32.0, 52.0, paint(0xFF777777.toInt(), 3.2f * s, f.body))
+        text("Write each answer inside its box. Do not write on the black squares. Marked by InkTally.", 32.0, 52.0, paint(0xFF777777.toInt(), 3.2f * s, f.body))
         val box = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = INK; style = Paint.Style.STROKE; strokeWidth = 0.35f * s }
         val num = paint(INK, 5f * s, f.display).apply { textAlign = Paint.Align.RIGHT }
         val hint = paint(0xFF9999AA.toInt(), 2.6f * s, f.body).apply { textAlign = Paint.Align.RIGHT }
@@ -143,7 +143,7 @@ object Render {
     }
 
     private fun footer(c: Canvas, pupil: String, height: Int, scale: Float, body: Typeface) {
-        c.drawText("$pupil · marked by REDPEN · ${DateFormat.getDateInstance().format(Date())}", 16 * scale, height - 12 * scale, paint(SOFT, 11 * scale, body))
+        c.drawText("$pupil · marked by InkTally · ${DateFormat.getDateInstance().format(Date())}", 16 * scale, height - 12 * scale, paint(SOFT, 11 * scale, body))
     }
 
     /** Straightens the A4 sheet out of the photo through the scanner's homography (bilinear). */
@@ -169,7 +169,7 @@ object Render {
         return Bitmap.createBitmap(out, outW, outH, Bitmap.Config.ARGB_8888)
     }
 
-    /** Printed REDPEN sheet: draw each mark beside its own answer box on the straightened sheet. */
+    /** Printed InkTally sheet: draw each mark beside its own answer box on the straightened sheet. */
     fun sheetCopy(ctx: Context, photo: Bitmap, sheetToPhoto: Homography, boxes: List<SheetLayout.Box>, marks: List<Mark>, pupil: String): Bitmap {
         val mm = 4
         val page = straighten(photo, sheetToPhoto, mm).copy(Bitmap.Config.ARGB_8888, true)

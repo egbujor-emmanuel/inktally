@@ -117,7 +117,7 @@ private fun PrintTab(a: Assignment, profile: Profile) {
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Column(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Print one per student. The black corner squares let REDPEN find every answer box, even offline.", color = RP.InkSoft, fontSize = 14.sp)
+                Text("Print one per student. The black corner squares let InkTally find every answer box, even offline.", color = RP.InkSoft, fontSize = 14.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     PenButton("Print", { scope.launch { printPdf(ctx, pdf(), "${a.title} answer sheets") } }, Modifier.weight(1f))
                     GhostButton("Share PDF", { scope.launch { shareFile(ctx, pdf(), "application/pdf", "${a.title} — answer sheets") } }, Modifier.weight(1f))

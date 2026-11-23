@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
                     var boot by remember { mutableStateOf<String?>("Getting your desk ready…") }
                     LaunchedEffect(Unit) {
                         boot = runCatching { bootstrap(); DeviceModel.refresh(); null }
-                            .getOrElse { "REDPEN needs internet once to set up: ${it.message}" }
+                            .getOrElse { "InkTally needs internet once to set up: ${it.message}" }
                     }
                     // Whenever the connection changes, re-check Gemini Nano (offline marking must use the current status).
                     LaunchedEffect(boot == null) {
@@ -101,10 +101,10 @@ private fun Header(nav: NavHostController, ready: Boolean) {
     Column(Modifier.fillMaxWidth().background(RP.Paper)) {
         Row(Modifier.padding(start = 16.dp, end = 16.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Row(Modifier.clickable(enabled = ready) { nav.popBackStack("home", inclusive = false) }, verticalAlignment = Alignment.CenterVertically) {
-                Image(painterResource(R.drawable.logo_mark), contentDescription = "REDPEN home", modifier = Modifier.size(36.dp))
+                Image(painterResource(R.drawable.logo_mark), contentDescription = "InkTally home", modifier = Modifier.size(36.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("RED", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = RP.Ink)
-                Text("PEN", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = RP.Pen)
+                Text("Ink", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = RP.Ink)
+                Text("Tally", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = RP.Pen)
             }
             Spacer(Modifier.weight(1f))
             if (ready) AccountChip()

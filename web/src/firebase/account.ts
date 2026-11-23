@@ -1,4 +1,4 @@
-// Optional accounts. Every teacher starts as a private guest (anonymous) so REDPEN works instantly.
+// Optional accounts. Every teacher starts as a private guest (anonymous) so InkTally works instantly.
 // "Sign in with Google" LINKS the guest account: same user id, so all existing work is kept, and the
 // same assignments then appear on every device (web + Android) where she signs in.
 import { useEffect, useState } from 'react';

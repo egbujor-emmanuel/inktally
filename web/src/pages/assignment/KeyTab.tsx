@@ -7,7 +7,7 @@ import { ErrorText, GhostButton, PenButton } from '../../ui/Kit';
 
 /**
  * The saved answer key, editable after saving (same as the Android Answer key tab). Once students are marked the
- * questions stay as printed; fixing an answer or a mark re-marks everyone from what REDPEN already read.
+ * questions stay as printed; fixing an answer or a mark re-marks everyone from what InkTally already read.
  */
 export function KeyTab({ assignment, submissions }: { assignment: Assignment; submissions: Submission[] }) {
   const saved = assignment.scheme.questions;
@@ -43,7 +43,7 @@ export function KeyTab({ assignment, submissions }: { assignment: Assignment; su
     <div className="grid gap-3 pb-6">
       <p className="px-4 text-sm text-ink-soft">
         {locked
-          ? 'Students have been photographed or marked, so the questions stay as printed. Fix any answer or mark and REDPEN re-marks everyone from what it already read — no new photos, no new AI reading.'
+          ? 'Students have been photographed or marked, so the questions stay as printed. Fix any answer or mark and InkTally re-marks everyone from what it already read — no new photos, no new AI reading.'
           : 'Check the answer key. You can still add or remove questions until marking starts (then reprint the sheets).'}
       </p>
       <SchemeEditor key={version} questions={draft} locked={locked} onChange={(q) => { setDraft(q); setNotice(null); }} />

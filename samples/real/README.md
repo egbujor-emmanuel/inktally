@@ -1,7 +1,7 @@
 # Real handwritten test pages
 
 Pages written by hand on paper and photographed with a phone (no real students' names). Used for the demo video and
-to test REDPEN on real handwriting, unlike the generated samples one folder up.
+to test InkTally on real handwriting, unlike the generated samples one folder up.
 
 ## Mixed test page (JSS 2) — write this, photograph it, put the photo here
 
@@ -42,10 +42,10 @@ Expected: **9/12** — Q3 and Q6 wrong, Q7 both points, Q8 one of two points.
 
 ---
 
-## Printed REDPEN sheets (optional — the strongest demo: names stay on the phone, works offline)
+## Printed InkTally sheets (optional — the strongest demo: names stay on the phone, works offline)
 
 Print one of these PDFs (4 copies each, A4, "actual size" — do not "fit to page"). Each student writes only inside the
-boxes. Photograph each sheet flat with **all four black squares** in the photo. In REDPEN open the matching sample
+boxes. Photograph each sheet flat with **all four black squares** in the photo. In InkTally open the matching sample
 (Home → *Try it with a sample*) → **Mark** → photograph or **Choose photos**.
 
 ### `science-answer-sheets-x4.pdf` — Basic Science, "Blood and the Liver" (theory answers marked point by point)
@@ -82,4 +82,4 @@ Suggested answers, in different people's handwriting:
 | 4 | Abuja | FCT | Lagos | Abuja |
 | 5 | ran | runned | ran | ranned |
 
-Student 2 writing a real "A" on question 2 is the check that REDPEN's learned misreads never change what a student wrote.
+Student 2 writing a real "A" on question 2 is the check that InkTally's learned misreads never change what a student wrote.

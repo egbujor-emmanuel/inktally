@@ -1,4 +1,4 @@
-// Core domain types for REDPEN. Shared by the marking engine, AI layer, storage and UI.
+// Core domain types for InkTally. Shared by the marking engine, AI layer, storage and UI.
 
 /** Where the reading of a pupil's handwriting came from. */
 export type ReadSource = 'on_device' | 'in_cloud' | 'teacher';

@@ -11,7 +11,7 @@ const shot = async (n) => {
   if (w[0] > w[1] + 1) overflow.push(`${n}: page is ${w[0]}px wide on a ${w[1]}px screen`);
   await page.screenshot({ path: `${OUT}/${n}.png` });
 };
-await page.goto(U); if (await page.getByText('REDPEN preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
+await page.goto(U); if (await page.getByText('InkTally preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
 await page.getByText('Try it with a sample').waitFor({ timeout: 60000 }); await page.waitForTimeout(1200);
 await shot('01-home');
 await page.goto(`${U}/quick`); await page.getByText('Photograph the page').waitFor(); await shot('02-quick');

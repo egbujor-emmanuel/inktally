@@ -1,4 +1,4 @@
-# REDPEN demo video — plan (read before filming)
+# InkTally demo video — plan (read before filming)
 
 ## 1. What the rules require (quoted from the contest site, checked 2026-11-15)
 
@@ -19,19 +19,19 @@
 |---|---|---|---|---|
 | 1 | 0:00–0:12 | **Hook.** A real stack of handwritten pages on a desk. "One teacher. Eighty scripts. Patchy data." | Your photo or video of the hand-written pages | Impact |
 | 2 | 0:12–0:30 | **The idea in one breath.** Gemini Nano reads each answer on the device, code does the marking, Gemini in the cloud checks every on-device mark once you're back online. | App home screen + simple diagram | Idea |
-| 3 | 0:30–1:05 | **Web, real paper (cloud path).** Quick mark → photograph the hand-written mixed test → REDPEN drafts the key from the *questions only* → confirm → **9/12**, wrong answers caught, theory answer half credit → marked copy with red ticks. | Laptop screen recording, your real photo | Design, Tech |
+| 3 | 0:30–1:05 | **Web, real paper (cloud path).** Quick mark → photograph the hand-written mixed test → InkTally drafts the key from the *questions only* → confirm → **9/12**, wrong answers caught, theory answer half credit → marked copy with red ticks. | Laptop screen recording, your real photo | Design, Tech |
 | 4 | 1:05–1:45 | **Offline, on-device (Gemini Nano).** Turn off the connection → mark printed sheets → every mark says *On-device · Provisional*; one is held as *Check this* because the cloud found that misread earlier → reconnect → "Cloud check: N on-device marks confirmed, 1 needs you". | Chrome with real Gemini Nano (Codespace, recorded live) | Tech, Idea |
-| 5 | 1:45–2:15 | **Android, a real phone.** Same app, same data model: airplane mode → photograph → "Saved for marking" → airplane off → marked by itself. The phone has no Nano, and REDPEN says so ("Cloud AI") and uses the cloud: the hybrid fallback, shown honestly. | Your Android phone, screen recording | Tech, Design |
+| 5 | 1:45–2:15 | **Android, a real phone.** Same app, same data model: airplane mode → photograph → "Saved for marking" → airplane off → marked by itself. The phone has no Nano, and InkTally says so ("Cloud AI") and uses the cloud: the hybrid fallback, shown honestly. | Your Android phone, screen recording | Tech, Design |
 | 6 | 2:15–2:32 | **The teacher's tools.** Batch photos → mark register → Excel. Fix the answer key after marking → "Re-marked 12 students". Insights → catch-up sheet. | Laptop recording | Design, Impact |
 | 7 | 2:32–2:45 | **Proof + end card.** On-screen numbers, each from the repo: cloud reading 14/14; on unseen students, 7/7 device misreads held for checking; live walkthrough 18/18. Firebase AI Logic hybrid · App Check · Remote Config · Firestore offline · Auth · Hosting. URL + repo. | Captions over app shots | All |
 
-If a teacher tries REDPEN before filming (with consent), a 5-second clip or one quoted line replaces scene 1's voiceover. That is the strongest Impact evidence there is.
+If a teacher tries InkTally before filming (with consent), a 5-second clip or one quoted line replaces scene 1's voiceover. That is the strongest Impact evidence there is.
 
 ## 3. Footage inventory
 
 | Footage | Status | Who |
 |---|---|---|
-| Hand-written mixed test page (`samples/real/README.md`), photographed | **Needed** | You: write it, photograph it, put it in Drive `REDPEN photos` |
+| Hand-written mixed test page (`samples/real/README.md`), photographed | **Needed** | You: write it, photograph it, put it in Drive `InkTally photos` |
 | Printed sheets filled in by 3–4 people (`samples/real/*.pdf`) | Optional, strongest for scene 4 | You, if you can print |
 | A real stack on a desk, phone photographing it (B-roll) | Optional | You (5–10 s on a second phone) |
 | Web screen recordings (scenes 3, 6) | Ready to record | Me (Playwright on this laptop, 1920×1080) |
@@ -44,12 +44,12 @@ If a teacher tries REDPEN before filming (with consent), a 5-second clip or one 
 ## 4. Narration (draft, every claim from the repo)
 
 1. "One teacher. Eighty handwritten scripts. Data that comes and goes. Marking takes the whole weekend."
-2. "REDPEN marks them on the teacher's own phone or laptop, even offline. Gemini Nano reads each answer on the device. Plain code does the marking. And when the connection comes back, Gemini in the cloud checks every on-device mark by itself."
-3. "Here's a real page. REDPEN works out the answer key from the questions alone — never from the student's answers — I check it, and it marks the page: nine out of twelve, both wrong answers caught, half credit where half the point is there."
-4. "Now with no connection at all. Gemini Nano reads each answer box right here on the device. This one is held for me: the cloud caught the device misreading this before, so REDPEN won't let it count until someone checks. Back online — the cloud has already confirmed the rest."
-5. "Same app on Android, same data. This phone has no Gemini Nano, so REDPEN tells me and uses the cloud — and with no signal it keeps the photos and marks them the moment the signal is back."
-6. "A whole stack at once, a register, an Excel file. Spot a mistake in the answer key? Fix it, and everyone is re-marked from what REDPEN already read."
-7. "Every number here is in the repo: cloud reading fourteen out of fourteen; on students it had never seen, every device misread held for checking. REDPEN, built on Firebase AI Logic."
+2. "InkTally marks them on the teacher's own phone or laptop, even offline. Gemini Nano reads each answer on the device. Plain code does the marking. And when the connection comes back, Gemini in the cloud checks every on-device mark by itself."
+3. "Here's a real page. InkTally works out the answer key from the questions alone — never from the student's answers — I check it, and it marks the page: nine out of twelve, both wrong answers caught, half credit where half the point is there."
+4. "Now with no connection at all. Gemini Nano reads each answer box right here on the device. This one is held for me: the cloud caught the device misreading this before, so InkTally won't let it count until someone checks. Back online — the cloud has already confirmed the rest."
+5. "Same app on Android, same data. This phone has no Gemini Nano, so InkTally tells me and uses the cloud — and with no signal it keeps the photos and marks them the moment the signal is back."
+6. "A whole stack at once, a register, an Excel file. Spot a mistake in the answer key? Fix it, and everyone is re-marked from what InkTally already read."
+7. "Every number here is in the repo: cloud reading fourteen out of fourteen; on students it had never seen, every device misread held for checking. InkTally, built on Firebase AI Logic."
 
 ## 5. Production and checks
 

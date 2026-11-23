@@ -1,4 +1,4 @@
-// Geometry of a printed REDPEN answer sheet, in millimetres on A4 portrait.
+// Geometry of a printed InkTally answer sheet, in millimetres on A4 portrait.
 // The printer and the scanner both use this module, so boxes always line up.
 import type { Question } from '../domain/types';
 

@@ -5,10 +5,15 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 
-const hosting = JSON.parse(readFileSync(new URL('../../../firebase.json', import.meta.url), 'utf8')).hosting as {
-  headers: { source: string; headers: { key: string; value: string }[] }[];
-};
-const csp = hosting.headers.flatMap((h) => h.headers).find((h) => h.key === 'Content-Security-Policy')?.value ?? '';
+interface HostingSite { target?: string; headers: { source: string; headers: { key: string; value: string }[] }[] }
+// Two sites (inktally.web.app and the original address) serve the same build with the same headers.
+const sites = [JSON.parse(readFileSync(new URL('../../../firebase.json', import.meta.url), 'utf8')).hosting].flat() as HostingSite[];
+const cspOf = (site: HostingSite) => site.headers.flatMap((h) => h.headers).find((h) => h.key === 'Content-Security-Policy')?.value ?? '';
+const csp = cspOf(sites[0]);
+
+test('every site has the same Content-Security-Policy', () => {
+  expect(new Set(sites.map(cspOf)).size).toBe(1);
+});
 const directive = (name: string) => csp.split(';').map((d) => d.trim()).find((d) => d.startsWith(`${name} `)) ?? '';
 
 describe('Content-Security-Policy', () => {

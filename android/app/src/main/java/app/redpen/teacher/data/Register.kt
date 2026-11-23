@@ -99,7 +99,7 @@ object Register {
         if (profile.institution.isNotBlank()) heading(profile.institution, Style.TITLE)
         if (profile.details.isNotBlank()) heading(profile.details, Style.SOFT)
         heading("${a.title} — ${a.className}${if (a.scheme.subject.isNotBlank()) " · ${a.scheme.subject}" else ""}", Style.HEADING)
-        heading("${if (profile.teacher.isNotBlank()) "Teacher: ${profile.teacher} · " else ""}Exported ${DateFormat.getDateInstance().format(Date())} · Marked with REDPEN", Style.ITALIC)
+        heading("${if (profile.teacher.isNotBlank()) "Teacher: ${profile.teacher} · " else ""}Exported ${DateFormat.getDateInstance().format(Date())} · Marked with InkTally", Style.ITALIC)
         sheet += emptyList<Cell?>()
         val headerRow = sheet.size
         sheet += (listOf("Student") + qs.map { "Q${it.shownLabel} (/${it.max})" } + listOf("Total (/$max)", "Percent", "Status", "Teacher’s comment")).map { Txt(it, Style.HEADER) }

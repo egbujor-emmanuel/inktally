@@ -34,7 +34,7 @@ export function AccessGate({ children }: { children: ReactNode }) {
     <main className="ruled grid min-h-dvh place-items-center px-4">
       <form onSubmit={(e) => void handleSubmit(e)} className="paper-card grid w-full max-w-sm gap-4 p-8">
         <img src="/logo-mark.svg" alt="" width={56} height={56} className="size-14" />
-        <h1 className="font-display text-3xl font-bold">REDPEN preview</h1>
+        <h1 className="font-display text-3xl font-bold">InkTally preview</h1>
         <label className="text-sm font-medium">Access code
           <input className="mt-1 w-full rounded-lg border border-[oklch(82%_0.02_85)] bg-white px-3 py-2" value={code}
             onChange={(e) => setCode(e.target.value)} autoComplete="off" autoFocus />

@@ -53,7 +53,7 @@ export function AnswerSheet({ title, className, questions, profile }: Props) {
           <text x={136} y={41} fontFamily="Inter Tight, sans-serif" fontSize={4.2} fill="#1f2a44">No.</text>
           <line x1={146} y1={41.5} x2={192} y2={41.5} stroke="#1f2a44" strokeWidth={0.3} />
           <text x={32} y={52} fontFamily="Inter Tight, sans-serif" fontSize={3.2} fill="#777">
-            Write each answer inside its box. Do not write on the black squares. Marked by REDPEN.
+            Write each answer inside its box. Do not write on the black squares. Marked by InkTally.
           </text>
           {page.boxes.map((box) => {
             const q = byQ.get(box.q);

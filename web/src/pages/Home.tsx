@@ -73,7 +73,7 @@ export function Home({ signedIn = true }: { signedIn?: boolean }) {
           A stack of classwork, marked in minutes. <span className="text-pen">Even offline.</span>
         </h1>
         <p data-rise className="mt-3.5 text-base leading-6 text-ink-soft">
-          REDPEN reads students’ handwriting with the AI on your device and marks it against your marking scheme.
+          InkTally reads students’ handwriting with the AI on your device and marks it against your marking scheme.
           Students’ work stays with you; the cloud double-checks every mark when you’re back online.
         </p>
         <p data-rise className="mt-2 text-[13px] leading-[19px] text-ink-soft">
@@ -85,7 +85,7 @@ export function Home({ signedIn = true }: { signedIn?: boolean }) {
         </div>
       </section>
 
-      <div className="hscroll steps-row gap-3 px-4" role="region" aria-label="How REDPEN works" tabIndex={0}>
+      <div className="hscroll steps-row gap-3 px-4" role="region" aria-label="How InkTally works" tabIndex={0}>
         {STEPS.map((s) => (
           <article key={s.n} className="w-[250px] flex-none rounded-[14px] border border-border bg-paper p-[18px] shadow-[0_3px_8px_rgb(31_42_68/0.12)]">
             <span className="font-hand text-[40px] leading-none text-pen">{s.n}</span>

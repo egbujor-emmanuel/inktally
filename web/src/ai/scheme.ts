@@ -147,7 +147,7 @@ export function inferLabels(questions: Question[]): Question[] {
   });
 }
 
-/** A drafted key plus any question numbers REDPEN could not find even after asking again (shown to the teacher). */
+/** A drafted key plus any question numbers InkTally could not find even after asking again (shown to the teacher). */
 export interface DraftedScheme extends MarkingScheme { missing: number[]; /** The printed labels of the missing questions, when the guide was typed. */ missingShown?: string[] }
 
 export async function draftScheme(source: SchemeSource, subject: string, level: string): Promise<DraftedScheme> {
@@ -208,4 +208,4 @@ async function draftOnce(parts: (string | Part)[]): Promise<{ questions: Questio
 
 /** The sentence shown when questions are still missing after the second try. */
 export const missingNotice = (missing: ReadonlyArray<number | string>): string =>
-  `REDPEN could not find question${missing.length === 1 ? '' : 's'} ${missing.join(', ')}. Check the paper, and add ${missing.length === 1 ? 'it' : 'them'} with "+ Add question".`;
+  `InkTally could not find question${missing.length === 1 ? '' : 's'} ${missing.join(', ')}. Check the paper, and add ${missing.length === 1 ? 'it' : 'them'} with "+ Add question".`;

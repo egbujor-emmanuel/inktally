@@ -46,7 +46,7 @@ async function waitUntil(fn, arg, timeout = 15_000) {
 
 await step('open site + passcode', async () => {
   await page.goto(URL_, { waitUntil: 'load' });
-  if (await page.getByText('REDPEN preview').count()) { await page.fill('input', CODE); await page.click('button[type=submit]'); }
+  if (await page.getByText('InkTally preview').count()) { await page.fill('input', CODE); await page.click('button[type=submit]'); }
   await page.getByText('Try it with a sample').waitFor({ timeout: 60_000 });
   return await page.locator('[role=status]').first().innerText();
 });

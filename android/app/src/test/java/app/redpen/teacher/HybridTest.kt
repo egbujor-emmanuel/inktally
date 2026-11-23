@@ -108,9 +108,9 @@ class HybridTest {
 
     @Test fun statusLineUsesTheWebWording() {
         assertEquals("Cloud check: 1 on-device mark confirmed, 1 needs you.", checkSummaryText(CheckSummary(2, 1, 1)))
-        assertEquals("Cloud check: 2 on-device marks confirmed, 2 need you. REDPEN learned 1 device misread to hold for checking.",
+        assertEquals("Cloud check: 2 on-device marks confirmed, 2 need you. InkTally learned 1 device misread to hold for checking.",
             checkSummaryText(CheckSummary(4, 2, 2, 1)))
-        assertEquals("Cloud check: 0 on-device marks confirmed. REDPEN learned 3 device misreads to hold for checking.",
+        assertEquals("Cloud check: 0 on-device marks confirmed. InkTally learned 3 device misreads to hold for checking.",
             checkSummaryText(CheckSummary(1, 0, 0, 3)))
     }
 

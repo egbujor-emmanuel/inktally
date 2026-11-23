@@ -5,7 +5,7 @@ const U = process.argv[2] ?? 'https://redpen-hybrid.web.app';
 const PORT = 9333;
 const ctx = await chromium.launchPersistentContext('', { channel: 'chrome', headless: true, args: [`--remote-debugging-port=${PORT}`] });
 const page = ctx.pages()[0] ?? await ctx.newPage();
-await page.goto(U); if (await page.getByText('REDPEN preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
+await page.goto(U); if (await page.getByText('InkTally preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
 await page.getByText('Try it with a sample').waitFor({ timeout: 60000 });
 const scores = {};
 for (const path of ['/', '/quick', '/new']) {

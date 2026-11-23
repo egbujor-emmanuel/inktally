@@ -26,7 +26,7 @@ export type MarkOutcome =
   | { ok: true; marks: Mark[]; copy: Blob | null }
   | { ok: false; reason: string };
 
-/** Remote Config switch: use what cloud checks taught REDPEN about the device's misreads on this assignment. */
+/** Remote Config switch: use what cloud checks taught InkTally about the device's misreads on this assignment. */
 const learning = (): boolean => config('device_learning') === 'true';
 
 export function failedMark(q: number, max: number, error: unknown): Mark {
@@ -49,7 +49,7 @@ async function buildCopy(submissionId: string, build: () => Promise<Blob>): Prom
   }
 }
 
-/** Printed REDPEN sheet: find the corner squares, cut out each answer box, read + mark each one. */
+/** Printed InkTally sheet: find the corner squares, cut out each answer box, read + mark each one. */
 export async function markSheetSubmission(
   assignment: Assignment, photo: Blob, pageIndex: number, submissionId: string, label: string,
   onProgress?: (p: MarkProgress) => void, failFast = false,

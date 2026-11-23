@@ -241,7 +241,7 @@ object Repo {
     private fun hintMap(h: ReadingHint) = mapOf("type" to h.type, "device" to h.device, "cloud" to h.cloud, "n" to h.n)
 
     /** Replaces the known device misreads (the teacher's "Forget these" saves an empty list). */
-    fun saveReadingHints(assignmentId: String, hints: List<ReadingHint>) = queue("what REDPEN learned",
+    fun saveReadingHints(assignmentId: String, hints: List<ReadingHint>) = queue("what InkTally learned",
         db.collection("assignments").document(assignmentId).update("readingHints", hints.map(::hintMap)))
 
     /**

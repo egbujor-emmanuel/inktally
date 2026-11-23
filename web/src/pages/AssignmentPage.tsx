@@ -110,7 +110,7 @@ function CheckStatus({ check, reviewHref }: { check: CloudCheckState; reviewHref
         : summary && <span>
             Cloud check: {summary.confirmed} on-device mark{summary.confirmed === 1 ? '' : 's'} confirmed
             {summary.needTeacher > 0 && <>, <NavLink to={reviewHref} className="font-semibold text-pen underline">{summary.needTeacher} need{summary.needTeacher === 1 ? 's' : ''} you</NavLink></>}.
-            {summary.learned ? ` REDPEN learned ${summary.learned} device misread${summary.learned === 1 ? '' : 's'} to hold for checking.` : ''}
+            {summary.learned ? ` InkTally learned ${summary.learned} device misread${summary.learned === 1 ? '' : 's'} to hold for checking.` : ''}
           </span>}
     </p>
   );
@@ -134,7 +134,7 @@ function PrintTab({ assignment, profile }: { assignment: Assignment; profile: Pr
   return (
     <div className="grid gap-3">
       <div className="grid gap-2 px-4">
-        <p className="text-sm text-ink-soft">Print one per student. The black corner squares let REDPEN find every answer box, even offline.</p>
+        <p className="text-sm text-ink-soft">Print one per student. The black corner squares let InkTally find every answer box, even offline.</p>
         <div className="grid grid-cols-2 gap-2">
           <PenButton onClick={() => window.print()}>Print</PenButton>
           <GhostButton onClick={() => void handleShare()} disabled={busy}>{busy ? 'Making PDF…' : 'Share PDF'}</GhostButton>

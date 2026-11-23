@@ -1,4 +1,4 @@
-// End-to-end hybrid test of the LIVE REDPEN site in real Chrome with Gemini Nano:
+// End-to-end hybrid test of the LIVE InkTally site in real Chrome with Gemini Nano:
 // enable on-device AI -> go offline -> mark a printed sheet on-device -> back online -> automatic cloud check.
 // Usage (in the Codespace, under run.sh for screen recording): REDPEN_CODE=... node e2e-ondevice.mjs
 import { chromium } from 'playwright';
@@ -42,7 +42,7 @@ try {
   // Always test the build that is live now: drop any cached app from an earlier run (Gemini Nano itself is kept).
   await cdp.send('Storage.clearDataForOrigin', { origin: new URL(SITE).origin, storageTypes: 'service_workers,cache_storage' });
   await page.goto(SITE, { waitUntil: 'load' });
-  if (await page.locator('text=REDPEN preview').count()) {
+  if (await page.locator('text=InkTally preview').count()) {
     await page.fill('input', CODE);
     await page.click('button[type=submit]');
   }
@@ -90,8 +90,8 @@ try {
   await page.getByRole('link', { name: 'Review', exact: true }).click();
   await sleep(1500);
   const reviewText = await page.locator('main').innerText();
-  const learned = await page.getByText('What REDPEN learned').count()
-    ? await page.locator('section', { hasText: 'What REDPEN learned' }).innerText().catch(() => 'card shown') : 'no correction to learn from';
+  const learned = await page.getByText('What InkTally learned').count()
+    ? await page.locator('section', { hasText: 'What InkTally learned' }).innerText().catch(() => 'card shown') : 'no correction to learn from';
   log('DEVICE LEARNED:', learned);
   log('REVIEW AFTER CLOUD CHECK:\n' + reviewText.slice(0, 1500));
   await shot('3-review-after-online');

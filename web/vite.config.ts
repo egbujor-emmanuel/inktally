@@ -12,7 +12,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     // Service worker: the whole app (every route chunk, icons, fonts) is cached on the first online visit,
-    // so a teacher can open and reload REDPEN with no connection at all.
+    // so a teacher can open and reload InkTally with no connection at all.
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false, // registered from main.tsx (no inline script, so the CSP stays strict)

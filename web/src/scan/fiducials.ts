@@ -1,4 +1,4 @@
-// Finds the four solid black corner squares of a REDPEN sheet in a grayscale photo.
+// Finds the four solid black corner squares of an InkTally sheet in a grayscale photo.
 // Pure function over a luminance buffer so it runs offline and is unit-testable.
 import type { Point } from './homography';
 

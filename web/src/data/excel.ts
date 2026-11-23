@@ -32,7 +32,7 @@ export async function buildRegisterWorkbook(assignment: Assignment, submissions:
   const max = questions.reduce((a, q) => a + q.max, 0);
   const rows = registerRows(questions, submissions);
   const wb = new ExcelJS.Workbook();
-  wb.creator = profile.teacher || 'REDPEN';
+  wb.creator = profile.teacher || 'InkTally';
   const ws = wb.addWorksheet('Mark register', { pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
   const totalCol = questions.length + 2;
   const percentCol = questions.length + 3;
@@ -50,7 +50,7 @@ export async function buildRegisterWorkbook(assignment: Assignment, submissions:
   if (profile.institution) heading(profile.institution, { bold: true, size: 16, color: { argb: 'FF1F2A44' } });
   if (profile.details) heading(profile.details, { size: 10, color: { argb: 'FF5B6273' } });
   heading(`${assignment.title} — ${assignment.className}${assignment.scheme.subject ? ` · ${assignment.scheme.subject}` : ''}`, { bold: true, size: 13 });
-  heading(`${profile.teacher ? `Teacher: ${profile.teacher} · ` : ''}Exported ${new Date().toLocaleDateString()} · Marked with REDPEN`, { size: 10, italic: true, color: { argb: 'FF5B6273' } });
+  heading(`${profile.teacher ? `Teacher: ${profile.teacher} · ` : ''}Exported ${new Date().toLocaleDateString()} · Marked with InkTally`, { size: 10, italic: true, color: { argb: 'FF5B6273' } });
   r += 1;
 
   const headerRow = ws.getRow(r);

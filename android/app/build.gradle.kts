@@ -19,8 +19,8 @@ android {
         applicationId = "app.redpen.teacher"
         minSdk = 26
         targetSdk = 36
-        versionCode = 12
-        versionName = "0.7.1"
+        versionCode = 13
+        versionName = "0.8.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

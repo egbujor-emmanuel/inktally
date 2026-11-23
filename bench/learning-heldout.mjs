@@ -104,7 +104,7 @@ async function onlineCheck(label) {
   const summary = await page.getByText(/^Cloud check:/).innerText();
   await tab('Review');
   await sleep(2000);
-  const card = page.locator('section', { hasText: 'What REDPEN learned' });
+  const card = page.locator('section', { hasText: 'What InkTally learned' });
   const learned = (await card.count()) ? (await card.innerText()).replace(/\s+/g, ' ') : 'none';
   log(`[${label}] ${summary}`);
   log(`[${label}] learned: ${learned.slice(0, 400)}`);
@@ -117,7 +117,7 @@ try {
   // Always test the build that is live now: drop any service worker / cached app from an earlier run (Nano itself is kept).
   await cdp.send('Storage.clearDataForOrigin', { origin: new URL(SITE).origin, storageTypes: 'service_workers,cache_storage' });
   await page.goto(SITE, { waitUntil: 'load' });
-  if (await page.locator('text=REDPEN preview').count()) { await page.fill('input', CODE); await page.click('button[type=submit]'); }
+  if (await page.locator('text=InkTally preview').count()) { await page.fill('input', CODE); await page.click('button[type=submit]'); }
   await page.getByText('Try it with a sample').waitFor({ timeout: 60_000 });
   await page.getByText(/Gemini Nano ready|Gemini Nano not downloaded|Downloading Gemini Nano|Cloud AI \(no on-device model\)/).first().waitFor({ timeout: 120_000 });
   if (await page.getByText('Cloud AI (no on-device model)').count()) throw new Error('Gemini Nano unavailable on this machine');

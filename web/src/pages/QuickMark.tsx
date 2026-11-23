@@ -25,7 +25,7 @@ type Step =
 export function QuickMark() {
   const isOnline = useOnline();
   const navigate = useNavigate();
-  // Empty by default: REDPEN reads the subject and level from the page.
+  // Empty by default: InkTally reads the subject and level from the page.
   const [subject, setSubject] = useState('');
   const [level, setLevel] = useState('');
   const [pupil, setPupil] = useState('');
@@ -80,10 +80,10 @@ export function QuickMark() {
   return (
     <div className="grid gap-[14px] pb-10">
       <PageTitle eyebrow="no preparation needed" title="Quick mark"
-        intro="Photograph one student’s page with the questions on it. REDPEN works out the answers from the questions, you check them in seconds, then it marks the page. The answer key is saved so you can mark the rest of the class." />
+        intro="Photograph one student’s page with the questions on it. InkTally works out the answers from the questions, you check them in seconds, then it marks the page. The answer key is saved so you can mark the rest of the class." />
       {step.kind === 'snap' && (
         <Card>
-          <Field label="Subject" value={subject} onChange={setSubject} placeholder="Leave empty: REDPEN reads it from the page" />
+          <Field label="Subject" value={subject} onChange={setSubject} placeholder="Leave empty: InkTally reads it from the page" />
           <LevelField level={level} onChange={setLevel} />
           <Field label="Student" value={pupil} onChange={setPupil} placeholder="Name or number" />
           {isOnline
@@ -118,7 +118,7 @@ function ConfirmKey({ initial, onConfirm }: { initial: Question[]; onConfirm: (q
     <div className="grid gap-3">
       <Card flag>
         <h2 className="font-display text-[22px] font-bold">Does this answer key look right?</h2>
-        <p className="text-sm text-ink-soft">REDPEN worked these answers out from the questions. Every mark depends on them, so fix anything that is wrong.</p>
+        <p className="text-sm text-ink-soft">InkTally worked these answers out from the questions. Every mark depends on them, so fix anything that is wrong.</p>
       </Card>
       <SchemeEditor questions={questions} onChange={setQuestions} />
       <div className="px-4"><PenButton className="w-full" disabled={!questions.length} onClick={() => onConfirm(questions)}>Looks right — mark it</PenButton></div>

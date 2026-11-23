@@ -6,12 +6,12 @@ Fill these in on submission day, after the repo is public and the release APK ex
 
 **Project name** (60 characters max)
 ```
-REDPEN — handwritten classwork marked offline
+InkTally — handwritten classwork marked offline
 ```
 
 **Elevator pitch**
 ```
-Photograph a stack of handwritten classwork and REDPEN marks it on the teacher's own phone or laptop — even offline. Gemini Nano reads, code marks, the cloud checks.
+Photograph a stack of handwritten classwork and InkTally marks it on the teacher's own phone or laptop — even offline. Gemini Nano reads, code marks, the cloud checks.
 ```
 
 ## Step: Project details
@@ -24,9 +24,9 @@ firebase-ai-logic, gemini-nano, gemini, firestore, firebase-app-check, firebase-
 ```
 
 **"Try it out" links**
-- `https://redpen-hybrid.web.app` — live web app
-- `https://github.com/egbujor-emmanuel/redpen` — code
-- `https://github.com/egbujor-emmanuel/redpen/releases` — Android APK
+- `https://inktally.web.app` — live web app
+- `https://github.com/egbujor-emmanuel/inktally` — code
+- `https://github.com/egbujor-emmanuel/inktally/releases` — Android APK
 
 **Image gallery** — upload `docs/submission/gallery/01-…png` to `08-…png` in order (3:2, under 5 MB each). Captions are in [`gallery/captions.md`](gallery/captions.md).
 
@@ -42,13 +42,13 @@ firebase-ai-logic, gemini-nano, gemini, firestore, firebase-app-check, firebase-
 | Start date (MM-DD-YY) | `11-12-26` (first commit 2026-11-12) |
 | New or existing | **New.** This project did not exist before Nov 11, 2026 |
 | Platforms | **Web (Chrome)** and **Android** |
-| Working demo URL | `https://redpen-hybrid.web.app` |
-| License URL | `https://github.com/egbujor-emmanuel/redpen/blob/main/LICENSE` |
+| Working demo URL | `https://inktally.web.app` |
+| License URL | `https://github.com/egbujor-emmanuel/inktally/blob/main/LICENSE` |
 | Eligibility checkboxes | **YOU**: tick only if true |
 
 **Explain how your project meets the main technology requirement**
 ```
-All of REDPEN's AI inference goes through Firebase AI Logic, on web (firebase/ai, getGenerativeModel with hybrid InferenceMode) and Android (com.google.firebase.ai with OnDeviceConfig). Three hybrid modes are used on purpose:
+All of InkTally's AI inference goes through Firebase AI Logic, on web (firebase/ai, getGenerativeModel with hybrid InferenceMode) and Android (com.google.firebase.ai with OnDeviceConfig). Three hybrid modes are used on purpose:
 • PREFER_ON_DEVICE — Gemini Nano reads each cut-out answer box on the teacher's device (Chrome Prompt API on web, ML Kit/AICore on Android), offline; code then marks it.
 • ONLY_IN_CLOUD — when the device is back online, Gemini 3.5 Flash-Lite re-reads every on-device mark as an independent check; agreement makes it Verified, a different score goes to the teacher with both readings. Misreads the cloud finds are remembered, and later offline readings that match one are held for the teacher.
 • ONLY_IN_CLOUD for writing — answer keys (from the questions, never the student's answers) and catch-up sheets (anonymised wrong answers), with structured output; PREFER_IN_CLOUD for reads when no Gemini Nano is available.
@@ -59,13 +59,13 @@ inferenceSource on each response drives the labels the teacher sees. App Check p
 ```
 No account needed: you start as a private guest ("Save my work" links a Google account).
 
-Fastest (any browser): https://redpen-hybrid.web.app → Quick mark a page → upload samples/maths.png from the repo → check the answer key → "Looks right — mark it" → 4/6, with the two wrong answers caught.
+Fastest (any browser): https://inktally.web.app → Quick mark a page → upload samples/maths.png from the repo → check the answer key → "Looks right — mark it" → 4/6, with the two wrong answers caught.
 
-A whole stack, offline: open the "English — Grammar Check" sample once while online → turn the connection off → reload (REDPEN still opens) → Mark → Choose photos → pick samples/english-sheet-photo.jpg a few times → reconnect → each script is marked 3/5.
+A whole stack, offline: open the "English — Grammar Check" sample once while online → turn the connection off → reload (InkTally still opens) → Mark → Choose photos → pick samples/english-sheet-photo.jpg a few times → reconnect → each script is marked 3/5.
 
 On-device path: desktop Chrome with built-in AI (Gemini Nano) → status bar → "Download on-device AI" → go offline → mark the sheet: marks show "On-device · Provisional" → reconnect → the cloud check confirms them by itself. No Nano hardware? The recorded run is in bench/evidence/ondevice-learning-2026-11-14/ and bench/evidence/learning-heldout-2026-11-14/.
 
-Android: install the APK from the Releases page (Android 8+), open it and tap a sample. On phones without Gemini Nano for apps, REDPEN says "Cloud AI" and reads in the cloud.
+Android: install the APK from the Releases page (Android 8+), open it and tap a sample. On phones without Gemini Nano for apps, InkTally says "Cloud AI" and reads in the cloud.
 
 Full click-through script: node web/e2e/live-walkthrough.mjs (18 steps). More in the README's "Try it in 2 minutes".
 ```

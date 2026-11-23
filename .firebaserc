@@ -1,3 +1,18 @@
 {
-  "projects": { "default": "redpen-hybrid" }
+  "projects": {
+    "default": "redpen-hybrid"
+  },
+  "targets": {
+    "redpen-hybrid": {
+      "hosting": {
+        "legacy": [
+          "redpen-hybrid"
+        ],
+        "brand": [
+          "inktally"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

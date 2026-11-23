@@ -79,7 +79,7 @@ fun summarise(before: List<Mark>, after: List<Mark>): CheckSummary {
 fun checkSummaryLead(s: CheckSummary) = "Cloud check: ${s.confirmed} on-device mark${if (s.confirmed == 1) "" else "s"} confirmed"
 fun checkSummaryNeedYou(s: CheckSummary) = "${s.needTeacher} need${if (s.needTeacher == 1) "s" else ""} you"
 fun checkSummaryLearned(s: CheckSummary) =
-    if (s.learned > 0) " REDPEN learned ${s.learned} device misread${if (s.learned == 1) "" else "s"} to hold for checking." else ""
+    if (s.learned > 0) " InkTally learned ${s.learned} device misread${if (s.learned == 1) "" else "s"} to hold for checking." else ""
 
 /** The full status line as plain text (the app renders the "needs you" part as a link to the Review tab). */
 fun checkSummaryText(s: CheckSummary) =

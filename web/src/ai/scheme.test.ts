@@ -67,7 +67,7 @@ describe('drafts that leave questions out', async () => {
     expect(missingQuestions([1, 2, 3], 0)).toEqual([]);
   });
   test('the teacher is told exactly which questions to add', () => {
-    expect(missingNotice([6, 7])).toBe('REDPEN could not find questions 6, 7. Check the paper, and add them with "+ Add question".');
+    expect(missingNotice([6, 7])).toBe('InkTally could not find questions 6, 7. Check the paper, and add them with "+ Add question".');
   });
 });
 

@@ -32,7 +32,7 @@ export function MarkedCopy({ blob: raw, pupil, letterhead }: Props) {
   async function handleShare() {
     setShareError(null);
     if (canShare) {
-      try { await navigator.share({ files: [file], title: `${pupil} — marked by REDPEN` }); return; } catch (e: unknown) {
+      try { await navigator.share({ files: [file], title: `${pupil} — marked by InkTally` }); return; } catch (e: unknown) {
         if (e instanceof DOMException && e.name === 'AbortError') return;
       }
     }

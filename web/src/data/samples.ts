@@ -1,4 +1,4 @@
-// Ready-made assignments so a judge can try REDPEN in one click.
+// Ready-made assignments so a judge can try InkTally in one click.
 // They mirror the real handwriting samples used in our benchmark.
 import type { MarkingScheme } from '../domain/types';
 

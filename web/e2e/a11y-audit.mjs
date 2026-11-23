@@ -6,7 +6,7 @@ const U = process.argv[2] ?? 'https://redpen-hybrid.web.app';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
 const page = await ctx.newPage();
-await page.goto(U); if (await page.getByText('REDPEN preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
+await page.goto(U); if (await page.getByText('InkTally preview').count()) { await page.fill('input', process.env.REDPEN_CODE); await page.click('button[type=submit]'); }
 await page.getByText('Try it with a sample').waitFor({ timeout: 60000 });
 const screens = [['home', U], ['quick', `${U}/quick`], ['new', `${U}/new`], ['school', `${U}/school`]];
 await page.locator('#samples button', { hasText: 'English' }).click(); await page.waitForURL(/\/print$/);
