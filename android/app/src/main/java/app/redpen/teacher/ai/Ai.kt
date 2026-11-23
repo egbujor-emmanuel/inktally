@@ -140,8 +140,6 @@ object Ai {
 
     // ---- Dynamic routing across cloud models (quota-aware), same rules as web/src/ai/models.ts ----
     private const val MAX_SWITCHES = 8
-    private const val AUTHOR_ATTEMPTS = 1
-    private const val FALLBACK_ATTEMPTS = 2
     private val routing = ModelRouting(
         readModel = { cfg("cloud_read_model") },
         fallbackModels = { cfg("cloud_fallback_models").split(",").map { it.trim() }.filter { it.isNotEmpty() } },
@@ -200,30 +198,42 @@ object Ai {
      * (same as web authorGenerate). Non-transient failures (App Check, permission, bad request) are not retried.
      */
     private suspend fun authorGenerate(schema: Schema, request: Content): com.google.firebase.ai.type.GenerateContentResponse {
-        // An overload can last a minute or more: go round the models again after a pause (same as web).
-        var round = 0
-        while (true) {
-            try { return authorRound(schema, request) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
-                if (round >= AUTHOR_ROUND_WAITS_MS.size || !isTransient(e)) throw e
-                delay(AUTHOR_ROUND_WAITS_MS[round]); round++
-            }
-        }
-    }
-
-    private val AUTHOR_ROUND_WAITS_MS = longArrayOf(10_000L, 30_000L)
-
-    private suspend fun authorRound(schema: Schema, request: Content): com.google.firebase.ai.type.GenerateContentResponse {
+        // Every allowed cloud model in turn; when all are overloaded, pause and go round again. One overall budget, so the
+        // teacher gets an answer or a clear message, never an endless wait (same as web).
+        val deadline = System.currentTimeMillis() + AUTHOR_BUDGET_MS
         val primary = cfg("cloud_author_model")
-        return try {
-            retry(AUTHOR_ATTEMPTS, pick = { routing.activeCloudModel(primary) }) { m -> authorModel(schema, m).generateContent(request) }
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (primaryError: Exception) {
-            if (!isTransient(primaryError)) throw primaryError
-            val fallback = routing.authorFallback(primary)
-            retry(FALLBACK_ATTEMPTS, pick = { routing.activeCloudModel(fallback) }) { m -> authorModel(schema, m).generateContent(request) }
+        val chain = (listOf(primary, cfg("cloud_read_model")) + cfg("cloud_fallback_models").split(",").map { it.trim() }).filter { it.isNotEmpty() }.distinct()
+        var last: Throwable = IllegalStateException("timeout: the cloud took too long")
+        for (round in 0..AUTHOR_PAUSES_MS.size) {
+            for (model in chain) {
+                if (routing.isExhausted(model)) continue
+                val left = deadline - System.currentTimeMillis()
+                if (left < MIN_ATTEMPT_MS) throw last
+                try {
+                    return kotlinx.coroutines.withTimeout(minOf(AUTHOR_TIMEOUT_MS, left)) { retry(1, pick = { routing.activeCloudModel(model) }) { m -> authorModel(schema, m).generateContent(request) } }
+                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                    last = IllegalStateException("timeout: the cloud took too long", e)
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    last = e
+                    // App Check, permission or a bad request: another model or another try cannot help.
+                    if (!isTransient(e) && !Regex("""quota|RESOURCE_EXHAUSTED|\b429\b""", RegexOption.IGNORE_CASE).containsMatchIn(errorText(e))) throw e
+                }
+            }
+            val pause = AUTHOR_PAUSES_MS.getOrNull(round) ?: break
+            if (deadline - System.currentTimeMillis() < pause + MIN_ATTEMPT_MS) break
+            delay(pause)
         }
+        throw last
     }
+
+    /** The longest one drafting call may take, across every model and round (same as web). */
+    private const val AUTHOR_BUDGET_MS = 150_000L
+    /** Pauses before going round the models again when all of them are overloaded. */
+    private val AUTHOR_PAUSES_MS = longArrayOf(5_000L, 15_000L)
+    /** Not worth starting another attempt with less time than this left. */
+    private const val MIN_ATTEMPT_MS = 15_000L
 
     /** Remote Config switch for the learning loop (cloud corrections -> hold matching on-device reads for checking). */
     fun deviceLearning() = cfg("device_learning").trim() == "true"

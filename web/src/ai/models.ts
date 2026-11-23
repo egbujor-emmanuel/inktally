@@ -50,10 +50,11 @@ export function handleModelError(error: unknown): boolean {
   const text = errorText(error);
   if (UNSUPPORTED_THINKING.test(text) && !noThinking.has(model)) { noThinking.add(model); return true; }
   if (QUOTA.test(text)) {
-    if (!isExhausted(model)) {
-      const daily = /per ?day|PerDay|daily/i.test(text);
-      exhausted.set(model, Date.now() + (daily ? 12 * 3_600_000 : 60_000));
-    }
+    // Already marked used up and still asked for: the caller's own chain has nothing else left, so switching again
+    // would just repeat the same request (this looped forever when every model's quota ran out, 23 Nov).
+    if (isExhausted(model)) return false;
+    const daily = /per ?day|PerDay|daily/i.test(text);
+    exhausted.set(model, Date.now() + (daily ? 12 * 3_600_000 : 60_000));
     const next = activeCloudModel();
     return next !== model && !isExhausted(next); // only retry if a model with quota left remains
   }
@@ -157,52 +158,48 @@ export function authorModel(schema: ObjectSchema, modelName = config('cloud_auth
 
 /** A full question-paper photo took 10-45 s in testing; give the first attempt room before retrying. */
 const AUTHOR_TIMEOUT_MS = 60_000;
-const AUTHOR_ATTEMPTS = 1;
-const FALLBACK_ATTEMPTS = 2;
 
 /**
  * Generates with the stronger authoring model, falling back to the fast read model when the
  * stronger one is overloaded or slow (we measured "high demand" errors during testing).
  */
 export async function authorGenerate(schema: ObjectSchema, request: string | (string | Part)[]): Promise<{ text: string; model: string }> {
-  // An overload can last a minute or more (seen in the WAEC dry run, 23 Nov): go round every model again after a pause
-  // instead of making the teacher press the button again.
-  for (let round = 0; ; round++) {
-    try {
-      return await authorRound(schema, request);
-    } catch (error: unknown) {
-      const busy = isTransient(error) || /quota|RESOURCE_EXHAUSTED|429/i.test(error instanceof Error ? error.message : String(error));
-      const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
-      if (round >= AUTHOR_ROUND_WAITS_MS.length || !busy || offline) throw error;
-      await new Promise((resolve) => setTimeout(resolve, AUTHOR_ROUND_WAITS_MS[round]));
-    }
-  }
-}
-
-/** Pauses between full rounds over the cloud models when all of them are overloaded. */
-const AUTHOR_ROUND_WAITS_MS = [10_000, 30_000];
-
-async function authorRound(schema: ObjectSchema, request: string | (string | Part)[]): Promise<{ text: string; model: string }> {
+  // Every allowed cloud model in turn; when all are overloaded (seen in the WAEC dry run, 23 Nov), pause and go round
+  // again. One overall budget, so the teacher gets an answer or a clear message, never an endless wait.
+  const deadline = Date.now() + AUTHOR_BUDGET_MS;
   const primary = config('cloud_author_model');
-  try {
-    const r = await withRetry(() => authorModel(schema, primary).generateContent(request), AUTHOR_ATTEMPTS);
-    return { text: r.response.text(), model: primary };
-  } catch (primaryError: unknown) {
-    // A stalled or overloaded model: move to a different one rather than waiting on the same model again.
-    const chain = [config('cloud_read_model'), ...config('cloud_fallback_models').split(',').map((m) => m.trim())].filter(Boolean);
-    const fallback = chain.find((m) => m !== primary && !isExhausted(m)) ?? primary;
-    if (fallback === primary || !isTransient(primaryError)) {
-      // Same model, or a non-transient failure (App Check, permission, bad request): retrying cannot help.
-      if (fallback === primary && isTransient(primaryError)) {
-        const r = await withRetry(() => authorModel(schema, primary, REQUEST_TIMEOUT_MS).generateContent(request), FALLBACK_ATTEMPTS).catch((e: unknown) => { throw friendlyCloudError(e); });
-        return { text: r.response.text(), model: primary };
+  const chain = [...new Set([primary, config('cloud_read_model'), ...config('cloud_fallback_models').split(',').map((m) => m.trim())].filter(Boolean))];
+  let lastError: unknown = new Error('timeout: the cloud took too long');
+  for (let round = 0; round <= AUTHOR_PAUSES_MS.length; round++) {
+    for (const model of chain) {
+      if (isExhausted(model)) continue;
+      const left = deadline - Date.now();
+      if (left < MIN_ATTEMPT_MS) throw friendlyCloudError(lastError);
+      const timeout = Math.min(model === primary ? AUTHOR_TIMEOUT_MS : REQUEST_TIMEOUT_MS, left);
+      try {
+        const r = await withRetry(() => authorModel(schema, model, timeout).generateContent(request), 1);
+        return { text: r.response.text(), model };
+      } catch (error: unknown) {
+        lastError = error;
+        const busy = isTransient(error) || /quota|RESOURCE_EXHAUSTED|\b429\b/i.test(error instanceof Error ? error.message : String(error));
+        const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+        // App Check, permission or a bad request: another model or another try cannot help.
+        if (!busy || offline) throw friendlyCloudError(error);
       }
-      throw friendlyCloudError(primaryError);
     }
-    const r = await withRetry(() => authorModel(schema, fallback, REQUEST_TIMEOUT_MS).generateContent(request), FALLBACK_ATTEMPTS).catch((e: unknown) => { throw friendlyCloudError(e); });
-    return { text: r.response.text(), model: fallback };
+    const pause = AUTHOR_PAUSES_MS[round];
+    if (pause === undefined || deadline - Date.now() < pause + MIN_ATTEMPT_MS) break;
+    await new Promise((resolve) => setTimeout(resolve, pause));
   }
+  throw friendlyCloudError(lastError);
 }
+
+/** The longest one drafting call may take, across every model and round. */
+const AUTHOR_BUDGET_MS = 150_000;
+/** Pauses before going round the models again when all of them are overloaded. */
+const AUTHOR_PAUSES_MS = [5_000, 15_000];
+/** Not worth starting another attempt with less time than this left. */
+const MIN_ATTEMPT_MS = 15_000;
 
 export async function blobToPart(blob: Blob): Promise<Part> {
   const buffer = new Uint8Array(await blob.arrayBuffer());

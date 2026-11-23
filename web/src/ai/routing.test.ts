@@ -31,6 +31,22 @@ const quota = (daily = false) => () => Promise.reject(new Error(`[429] RESOURCE_
 
 beforeEach(() => { behaviour = {}; calls.length = 0; models.resetModelRouting(); vi.useRealTimers(); });
 
+describe('when every model is out of quota or failing (the 23 Nov loop)', () => {
+  test('drafting stops with the quota message instead of retrying forever', async () => {
+    const overloaded = () => Promise.reject(new Error('[500] Internal error encountered'));
+    behaviour = { 'model-a': overloaded, 'model-b': quota(true), 'model-c': quota(true) };
+    await expect(models.authorGenerate({} as never, 'x')).rejects.toThrow(/quota|overloaded|too long/i);
+    expect(calls.length).toBeLessThan(20);
+  }, 60_000);
+
+  test('a quota error on a model already used up does not switch again', async () => {
+    behaviour = { 'model-b': quota(true), 'model-c': quota(true) };
+    await expect(withRetry(() => models.authorModel({} as never, 'model-b').generateContent('x'))).rejects.toThrow(/429/);
+    await expect(withRetry(() => models.authorModel({} as never, 'model-b').generateContent('x'))).rejects.toThrow(/429/);
+    expect(calls.length).toBeLessThan(10);
+  });
+});
+
 describe('quota-aware model routing', () => {
   test('a quota error on the primary model switches to the first fallback at once', async () => {
     behaviour = { 'model-a': quota(), 'model-b': reply('ok') };
