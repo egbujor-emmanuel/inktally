@@ -1,3 +1,4 @@
+import { qLabel } from '../../domain/types';
 import { useState } from 'react';
 import { COMMENT_LIMIT, PUPIL_LIMIT, updateSubmission, type Assignment, type Submission } from '../../data/store';
 import { useProfile } from '../../data/profile';
@@ -55,7 +56,7 @@ export function RegisterTab({ assignment, submissions }: Props) {
   function handleCsv() {
     const letterhead = [[profile.institution], [profile.details], [`${assignment.title} — ${assignment.className}`], [profile.teacher ? `Teacher: ${profile.teacher}` : ''], []]
       .filter((l, i) => i >= 2 || l[0]);
-    const header = ['Student', ...questions.map((q) => `Q${q.q} (/${q.max})`), `Total (/${max})`, 'Percent', 'Status', 'Teacher comment'];
+    const header = ['Student', ...questions.map((q) => `Q${qLabel(q)} (/${q.max})`), `Total (/${max})`, 'Percent', 'Status', 'Teacher comment'];
     const lines = rows.map((r) => [
       r.submission.pupil, ...r.scores.map((v) => v ?? ''), r.total, `${Math.round((r.total / (max || 1)) * 100)}%`,
       r.submission.queued ? 'waiting to be marked' : r.unchecked ? `${r.unchecked} to check` : 'final', r.submission.comment ?? '',
@@ -103,7 +104,7 @@ export function RegisterTab({ assignment, submissions }: Props) {
             <thead className="bg-ink text-white">
               <tr>
                 <th scope="col" className={`${cell} min-w-[130px] py-2 text-left text-xs font-semibold`}>Student</th>
-                {questions.map((q) => <th key={q.q} scope="col" className={`${cell} min-w-[54px] py-2 text-left text-xs font-semibold`}>Q{q.q} /{q.max}</th>)}
+                {questions.map((q) => <th key={q.q} scope="col" className={`${cell} min-w-[54px] py-2 text-left text-xs font-semibold`}>Q{qLabel(q)} /{q.max}</th>)}
                 <th scope="col" className={`${cell} min-w-[70px] py-2 text-left text-xs font-semibold`}>Total /{max}</th>
                 <th scope="col" className={`${cell} min-w-[86px] py-2 text-left text-xs font-semibold`}>Status</th>
                 <th scope="col" className={`${cell} min-w-[200px] py-2 text-left text-xs font-semibold`}>Teacher’s comment</th>

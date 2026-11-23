@@ -1,5 +1,6 @@
 package app.redpen.teacher.data
 
+import app.redpen.teacher.domain.shownLabel
 import app.redpen.teacher.domain.Profile
 import app.redpen.teacher.domain.needsCheck
 import java.io.ByteArrayOutputStream
@@ -32,7 +33,7 @@ object Register {
         val max = a.maxTotal
         val head = listOfNotNull(profile.institution.ifBlank { null }, profile.details.ifBlank { null }, "${a.title} — ${a.className}",
             profile.teacher.ifBlank { null }?.let { "Teacher: $it" }).map { listOf(it) } + listOf(emptyList())
-        val header = listOf("Student") + a.scheme.questions.map { "Q${it.q} (/${it.max})" } + listOf("Total (/$max)", "Percent", "Status", "Teacher comment")
+        val header = listOf("Student") + a.scheme.questions.map { "Q${it.shownLabel} (/${it.max})" } + listOf("Total (/$max)", "Percent", "Status", "Teacher comment")
         val lines = rows(a, submissions).map { r ->
             listOf(r.submission.pupil) + r.scores.map { it?.toString() ?: "" } +
                 listOf(r.total.toString(), "${if (max > 0) r.total * 100 / max else 0}%", if (r.submission.queued != null) "waiting to be marked" else if (r.unchecked > 0) "${r.unchecked} to check" else "final", r.submission.comment)
@@ -101,7 +102,7 @@ object Register {
         heading("${if (profile.teacher.isNotBlank()) "Teacher: ${profile.teacher} · " else ""}Exported ${DateFormat.getDateInstance().format(Date())} · Marked with REDPEN", Style.ITALIC)
         sheet += emptyList<Cell?>()
         val headerRow = sheet.size
-        sheet += (listOf("Student") + qs.map { "Q${it.q} (/${it.max})" } + listOf("Total (/$max)", "Percent", "Status", "Teacher’s comment")).map { Txt(it, Style.HEADER) }
+        sheet += (listOf("Student") + qs.map { "Q${it.shownLabel} (/${it.max})" } + listOf("Total (/$max)", "Percent", "Status", "Teacher’s comment")).map { Txt(it, Style.HEADER) }
         val rows = rows(a, submissions)
         rows.forEach { r ->
             sheet += listOf<Cell?>(Txt(safeText(r.submission.pupil), 7)) + r.scores.map { it?.let { v -> Num(v.toDouble(), 7) } ?: Txt("", 7) } +

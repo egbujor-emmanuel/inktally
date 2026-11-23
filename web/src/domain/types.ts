@@ -17,8 +17,10 @@ export type MarkStatus = 'provisional' | 'verified' | 'flagged' | 'reviewed';
 export type QuestionType = 'objective' | 'numeric' | 'short' | 'points';
 
 interface QuestionBase {
-  /** Question number as printed on the sheet (1-based). */
+  /** Question number in order (1-based); sub-parts are numbered on too. */
   q: number;
+  /** The question's label as printed, when it is not just the number: "6(a)", "6(b)(ii)" (WAEC-style sub-parts). */
+  label?: string;
   /** The question text (used only for cloud scheme drafting and teacher display, never for on-device reading). */
   prompt: string;
   max: number;
@@ -68,6 +70,8 @@ export interface MarkingScheme {
 
 export interface Mark {
   q: number;
+  /** The question's printed label ("6(a)"), copied from the question when marked. */
+  label?: string;
   /** What the model (or teacher) read from the pupil's answer box. */
   read: string;
   readSource: ReadSource;
@@ -80,3 +84,6 @@ export interface Mark {
   /** Marking points that were found (points questions / method marks). */
   pointsFound?: string[];
 }
+
+/** How a question is shown to people: its printed label ("6(a)") or else its number. */
+export const qLabel = (x: { q: number; label?: string }): string => x.label?.trim() || String(x.q);

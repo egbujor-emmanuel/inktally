@@ -1,5 +1,6 @@
 package app.redpen.teacher.ui
 
+import app.redpen.teacher.domain.shownLabel
 import android.graphics.Bitmap
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -106,7 +107,7 @@ fun MarkCard(mark: Mark, crop: Bitmap?, extra: @Composable () -> Unit = {}) {
     Card(colors = CardDefaults.cardColors(containerColor = RP.Paper), border = BorderStroke(1.dp, Color(0xFFE5DECF)), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Q${mark.q}", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                Text("Q${mark.shownLabel}", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
                 Spacer(Modifier.weight(1f))
                 MarkGlyph(mark)
                 Text("${mark.awarded}/${mark.max}", fontFamily = RP.Hand, fontSize = 30.sp, color = RP.Pen)

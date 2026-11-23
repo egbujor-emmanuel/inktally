@@ -2,6 +2,7 @@
 // PREFER_IN_CLOUD: the cloud reads whole pages reliably (14/14 in our benchmark); offline we fall back to
 // on-device, whose whole-page reads can "auto-correct" pupils, so callers must treat those as unverified.
 import { InferenceMode, Schema } from 'firebase/ai';
+import { qLabel } from '../domain/types';
 import { z } from 'zod';
 import type { ReadSource } from '../domain/types';
 import { blobToPart, readerModel, type ReadMode } from './models';
@@ -15,12 +16,13 @@ const PageResponse = z.object({ answers: z.array(z.object({ q: z.number().int(),
 
 const PAGE_PROMPT = 'This is a photo of a student\'s handwritten exercise-book page. For each numbered answer, transcribe exactly what the student '
   + 'wrote after the question number, character by character. Keep every mistake — do NOT calculate, solve or correct anything. '
-  + 'Ignore the student\'s name, the date and any teacher marks. Only include these question numbers: {numbers}.';
+  + 'Ignore the student\'s name, the date and any teacher marks. Only include these questions. The student labels each one as shown, '
+  + 'and you return it with the number on the left: {numbers}.';
 
 export interface PageRead { answers: Map<number, string>; source: ReadSource }
 
-export async function readPage(photo: Blob, questionNumbers: number[], mode: ReadMode = InferenceMode.PREFER_IN_CLOUD): Promise<PageRead> {
-  const prompt = PAGE_PROMPT.replace('{numbers}', questionNumbers.join(', '));
+export async function readPage(photo: Blob, questions: { q: number; label?: string }[], mode: ReadMode = InferenceMode.PREFER_IN_CLOUD): Promise<PageRead> {
+  const prompt = PAGE_PROMPT.replace('{numbers}', questions.map((x) => `${x.q} = "${qLabel(x)}"`).join(', '));
   const image = await blobToPart(photo);
   const started = performance.now();
   const response = await withRetry(() => readerModel(PAGE_SCHEMA, mode).generateContent([prompt, image]));

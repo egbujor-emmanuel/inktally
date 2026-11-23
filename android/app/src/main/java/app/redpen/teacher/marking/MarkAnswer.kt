@@ -67,7 +67,7 @@ object Marker {
 
     /** Exercise-book mode: one page read, then code marks each question. On-device page reads are never final. */
     suspend fun markPage(questions: List<Question>, photo: Bitmap, force: InferenceMode? = InferenceMode.PREFER_IN_CLOUD): List<Mark> {
-        val page = Ai.readPage(photo, questions.map { it.q }, force)
+        val page = Ai.readPage(photo, questions, force)
         return questions.map { q ->
             val m = markFromRead(q, page.answers[q.q] ?: "", page.source, force)
             if (page.source == ReadSource.ON_DEVICE && m.status != MarkStatus.FLAGGED) m.copy(status = MarkStatus.PROVISIONAL, reasons = m.reasons + PAGE_ON_DEVICE_WARNING) else m

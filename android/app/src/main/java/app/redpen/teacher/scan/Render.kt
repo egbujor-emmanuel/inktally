@@ -1,5 +1,6 @@
 package app.redpen.teacher.scan
 
+import app.redpen.teacher.domain.shownLabel
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -78,7 +79,7 @@ object Render {
         val hint = paint(0xFF9999AA.toInt(), 2.6f * s, f.body).apply { textAlign = Paint.Align.RIGHT }
         val byQ = questions.associateBy { it.q }
         for (b in boxes) {
-            c.drawText("${b.q}", ((b.x - 3) * s).toFloat(), ((b.y + 6) * s).toFloat(), num)
+            c.drawText(byQ[b.q]?.shownLabel ?: "${b.q}", ((b.x - 3) * s).toFloat(), ((b.y + 6) * s).toFloat(), num)
             c.drawRoundRect(RectF((b.x * s).toFloat(), (b.y * s).toFloat(), ((b.x + b.w) * s).toFloat(), ((b.y + b.h) * s).toFloat()), 1.2f * s, 1.2f * s, box)
             byQ[b.q]?.let { q ->
                 // Hint sits ABOVE the box so it is never inside the scanned crop.
@@ -200,7 +201,7 @@ object Render {
         val row = min(14 * u, (ph - 46 * u) / maxOf(marks.size, 1))
         marks.forEachIndexed { i, m ->
             val y = 40 * u + i * row
-            c.drawText("Q${m.q}", pw + 8 * u, y + row * 0.62f, paint(INK, row * 0.55f, f.display))
+            c.drawText("Q${m.shownLabel}", pw + 8 * u, y + row * 0.62f, paint(INK, row * 0.55f, f.display))
             glyph(c, m, pw + 34 * u, y + row * 0.1f, row * 0.8f, f.hand)
             c.drawText("${m.awarded}/${m.max}", pw + 62 * u, y + row * 0.68f, paint(if (m.status == MarkStatus.FLAGGED) FLAG else PEN, row * 0.7f, f.hand))
         }
@@ -288,7 +289,7 @@ object Render {
             val white = paint(Color.WHITE, 9f, f.body, bold = true)
             var x = pad + 4
             c.drawText("Student", x, y + 15f, white); x = pad + nameW
-            qs.forEach { q -> c.drawText("Q${q.q} /${q.max}", x + 2, y + 15f, white); x += qW }
+            qs.forEach { q -> c.drawText("Q${q.shownLabel} /${q.max}", x + 2, y + 15f, white); x += qW }
             c.drawText("Total /${a.maxTotal}", x + 2, y + 15f, white); x += totW
             c.drawText("Status", x + 2, y + 15f, white); x += statW
             c.drawText("Teacher’s comment", x + 2, y + 15f, white)

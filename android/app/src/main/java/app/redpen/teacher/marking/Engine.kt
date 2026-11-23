@@ -20,7 +20,7 @@ private fun settled(source: ReadSource) = if (source == ReadSource.ON_DEVICE) Ma
 private fun result(
     q: Question, read: String, source: ReadSource, awarded: Int, status: MarkStatus, reasons: List<String>,
     engine: MarkEngine = MarkEngine.CODE, pointsFound: List<String> = emptyList(),
-) = Mark(q.q, read, source, awarded, q.max, engine, status, reasons, pointsFound)
+) = Mark(q.q, read, source, awarded, q.max, engine, status, reasons, pointsFound, label = q.label)
 
 private fun fmt(v: Double) = if (v == v.toLong().toDouble()) v.toLong().toString() else v.toString()
 

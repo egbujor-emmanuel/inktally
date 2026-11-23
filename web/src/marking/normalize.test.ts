@@ -27,6 +27,16 @@ describe('parseNumericAnswer', () => {
     expect(parseNumericAnswer('Density = 240 / 30 = 80 g/cm^3').value).toBe(80);
   });
 
+  it('reads standard form the way students and models write it', () => {
+    expect(parseNumericAnswer('P = hρg = 10 × 1000 × 10 = 1.0 × 10^5 Pa').value).toBe(100000);
+    expect(parseNumericAnswer('1 x 10⁵').value).toBe(100000);
+    expect(parseNumericAnswer('1.0×10⁵ Pa').value).toBe(100000);
+    expect(parseNumericAnswer('6.02 x 10^23').value).toBe(6.02e23);
+    expect(parseNumericAnswer('2.5 × 10⁻³ m').value).toBe(0.0025);
+    expect(parseNumericAnswer('1e5').value).toBe(100000);
+    expect(parseNumericAnswer('100,000 Pa').value).toBe(100000);
+  });
+
   it('reads written fractions such as 4⅜', () => {
     expect(parseNumericAnswer('35/8 = 4⅜').value).toBe(4.375);
     expect(parseNumericAnswer('2¾').value).toBe(2.75);

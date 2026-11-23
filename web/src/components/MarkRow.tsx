@@ -1,3 +1,4 @@
+import { qLabel } from '../domain/types';
 import type { ReactNode } from 'react';
 import type { Mark } from '../domain/types';
 import { MarkGlyph, type GlyphKind } from './MarkGlyph';
@@ -30,7 +31,7 @@ export function MarkRow({ mark, cropUrl, index = 0, actions }: Props) {
   return (
     <li className="grid list-none gap-2 rounded-[12px] border border-border bg-paper p-3.5">
       <div className="flex items-center">
-        <span className="font-display text-[22px] font-bold">Q{mark.q}</span>
+        <span className="font-display text-[22px] font-bold">Q{qLabel(mark)}</span>
         <span className="flex-1" />
         <MarkGlyph kind={glyph} size={40} delay={index * 0.08} label={glyph === 'query' ? 'Needs checking' : `${mark.awarded} of ${mark.max}`} />
         <span className="font-hand text-[30px] text-pen">{mark.awarded}/{mark.max}</span>

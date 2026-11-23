@@ -2,6 +2,7 @@
 
 package app.redpen.teacher.ui
 
+import app.redpen.teacher.domain.shownLabel
 import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -474,7 +475,7 @@ fun RegisterTab(a: Assignment, submissions: List<Submission>, profile: Profile, 
             Column(Modifier.padding(horizontal = 16.dp).background(androidx.compose.ui.graphics.Color.White).horizontalScroll(scroll)) {
                 Row(Modifier.background(RP.Ink).padding(vertical = 8.dp)) {
                     Cell("Student", 130, header = true)
-                    a.scheme.questions.forEach { Cell("Q${it.q} /${it.max}", 54, header = true) }
+                    a.scheme.questions.forEach { Cell("Q${it.shownLabel} /${it.max}", 54, header = true) }
                     Cell("Total /$max", 70, header = true); Cell("Status", 86, header = true); Cell("Teacher’s comment", 200, header = true); Cell("", 92, header = true)
                 }
                 rows.forEach { r ->
@@ -530,7 +531,7 @@ fun InsightsTab(a: Assignment, submissions: List<Submission>) {
             val pct = (avg * 100).toInt()
             Paper {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Q${q.q}", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.width(52.dp))
+                    Text("Q${q.shownLabel}", fontFamily = RP.Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.width(52.dp))
                     Text(q.prompt, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
                 }
                 if (wrong.isNotEmpty()) Text("Answers that lost marks: " + wrong.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.take(4)

@@ -100,7 +100,9 @@ object Repo {
     }
 
     // ---- encoding (wire format identical to web/src/domain/types.ts) ----
-    private fun Question.toMap(): Map<String, Any?> = when (this) {
+    private fun Question.toMap(): Map<String, Any?> = baseMap().let { b -> if (label.isNullOrBlank()) b else b + ("label" to label) }
+
+    private fun Question.baseMap(): Map<String, Any?> = when (this) {
         is Question.Objective -> mapOf("q" to q, "type" to "objective", "prompt" to prompt, "max" to max, "correct" to correct)
         is Question.Numeric -> buildMap {
             put("q", q); put("type", "numeric"); put("prompt", prompt); put("max", max); put("accept", accept); put("methodPoints", methodPoints)
@@ -115,18 +117,19 @@ object Repo {
         val prompt = m["prompt"] as? String ?: ""
         val max = (m["max"] as? Number)?.toInt() ?: 1
         fun strings(k: String) = (m[k] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+        val label = (m["label"] as? String)?.takeIf { it.isNotBlank() }
         return when (m["type"]) {
-            "objective" -> Question.Objective(q, prompt, max, strings("correct"))
+            "objective" -> Question.Objective(q, prompt, max, strings("correct"), label)
             "numeric" -> Question.Numeric(q, prompt, max, (m["accept"] as? List<*>)?.filterIsInstance<Number>()?.map { it.toDouble() } ?: emptyList(),
-                (m["tolerance"] as? Number)?.toDouble(), strings("methodPoints"))
-            "short" -> Question.Short(q, prompt, max, strings("accept"), strings("reject"), m["spellingTolerant"] as? Boolean ?: true)
-            "points" -> Question.Points(q, prompt, max, strings("points"), strings("reject"))
+                (m["tolerance"] as? Number)?.toDouble(), strings("methodPoints"), label)
+            "short" -> Question.Short(q, prompt, max, strings("accept"), strings("reject"), m["spellingTolerant"] as? Boolean ?: true, label)
+            "points" -> Question.Points(q, prompt, max, strings("points"), strings("reject"), label)
             else -> null
         }
     }
 
     private fun Mark.toMap() = mapOf("q" to q, "read" to read, "readSource" to readSource.wire, "awarded" to awarded, "max" to max,
-        "engine" to engine.wire, "status" to status.wire, "reasons" to reasons, "pointsFound" to pointsFound)
+        "engine" to engine.wire, "status" to status.wire, "reasons" to reasons, "pointsFound" to pointsFound).let { if (label.isNullOrBlank()) it else it + ("label" to label) }
 
     private fun markOf(m: Map<String, Any?>): Mark? = Mark(
         q = (m["q"] as? Number)?.toInt() ?: return null, read = m["read"] as? String ?: "",
@@ -136,6 +139,7 @@ object Repo {
         status = MarkStatus.entries.firstOrNull { it.wire == m["status"] } ?: MarkStatus.FLAGGED,
         reasons = (m["reasons"] as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
         pointsFound = (m["pointsFound"] as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
+        label = (m["label"] as? String)?.takeIf { it.isNotBlank() },
     )
 
     @Suppress("UNCHECKED_CAST")

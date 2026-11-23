@@ -1,3 +1,4 @@
+import { qLabel } from '../domain/types';
 import { useState } from 'react';
 import type { Question } from '../domain/types';
 import { Field, GhostButton } from '../ui/Kit';
@@ -41,7 +42,7 @@ export function SchemeEditor({ questions, onChange, locked = false }: Props) {
         <fieldset key={k(q, 'card')} className="card card-pad mx-4">
           <legend className="sr-only">Question {q.q}</legend>
           <div className="flex items-center">
-            <span className="w-10 flex-none font-hand text-4xl text-pen">{q.q}</span>
+            <span className="min-w-10 flex-none pr-1 font-hand text-4xl text-pen">{qLabel(q)}</span>
             <ListField key={k(q, 'p')} initial={q.prompt} label="Question" onParsed={(v) => update({ ...q, prompt: v })} />
           </div>
           {locked ? <p className="text-[13px] font-semibold text-ink-soft">{TYPES.find(([t]) => t === q.type)?.[1]}</p> : (
@@ -54,6 +55,8 @@ export function SchemeEditor({ questions, onChange, locked = false }: Props) {
             ))}
           </div>
           )}
+          <ListField key={k(q, 'lb')} initial={q.label ?? ''} label="Number as printed (optional, e.g. 6(a))"
+            onParsed={(v) => update(v.trim() ? { ...q, label: v.trim().slice(0, 16) } : (({ label: _, ...rest }) => rest)(q))} />
           <div className="flex items-center gap-2">
             <span className="text-sm">Marks</span>
             <button type="button" className="btn-text !text-xl" aria-label="Fewer marks" onClick={() => update({ ...q, max: Math.max(1, q.max - 1) })}>–</button>

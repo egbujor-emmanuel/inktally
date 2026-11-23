@@ -34,6 +34,16 @@ private val UNIT = Regex("""(?:\s*(?:g\/cm\^3|kg\/m\^3|cm\^3|cm\^2|m\^3|m\^2|m\/
 private val SMALL_DIGITS = Regex("""([0-9])?([⁰¹²³⁴⁵⁶⁷⁸⁹]+)\s*[/⁄]\s*([₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹0-9]+)""")
 private fun plainDigits(s: String) = s.map { c -> "⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(c).takeIf { it >= 0 }?.digitToChar() ?: "₀₁₂₃₄₅₆₇₈₉".indexOf(c).takeIf { it >= 0 }?.digitToChar() ?: c }.joinToString("")
 
+/** Standard form: "1.0 × 10^5", "6.02 x 10²³", "2.5×10⁻³", "1e5" (after any unit has been dropped). Same as web. */
+private val STANDARD_FORM = Regex("""^\s*(-?\d+(?:\.\d+)?)\s*(?:[x×*·]\s*10\s*(?:\^|\*\*)?\s*([-−⁻+]?[0-9⁰¹²³⁴⁵⁶⁷⁸⁹]+)|[eE]([-+]?\d+))\s*$""")
+private fun standardForm(text: String): Double? {
+    val m = STANDARD_FORM.find(text) ?: return null
+    val exp = (m.groupValues[2].ifEmpty { m.groupValues[3] }).replace('−', '-').replace('⁻', '-')
+        .map { c -> "⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(c).takeIf { it >= 0 }?.digitToChar() ?: c }.joinToString("")
+    val value = m.groupValues[1].toDouble() * Math.pow(10.0, exp.toDouble())
+    return if (value.isFinite()) "%.12g".format(java.util.Locale.ROOT, value).toDouble() else null
+}
+
 fun parseNumericAnswer(raw: String): NumericParse {
     val hasEquals = raw.contains('=')
     val lastPart = (if (hasEquals) raw.substring(raw.lastIndexOf('=') + 1) else raw).replace(SMALL_DIGITS) { m ->
@@ -42,6 +52,7 @@ fun parseNumericAnswer(raw: String): NumericParse {
     }
     val afterEquals = lastPart.replace(UNIT, "").replace(VULGAR_CHAR) { m -> " " + VULGAR.getValue(m.groupValues[1][0]) }
     val signAfterEquals = hasEquals && Regex("""^\s*[-−–]""").containsMatchIn(afterEquals)
+    standardForm(afterEquals.replace(",", ""))?.let { return NumericParse(it, true, signAfterEquals) }
     var clean = true
     val mapped = afterEquals.map { ch -> DIGIT_LOOKALIKES[ch]?.also { clean = false } ?: ch }.joinToString("")
     val compact = mapped.replace('−', '-').replace('–', '-').trim()

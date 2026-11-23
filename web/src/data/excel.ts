@@ -1,5 +1,6 @@
 // Real .xlsx mark register with the institution letterhead, per-question scores, totals and comments.
 // exceljs is loaded only when the teacher downloads, so it never slows the app down.
+import { qLabel } from '../domain/types';
 import type { Font } from 'exceljs';
 import type { Question } from '../domain/types';
 import type { Profile } from './profile';
@@ -53,7 +54,7 @@ export async function buildRegisterWorkbook(assignment: Assignment, submissions:
   r += 1;
 
   const headerRow = ws.getRow(r);
-  headerRow.values = ['Student', ...questions.map((q) => `Q${q.q} (/${q.max})`), `Total (/${max})`, 'Percent', 'Status', 'Teacher’s comment'];
+  headerRow.values = ['Student', ...questions.map((q) => `Q${qLabel(q)} (/${q.max})`), `Total (/${max})`, 'Percent', 'Status', 'Teacher’s comment'];
   headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
   headerRow.eachCell((c) => {
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F2A44' } };

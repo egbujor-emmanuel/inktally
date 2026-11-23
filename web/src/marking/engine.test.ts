@@ -6,6 +6,17 @@ const numeric = (accept: number[], extra: Partial<NumericQuestion> = {}): Numeri
   q: 2, prompt: '15 + 9', max: 1, type: 'numeric', accept, ...extra,
 });
 
+describe('sub-part labels', () => {
+  it('a mark carries its question’s printed label, shown as Q6(b)(i)', async () => {
+    const { qLabel } = await import('../domain/types');
+    const q = { q: 7, label: '6(b)(i)', type: 'numeric' as const, prompt: 'a', max: 2, accept: [4] };
+    const m = markNumeric(q as never, 'a = 20 ÷ 5 = 4 m/s²', 'in_cloud');
+    expect(m).toMatchObject({ label: '6(b)(i)', awarded: 2 });
+    expect(qLabel(m)).toBe('6(b)(i)');
+    expect(qLabel({ q: 3 })).toBe('3');
+  });
+});
+
 describe('short answers that are really numbers', () => {
   const q = { q: 8, type: 'short' as const, prompt: 'Solve', max: 2, accept: ['x = 8', '8'] };
   const frac = { q: 10, type: 'short' as const, prompt: 'Simplify', max: 2, accept: ['4⅜', '35/8', '4.375'] };

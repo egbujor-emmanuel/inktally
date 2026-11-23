@@ -35,6 +35,11 @@ describe('toQuestion', () => {
     expect(toQuestion({ q: 8, type: 'numeric', prompt: 'No method', max: 2, acceptNumbers: [8] })).not.toHaveProperty('methodPoints');
   });
 
+  test('a WAEC-style sub-part keeps its printed label; a plain number gets none', () => {
+    expect(toQuestion({ q: 7, label: '6(b)(i)', type: 'numeric', prompt: 'Acceleration', max: 2, acceptNumbers: [4] })).toMatchObject({ q: 7, label: '6(b)(i)' });
+    expect(toQuestion({ q: 3, label: '3', type: 'objective', prompt: 'Pick', max: 1, correctOptions: ['B'] })).not.toHaveProperty('label');
+  });
+
   test('questions with no usable answer are dropped', () => {
     expect(toQuestion({ q: 1, type: 'objective', prompt: 'Pick one', max: 1 })).toBeNull();
     expect(toQuestion({ q: 2, type: 'numeric', prompt: '7 x 8', max: 1, acceptNumbers: [] })).toBeNull();

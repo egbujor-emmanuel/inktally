@@ -1,5 +1,6 @@
 // Produces a "marked copy" of the pupil's own work: red ticks/crosses + scores drawn on it, total circled.
 // This removes the second, physical round of marking — the teacher prints/shares this and writes only the total.
+import { qLabel } from '../domain/types';
 import type { Mark } from '../domain/types';
 import { applyHomography, type Homography } from './homography';
 import { A4, type BoxRect } from './layout';
@@ -126,7 +127,7 @@ export async function markedPageCopy(photo: Blob, marks: Mark[], pupil: string):
   marks.forEach((m, i) => {
     const y = 40 * u + i * row;
     ctx.fillStyle = '#1f2a44'; ctx.font = `700 ${row * 0.55}px Georgia, serif`;
-    ctx.fillText(`Q${m.q}`, pw + 8 * u, y + row * 0.62);
+    ctx.fillText(`Q${qLabel(m)}`, pw + 8 * u, y + row * 0.62);
     glyph(ctx, m, pw + 34 * u, y + row * 0.1, row * 0.8);
     ctx.fillStyle = m.status === 'flagged' ? FLAG : PEN; ctx.font = `700 ${row * 0.7}px ${HAND_FONT}`;
     ctx.fillText(`${m.awarded}/${m.max}`, pw + 62 * u, y + row * 0.68);

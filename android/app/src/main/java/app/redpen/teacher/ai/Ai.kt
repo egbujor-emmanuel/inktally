@@ -5,6 +5,7 @@ import app.redpen.teacher.domain.MarkingScheme
 import app.redpen.teacher.domain.Question
 import app.redpen.teacher.domain.ReadSource
 import com.google.firebase.Firebase
+import app.redpen.teacher.domain.shownLabel
 import com.google.firebase.ai.InferenceMode
 import com.google.firebase.ai.InferenceSource
 import com.google.firebase.ai.OnDeviceConfig
@@ -325,13 +326,14 @@ object Ai {
 
     private const val PAGE_PROMPT = "This is a photo of a student's handwritten exercise-book page. For each numbered answer, transcribe exactly what the student " +
         "wrote after the question number, character by character. Keep every mistake — do NOT calculate, solve or correct anything. " +
-        "Ignore the student's name, the date and any teacher marks. Only include these question numbers: {numbers}."
+        "Ignore the student's name, the date and any teacher marks. Only include these questions. The student labels each one as shown, " +
+        "and you return it with the number on the left: {numbers}."
 
     /** PREFER_IN_CLOUD: the cloud reads whole pages reliably (14/14 in our benchmark); offline it falls back to Nano. */
-    suspend fun readPage(photo: Bitmap, numbers: List<Int>, force: InferenceMode? = InferenceMode.PREFER_IN_CLOUD): PageRead {
+    suspend fun readPage(photo: Bitmap, questions: List<Question>, force: InferenceMode? = InferenceMode.PREFER_IN_CLOUD): PageRead {
         val schema = Schema.obj(mapOf("answers" to Schema.array(Schema.obj(mapOf("q" to Schema.integer(), "text" to Schema.string())))))
         val started = System.currentTimeMillis()
-        val prompt = PAGE_PROMPT.replace("{numbers}", numbers.joinToString(", "))
+        val prompt = PAGE_PROMPT.replace("{numbers}", questions.joinToString(", ") { "${it.q} = \"${it.shownLabel}\"" })
         val r = retry { m -> model(schema, force, m).generateContent(content { image(photo); text(prompt) }) }
         val source = sourceOf(r.inferenceSource)
         Telemetry.record(if (force == InferenceMode.ONLY_IN_CLOUD) "verify" else "read", source, System.currentTimeMillis() - started)
@@ -349,13 +351,13 @@ object Ai {
 
     private val DRAFT_SCHEMA = Schema.obj(mapOf("subject" to Schema.string(), "level" to Schema.string(), "questionCount" to Schema.integer(), "questions" to Schema.array(Schema.obj(
         mapOf(
-            "q" to Schema.integer(), "prompt" to Schema.string(), "max" to Schema.integer(),
+            "q" to Schema.integer(), "label" to Schema.string(), "prompt" to Schema.string(), "max" to Schema.integer(),
             "type" to Schema.enumeration(listOf("objective", "numeric", "short", "points")),
             "correctOptions" to Schema.array(Schema.string()), "acceptNumbers" to Schema.array(Schema.double()),
             "acceptText" to Schema.array(Schema.string()), "points" to Schema.array(Schema.string()), "reject" to Schema.array(Schema.string()),
             "methodPoints" to Schema.array(Schema.string()),
         ),
-        optionalProperties = listOf("correctOptions", "acceptNumbers", "acceptText", "points", "reject", "methodPoints"),
+        optionalProperties = listOf("label", "correctOptions", "acceptNumbers", "acceptText", "points", "reject", "methodPoints"),
     ))), optionalProperties = listOf("subject", "level", "questionCount"))
 
     private fun JSONObject.strings(key: String): List<String> = optJSONArray(key)?.let { a -> (0 until a.length()).map { a.optString(it).trim() }.filter { it.isNotEmpty() } } ?: emptyList()
@@ -365,12 +367,13 @@ object Ai {
         val q = o.optInt("q", 0).takeIf { it > 0 } ?: return null
         val prompt = o.optString("prompt")
         val max = o.optInt("max", 1).coerceIn(1, 20)
+        val label = o.optString("label").replace(Regex("""[<>"]"""), "").trim().take(16).takeIf { it.isNotEmpty() && it != q.toString() }
         return when (o.optString("type")) {
-            "objective" -> o.strings("correctOptions").map { it.uppercase() }.takeIf { it.isNotEmpty() }?.let { Question.Objective(q, prompt, max, it) }
+            "objective" -> o.strings("correctOptions").map { it.uppercase() }.takeIf { it.isNotEmpty() }?.let { Question.Objective(q, prompt, max, it, label) }
             "numeric" -> o.optJSONArray("acceptNumbers")?.let { a -> (0 until a.length()).mapNotNull { a.optDouble(it).takeIf { d -> !d.isNaN() } } }
-                ?.takeIf { it.isNotEmpty() }?.let { Question.Numeric(q, prompt, max, it, methodPoints = if (max > 1) app.redpen.teacher.marking.workingSteps(o.strings("methodPoints")) else emptyList()) }
-            "short" -> o.strings("acceptText").takeIf { it.isNotEmpty() }?.let { Question.Short(q, prompt, max, it, o.strings("reject")) }
-            "points" -> o.strings("points").takeIf { it.isNotEmpty() }?.let { Question.Points(q, prompt, max, it, o.strings("reject")) }
+                ?.takeIf { it.isNotEmpty() }?.let { Question.Numeric(q, prompt, max, it, methodPoints = if (max > 1) app.redpen.teacher.marking.workingSteps(o.strings("methodPoints")) else emptyList(), label = label) }
+            "short" -> o.strings("acceptText").takeIf { it.isNotEmpty() }?.let { Question.Short(q, prompt, max, it, o.strings("reject"), label = label) }
+            "points" -> o.strings("points").takeIf { it.isNotEmpty() }?.let { Question.Points(q, prompt, max, it, o.strings("reject"), label) }
             else -> null
         }
     }
@@ -389,6 +392,7 @@ object Ai {
             text(fill(cfg("prompt_scheme_draft"), mapOf("subject" to subject.ifBlank { "the subject shown on the paper" },
                 "level" to level.ifBlank { "the class or level shown on the paper" })))
             text(DETECT_LABELS_NOTE)
+            text(SUBPARTS_NOTE)
             text(METHOD_MARKS_NOTE)
             if (isStudentPage) text(STUDENT_PAGE_NOTE)
             if (guide.isPresent) text(cfg("prompt_scheme_from_guide"))

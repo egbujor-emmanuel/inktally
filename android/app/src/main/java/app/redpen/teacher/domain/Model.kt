@@ -10,19 +10,21 @@ sealed interface Question {
     val q: Int
     val prompt: String
     val max: Int
+    /** The question's label as printed, when it is not just the number: "6(a)", "6(b)(ii)" (same as web). */
+    val label: String?
 
-    data class Objective(override val q: Int, override val prompt: String, override val max: Int, val correct: List<String>) : Question
+    data class Objective(override val q: Int, override val prompt: String, override val max: Int, val correct: List<String>, override val label: String? = null) : Question
     data class Numeric(
         override val q: Int, override val prompt: String, override val max: Int,
-        val accept: List<Double>, val tolerance: Double? = null, val methodPoints: List<String> = emptyList(),
+        val accept: List<Double>, val tolerance: Double? = null, val methodPoints: List<String> = emptyList(), override val label: String? = null,
     ) : Question
     data class Short(
         override val q: Int, override val prompt: String, override val max: Int,
-        val accept: List<String>, val reject: List<String> = emptyList(), val spellingTolerant: Boolean = true,
+        val accept: List<String>, val reject: List<String> = emptyList(), val spellingTolerant: Boolean = true, override val label: String? = null,
     ) : Question
     data class Points(
         override val q: Int, override val prompt: String, override val max: Int,
-        val points: List<String>, val reject: List<String> = emptyList(),
+        val points: List<String>, val reject: List<String> = emptyList(), override val label: String? = null,
     ) : Question
 }
 
@@ -39,7 +41,14 @@ data class Mark(
     val status: MarkStatus,
     val reasons: List<String>,
     val pointsFound: List<String> = emptyList(),
+    /** The question's printed label ("6(a)"), copied from the question when marked. */
+    val label: String? = null,
 )
+
+/** How a question or mark is shown to people: its printed label ("6(a)") or else its number (same as web qLabel). */
+fun qLabel(q: Int, label: String?) = label?.trim()?.takeIf { it.isNotEmpty() } ?: q.toString()
+val Question.shownLabel get() = qLabel(q, label)
+val Mark.shownLabel get() = qLabel(q, label)
 
 /** Institution details printed on sheets, marked copies, the register and the Excel file. Same doc as web/src/data/profile.ts. */
 data class Profile(val institution: String = "", val details: String = "", val teacher: String = "") {

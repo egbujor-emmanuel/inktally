@@ -19,6 +19,7 @@ const DRAFT_SCHEMA = Schema.object({
       items: Schema.object({
         properties: {
           q: Schema.integer(),
+          label: Schema.string(),
           prompt: Schema.string(),
           max: Schema.integer(),
           type: Schema.enumString({ enum: [...QUESTION_TYPES] }),
@@ -29,7 +30,7 @@ const DRAFT_SCHEMA = Schema.object({
           reject: Schema.array({ items: Schema.string() }),
           methodPoints: Schema.array({ items: Schema.string() }),
         },
-        optionalProperties: ['correctOptions', 'acceptNumbers', 'acceptText', 'points', 'reject', 'methodPoints'],
+        optionalProperties: ['label', 'correctOptions', 'acceptNumbers', 'acceptText', 'points', 'reject', 'methodPoints'],
       }),
     }),
   },
@@ -38,6 +39,7 @@ const DRAFT_SCHEMA = Schema.object({
 
 const DraftQuestion = z.object({
   q: z.number().int().positive(),
+  label: z.string().optional(),
   prompt: z.string(),
   max: z.number().int().positive().max(20),
   type: z.enum(QUESTION_TYPES),
@@ -52,7 +54,8 @@ const Draft = z.object({ subject: z.string().optional(), level: z.string().optio
 
 /** Converts the flat model output into the strongly-typed domain question, dropping unusable ones. */
 export function toQuestion(d: z.infer<typeof DraftQuestion>): Question | null {
-  const base = { q: d.q, prompt: d.prompt, max: d.max };
+  const label = d.label?.replace(/[<>"]/g, '').trim().slice(0, 16);
+  const base = { q: d.q, ...(label && label !== String(d.q) ? { label } : {}), prompt: d.prompt, max: d.max };
   // Only set when there is a list: Firestore rejects undefined fields (saving a teacher's scheme crashed on this).
   const reject = d.reject?.length ? { reject: d.reject } : {};
   switch (d.type) {
@@ -87,6 +90,9 @@ const PUPIL_PAGE_NOTE = "IMPORTANT: this photo shows a student's exercise page �
   + "Work out the correct answers yourself from the QUESTIONS only. The student's answers may be wrong: never copy them into the marking scheme. "
   + 'Each numbered item is ONE question: lines under it such as "Answer = ..." or working are part of that same question, never a new one.';
 
+/** WAEC-style sub-parts: each part that earns its own marks is its own question, numbered on, with its printed label. Same text on Android. */
+export const SUBPARTS_NOTE = 'Treat every sub-part that earns its own marks as its own question: number them 1, 2, 3 and so on in order in "q", and put the label printed on the paper (for example "6(a)", "6(b)(ii)") in "label". Leave "label" out when it is just the number.';
+
 /** Marks for working on calculations (WAEC-style partial credit). Same text on Android. */
 export const METHOD_MARKS_NOTE = 'Method marks: only when the question paper or the teacher’s scheme itself gives a calculation more than 1 mark, list what earns marks for working in "methodPoints" (for example "uses speed = distance ÷ time" or "finds the profit, 9,000"), one item per mark, never the final answer itself, and put only the final answer in "acceptNumbers". Never give a question more marks than the paper or scheme shows. When the teacher’s scheme gives method marks, copy them exactly.';
 
@@ -118,7 +124,7 @@ export async function draftScheme(source: SchemeSource, subject: string, level: 
   if (!hasPaper(source) && !hasGuide(source)) throw new Error('Add the question paper or your marking scheme (photo, PDF or typed) first.');
   const parts: (string | Part)[] = [fillTemplate(config('prompt_scheme_draft'), {
     subject: subject.trim() || 'the subject shown on the paper', level: level.trim() || 'the class or level shown on the paper',
-  }), DETECT_LABELS_NOTE, METHOD_MARKS_NOTE];
+  }), DETECT_LABELS_NOTE, SUBPARTS_NOTE, METHOD_MARKS_NOTE];
   if (source.isPupilPage) parts.push(PUPIL_PAGE_NOTE);
   if (hasGuide(source)) parts.push(config('prompt_scheme_from_guide'));
   if (hasPaper(source)) {

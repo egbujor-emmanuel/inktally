@@ -39,11 +39,24 @@ const smallToDigits = (_: string, whole: string | undefined, top: string, bottom
   return `${whole ? whole + ' ' : ''}${plain(top)}/${plain(bottom)}`;
 };
 
+/** Standard form: "1.0 × 10^5", "6.02 x 10²³", "2.5×10⁻³", "1e5" (after any unit has been dropped). */
+const STANDARD_FORM = /^\s*(-?\d+(?:\.\d+)?)\s*(?:[x×*·]\s*10\s*(?:\^|\*\*)?\s*([-−⁻+]?[0-9⁰¹²³⁴⁵⁶⁷⁸⁹]+)|[eE]([-+]?\d+))\s*$/;
+const SUPERSCRIPT = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+function standardForm(text: string): number | null {
+  const m = text.match(STANDARD_FORM);
+  if (!m) return null;
+  const exp = (m[2] ?? m[3]).replace(/[−⁻]/g, '-').replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, (c) => String(SUPERSCRIPT.indexOf(c)));
+  const value = Number(m[1]) * 10 ** Number(exp);
+  return Number.isFinite(value) ? Number(value.toPrecision(12)) : null;
+}
+
 /** Reads the numeric answer a pupil wrote, preferring whatever follows the last "=". */
 export function parseNumericAnswer(raw: string): NumericParse {
   const lastPart = (raw.includes('=') ? raw.slice(raw.lastIndexOf('=') + 1) : raw).replace(SMALL_DIGITS, smallToDigits);
   const afterEquals = lastPart.replace(UNIT, '').replace(/\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (_, f: string) => ` ${VULGAR[f]}`);
   const signAfterEquals = /^\s*[-−–]/.test(afterEquals) && raw.includes('=');
+  const scientific = standardForm(afterEquals.replace(/,/g, ''));
+  if (scientific !== null) return { value: scientific, clean: true, signAfterEquals };
   let clean = true;
   const mapped = [...afterEquals].map((ch) => {
     if (DIGIT_LOOKALIKES[ch] !== undefined) { clean = false; return DIGIT_LOOKALIKES[ch]; }

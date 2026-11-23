@@ -21,17 +21,17 @@ const isTruncationOf = (read: string, accepted: string): boolean => {
 /** Reads from the cloud model are trusted as verified; on-device reads stay provisional until checked. */
 const settled = (source: ReadSource): MarkStatus => (source === 'on_device' ? 'provisional' : 'verified');
 
-interface MarkInput { q: number; max: number; read: string; readSource: ReadSource }
+interface MarkInput { q: number; label?: string; max: number; read: string; readSource: ReadSource }
 
 function result(input: MarkInput, awarded: number, status: MarkStatus, reasons: string[], extra: Partial<Mark> = {}): Mark {
   return {
-    q: input.q, read: input.read, readSource: input.readSource, max: input.max,
+    q: input.q, ...(input.label ? { label: input.label } : {}), read: input.read, readSource: input.readSource, max: input.max,
     awarded, engine: 'code', status, reasons, ...extra,
   };
 }
 
 export function markNumeric(question: NumericQuestion, read: string, readSource: ReadSource): Mark {
-  const input = { q: question.q, max: question.max, read, readSource };
+  const input = { q: question.q, label: question.label, max: question.max, read, readSource };
   const parsed = parseNumericAnswer(read);
   if (parsed.value === null) {
     return result(input, 0, 'flagged', ['Could not read a number in the answer box — please check.']);
@@ -52,7 +52,7 @@ export function markNumeric(question: NumericQuestion, read: string, readSource:
 }
 
 export function markObjective(question: ObjectiveQuestion, read: string, readSource: ReadSource): Mark {
-  const input = { q: question.q, max: question.max, read, readSource };
+  const input = { q: question.q, label: question.label, max: question.max, read, readSource };
   const letter = normalizeOptionLetter(read);
   if (!letter) return result(input, 0, 'flagged', ['No single option letter could be read — please check.']);
   const correct = question.correct.map((c) => c.toUpperCase()).includes(letter);
@@ -62,7 +62,7 @@ export function markObjective(question: ObjectiveQuestion, read: string, readSou
 }
 
 export function markShort(question: ShortQuestion, read: string, readSource: ReadSource): Mark {
-  const input = { q: question.q, max: question.max, read, readSource };
+  const input = { q: question.q, label: question.label, max: question.max, read, readSource };
   if (!read.trim()) return result(input, 0, settled(readSource), ['No answer written.']);
 
   const rejected = (question.reject ?? []).find((r) => textSimilarity(read, r) >= SHORT_MATCH);
@@ -93,7 +93,7 @@ export function markShort(question: ShortQuestion, read: string, readSource: Rea
 export function markPoints(
   question: PointsQuestion, read: string, readSource: ReadSource, claimedPoints: string[], claimedRejects: string[] = [],
 ): Mark {
-  const input = { q: question.q, max: question.max, read, readSource };
+  const input = { q: question.q, label: question.label, max: question.max, read, readSource };
   const found = question.points.filter((p) => claimedPoints.includes(p));
   const rejected = (question.reject ?? []).filter((r) => claimedRejects.includes(r));
   const awarded = Math.min(found.length, question.max);

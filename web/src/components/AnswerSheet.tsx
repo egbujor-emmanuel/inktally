@@ -1,3 +1,4 @@
+import { qLabel } from '../domain/types';
 import type { Question } from '../domain/types';
 import type { Profile } from '../data/profile';
 import { A4, FIDUCIAL_CENTRES, FIDUCIAL_SIZE_MM, layoutSheet } from '../scan/layout';
@@ -58,7 +59,7 @@ export function AnswerSheet({ title, className, questions, profile }: Props) {
             const q = byQ.get(box.q);
             return (
               <g key={box.q}>
-                <text x={box.x - 3} y={box.y + 6} textAnchor="end" fontFamily="Fraunces, serif" fontSize={5} fontWeight={700} fill="#1f2a44">{box.q}</text>
+                <text x={box.x - 3} y={box.y + 6} textAnchor="end" fontFamily="Fraunces, serif" fontSize={5} fontWeight={700} fill="#1f2a44">{q ? qLabel(q) : box.q}</text>
                 <rect x={box.x} y={box.y} width={box.w} height={box.h} fill="none" stroke="#1f2a44" strokeWidth={0.35} rx={1.2} />
                 {/* Hint sits ABOVE the box so it is never inside the scanned crop. */}
                 <text x={box.x + box.w} y={box.y - 1} textAnchor="end" fontFamily="Inter Tight, sans-serif" fontSize={2.6} fill="#99a">

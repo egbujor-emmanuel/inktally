@@ -1,3 +1,4 @@
+import { qLabel } from '../../domain/types';
 import { useMemo, useState } from 'react';
 import type { Question } from '../../domain/types';
 import { makeCatchUp, type CatchUpSheet } from '../../ai/remediation';
@@ -67,7 +68,7 @@ export function InsightsTab({ assignment, submissions }: Props) {
         return (
           <section key={row.question.q} className="card card-pad mx-4" aria-label={`Question ${row.question.q}`}>
             <div className="flex items-center">
-              <span className="w-[52px] flex-none font-display text-[22px] font-bold">Q{row.question.q}</span>
+              <span className="w-[52px] flex-none font-display text-[22px] font-bold">Q{qLabel(row.question)}</span>
               <p className="flex-1 font-medium">{row.question.prompt}</p>
             </div>
             {row.wrong.length > 0 && (

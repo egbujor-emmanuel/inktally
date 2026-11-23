@@ -36,6 +36,19 @@ class EngineTest {
     @Test fun workingStepsDropAnAnswerEntry() {
         assertEquals(listOf("uses speed = distance ÷ time"), app.redpen.teacher.marking.workingSteps(listOf("uses speed = distance ÷ time", "answer", "Correct answer (1 mark)")))
     }
+    @Test fun readsStandardForm() {
+        assertEquals(100000.0, parseNumericAnswer("P = hρg = 10 × 1000 × 10 = 1.0 × 10^5 Pa").value!!, 0.0)
+        assertEquals(100000.0, parseNumericAnswer("1 x 10⁵").value!!, 0.0)
+        assertEquals(6.02e23, parseNumericAnswer("6.02 x 10^23").value!!, 1e10)
+        assertEquals(0.0025, parseNumericAnswer("2.5 × 10⁻³ m").value!!, 1e-12)
+        assertEquals(100000.0, parseNumericAnswer("1e5").value!!, 0.0)
+    }
+    @Test fun aMarkCarriesItsSubPartLabel() {
+        val q = app.redpen.teacher.domain.Question.Numeric(7, "Acceleration", 2, listOf(4.0), label = "6(b)(i)")
+        val m = markNumeric(q, "a = 20 ÷ 5 = 4 m/s²", app.redpen.teacher.domain.ReadSource.IN_CLOUD)
+        assertEquals("6(b)(i)", m.label); assertEquals(2, m.awarded)
+        assertEquals("6(b)(i)", app.redpen.teacher.domain.qLabel(m.q, m.label)); assertEquals("3", app.redpen.teacher.domain.qLabel(3, null))
+    }
     @Test fun readsWrittenFractions() {
         assertEquals(4.375, parseNumericAnswer("35/8 = 4⅜").value!!, 0.0)
         assertEquals(2.75, parseNumericAnswer("2¾").value!!, 0.0)

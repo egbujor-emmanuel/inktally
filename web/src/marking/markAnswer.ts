@@ -90,7 +90,7 @@ const PAGE_ON_DEVICE_WARNING = 'Read offline from the whole page — on-device p
 
 /** Exercise-book mode: one page read, then code marks each question. On-device page reads are never trusted as final. */
 export async function markPage(questions: Question[], photo: Blob, mode?: ReadMode): Promise<Mark[]> {
-  const { answers, source } = await readPage(photo, questions.map((q) => q.q), mode);
+  const { answers, source } = await readPage(photo, questions, mode);
   const marks: Mark[] = [];
   for (const question of questions) {
     const mark = await markFromRead(question, answers.get(question.q) ?? '', source, mode);

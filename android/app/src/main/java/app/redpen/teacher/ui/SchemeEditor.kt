@@ -1,5 +1,7 @@
 package app.redpen.teacher.ui
 
+import androidx.compose.foundation.layout.widthIn
+import app.redpen.teacher.domain.shownLabel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -31,17 +33,17 @@ private fun typeOf(q: Question) = when (q) { is Question.Objective -> "objective
 
 /** Converts a question to another type, keeping number, prompt and marks (mirrors web retype). */
 private fun retype(q: Question, type: String): Question = when (type) {
-    "objective" -> Question.Objective(q.q, q.prompt, q.max, listOf("A"))
-    "numeric" -> Question.Numeric(q.q, q.prompt, q.max, listOf(0.0))
-    "points" -> Question.Points(q.q, q.prompt, q.max, listOf(""))
-    else -> Question.Short(q.q, q.prompt, q.max, listOf(""))
+    "objective" -> Question.Objective(q.q, q.prompt, q.max, listOf("A"), q.label)
+    "numeric" -> Question.Numeric(q.q, q.prompt, q.max, listOf(0.0), label = q.label)
+    "points" -> Question.Points(q.q, q.prompt, q.max, listOf(""), label = q.label)
+    else -> Question.Short(q.q, q.prompt, q.max, listOf(""), label = q.label)
 }
 
-private fun Question.withBase(prompt: String = this.prompt, max: Int = this.max, q: Int = this.q): Question = when (this) {
-    is Question.Objective -> copy(q = q, prompt = prompt, max = max)
-    is Question.Numeric -> copy(q = q, prompt = prompt, max = max)
-    is Question.Short -> copy(q = q, prompt = prompt, max = max)
-    is Question.Points -> copy(q = q, prompt = prompt, max = max)
+private fun Question.withBase(prompt: String = this.prompt, max: Int = this.max, q: Int = this.q, label: String? = this.label): Question = when (this) {
+    is Question.Objective -> copy(q = q, prompt = prompt, max = max, label = label)
+    is Question.Numeric -> copy(q = q, prompt = prompt, max = max, label = label)
+    is Question.Short -> copy(q = q, prompt = prompt, max = max, label = label)
+    is Question.Points -> copy(q = q, prompt = prompt, max = max, label = label)
 }
 
 private fun lines(s: String) = s.split(Regex("\n|;")).map { it.trim() }.filter { it.isNotEmpty() }
@@ -73,7 +75,7 @@ fun SchemeEditor(questions: List<Question>, locked: Boolean = false, onChange: (
             val type = typeOf(q)
             Paper {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${q.q}", fontFamily = RP.Hand, fontSize = 36.sp, color = RP.Pen, modifier = Modifier.width(40.dp))
+                    Text(q.shownLabel, fontFamily = RP.Hand, fontSize = 36.sp, color = RP.Pen, modifier = Modifier.widthIn(min = 40.dp).padding(end = 4.dp))
                     ListField("p-${q.q}-$type-${questions.size}", q.prompt, "Question") { update(q.withBase(prompt = it)) }
                 }
                 if (locked) Text(TYPES.firstOrNull { it.first == type }?.second ?: "", fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, color = RP.InkSoft)
@@ -82,6 +84,9 @@ fun SchemeEditor(questions: List<Question>, locked: Boolean = false, onChange: (
                         FilterChip(selected = type == t, onClick = { if (type != t) update(retype(q, t)) }, label = { Text(label, fontSize = 13.sp) },
                             colors = FilterChipDefaults.filterChipColors(selectedContainerColor = RP.Ink, selectedLabelColor = Color.White))
                     }
+                }
+                ListField("lb-${q.q}-${questions.size}", q.label ?: "", "Number as printed (optional, e.g. 6(a))") { v ->
+                    update(q.withBase(label = v.trim().take(16).ifEmpty { null }))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Marks", fontSize = 14.sp)
