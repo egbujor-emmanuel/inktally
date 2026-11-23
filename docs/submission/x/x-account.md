@@ -11,7 +11,7 @@ Written for: you, setting the account up by hand. Nothing here is posted automat
 | Bio (≤160) | Snap a page of handwritten classwork. InkTally marks it on the phone, even offline, and the cloud double-checks. Web + Android. #BuildHybridAI |
 | Location | Nigeria |
 | Website | Leave empty until submission day (the site is behind the access code until then), then `https://inktally.web.app` |
-| Profile photo | `avatar-400.png` (the app's mark) |
+| Profile photo | `avatar-800.png` (the app's mark; `avatar-400.png` is a smaller copy) |
 | Header | `banner-1500x500.png` |
 | Category (professional account) | Education |
 
