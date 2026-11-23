@@ -44,13 +44,21 @@ private fun standardForm(text: String): Double? {
     return if (value.isFinite()) "%.12g".format(java.util.Locale.ROOT, value).toDouble() else null
 }
 
+/** Any other unit after the number ("4 ms− 2", "20m− 1"), only when it has a letter that is not a digit look-alike (same as web). */
+private val UNIT_TAIL = Regex("""^(\s*-?[\d.,]+(?:\s*[x×*·]\s*10\s*(?:\^|\*\*)?\s*[-−⁻+]?[0-9⁰¹²³⁴⁵⁶⁷⁸⁹]+)?)\s*(?![x×*·]\s*10|[eE][-+]?\d)([A-Za-zΩ°µ][A-Za-zΩ°µ/^⁻⁰¹²³⁴⁵⁶⁷⁸⁹0-9\s.−-]*)$""")
+private val NOT_LOOKALIKE = Regex("""[^OoDlIi|!ZzSsBgqбБОо\s\d.−-]""")
+private fun dropUnitTail(text: String): String {
+    val m = UNIT_TAIL.find(text) ?: return text
+    return if (NOT_LOOKALIKE.containsMatchIn(m.groupValues[2])) m.groupValues[1] else text
+}
+
 fun parseNumericAnswer(raw: String): NumericParse {
     val hasEquals = raw.contains('=')
     val lastPart = (if (hasEquals) raw.substring(raw.lastIndexOf('=') + 1) else raw).replace(SMALL_DIGITS) { m ->
         val whole = m.groupValues[1]
         (if (whole.isNotEmpty()) "$whole " else "") + plainDigits(m.groupValues[2]) + "/" + plainDigits(m.groupValues[3])
     }
-    val afterEquals = lastPart.replace(UNIT, "").replace(VULGAR_CHAR) { m -> " " + VULGAR.getValue(m.groupValues[1][0]) }
+    val afterEquals = dropUnitTail(lastPart.replace(UNIT, "")).replace(VULGAR_CHAR) { m -> " " + VULGAR.getValue(m.groupValues[1][0]) }
     val signAfterEquals = hasEquals && Regex("""^\s*[-−–]""").containsMatchIn(afterEquals)
     standardForm(afterEquals.replace(",", ""))?.let { return NumericParse(it, true, signAfterEquals) }
     var clean = true

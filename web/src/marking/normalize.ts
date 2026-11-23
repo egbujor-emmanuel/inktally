@@ -50,10 +50,21 @@ function standardForm(text: string): number | null {
   return Number.isFinite(value) ? Number(value.toPrecision(12)) : null;
 }
 
+/**
+ * Any other unit after the number ("4 ms− 2", "20m− 1", "3 kg m s⁻¹"): letters, slashes, powers and minus signs. Only
+ * used when the tail has a letter that is NOT a digit look-alike, so "1s" (a misread 15) is never cut short.
+ */
+const UNIT_TAIL = /^(\s*-?[\d.,]+(?:\s*[x×*·]\s*10\s*(?:\^|\*\*)?\s*[-−⁻+]?[0-9⁰¹²³⁴⁵⁶⁷⁸⁹]+)?)\s*(?![x×*·]\s*10|[eE][-+]?\d)([A-Za-zΩ°µ][A-Za-zΩ°µ/^⁻⁰¹²³⁴⁵⁶⁷⁸⁹0-9\s.−-]*)$/;
+const NOT_LOOKALIKE = /[^OoDlIi|!ZzSsBgqбБОо\s\d.−-]/;
+function dropUnitTail(text: string): string {
+  const m = text.match(UNIT_TAIL);
+  return m && NOT_LOOKALIKE.test(m[2]) ? m[1] : text;
+}
+
 /** Reads the numeric answer a pupil wrote, preferring whatever follows the last "=". */
 export function parseNumericAnswer(raw: string): NumericParse {
   const lastPart = (raw.includes('=') ? raw.slice(raw.lastIndexOf('=') + 1) : raw).replace(SMALL_DIGITS, smallToDigits);
-  const afterEquals = lastPart.replace(UNIT, '').replace(/\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (_, f: string) => ` ${VULGAR[f]}`);
+  const afterEquals = dropUnitTail(lastPart.replace(UNIT, '')).replace(/\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (_, f: string) => ` ${VULGAR[f]}`);
   const signAfterEquals = /^\s*[-−–]/.test(afterEquals) && raw.includes('=');
   const scientific = standardForm(afterEquals.replace(/,/g, ''));
   if (scientific !== null) return { value: scientific, clean: true, signAfterEquals };

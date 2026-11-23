@@ -57,6 +57,8 @@ class EngineTest {
         assertEquals(100.0, parseNumericAnswer("100J").value!!, 0.0)
         assertEquals(50.0, parseNumericAnswer("s = 50m").value!!, 0.0)
         assertEquals(15.0, parseNumericAnswer("1s").value!!, 0.0)
+        assertEquals(4.0, parseNumericAnswer("a = 20/5 = 4 ms− 2").value!!, 0.0)
+        assertEquals(20.0, parseNumericAnswer("v = 50 × 0.4 = 20m− 1").value!!, 0.0)
     }
     @Test fun readsWrittenFractions() {
         assertEquals(4.375, parseNumericAnswer("35/8 = 4⅜").value!!, 0.0)
