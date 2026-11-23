@@ -1,11 +1,12 @@
 {
-  "paper": "JSS 3 Basic Science and Mathematics — Mixed Test",
-  "total": 23,
-  "max": [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 2, 3],
+  "paper": "WAEC-standard Physics — Objectives and Structured Questions",
+  "total": 22,
+  "labels": ["1", "2", "3", "4", "5", "6(a)", "6(b)(i)", "6(b)(ii)", "7(a)", "7(b)", "8(a)", "8(b)", "9", "10"],
+  "max": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2],
   "scripts": {
-    "Script 1": { "marks": [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 2, 2], "total": 22, "notes": { "13": "\"Pray\" is not a valid way, so 2 of 3" } },
-    "Script 2": { "marks": [0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 2, 1, 2], "total": 10, "notes": { "4": "fotosynthesis: spelling accepted", "7": "method right, answer 80 wrong: 1", "9": "profit found (method), divided by selling price: 1", "11": "digestion is not a function of blood", "12": "size is not a valid difference", "13": "drinking clean water does not prevent malaria" } },
-    "Script 3": { "marks": [1, 0, 1, 0, 0, 2, 0, 2, 1, 2, 1, 0, 2], "total": 12, "notes": { "5": "So is listed as not acceptable", "6": "50 without a unit: accepted", "7": "left blank", "8": "correct answer, no working: full marks", "9": "profit found, no percentage: 1", "12": "left blank" } },
-    "Script 4": { "marks": [1, 1, 0, 1, 1, 2, 0, 2, 2, 2, 3, 2, 3], "total": 20, "notes": { "7": "density inverted (volume ÷ mass): no method mark", "10": "35/8 accepted" } }
+    "Script 1": { "marks": [1, 1, 1, 1, 1, 1, 2, 2, 1, 2, 2, 2, 2, 2], "total": 21, "notes": { "7(a)": "proportionality stated, but not the condition (constant temperature): 1 of 2" } },
+    "Script 2": { "marks": [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1], "total": 6, "notes": { "6(a)": "\"change in speed\" is neither velocity nor a rate", "6(b)(i)": "multiplied instead of dividing: no method mark", "7(b)": "multiplied the resistances: no method mark", "8(a)": "one difference (crests/troughs vs compressions/rarefactions); \"sound is longitudinal\" is not a difference", "8(b)": "v = f/λ is the wrong formula", "9": "P = hρg right, arithmetic wrong: method mark", "10": "PE = mgh right, arithmetic wrong: method mark" } },
+    "Script 3": { "marks": [1, 1, 0, 1, 0, 1, 2, 0, 2, 2, 1, 2, 2, 2], "total": 17, "notes": { "6(b)(i)": "4 with no unit and no working: correct answer earns full marks", "6(b)(ii)": "left blank", "8(a)": "one point (particles vibrate along the direction of travel)", "10": "\"100 joules\" accepted" } },
+    "Script 4": { "marks": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2], "total": 22, "notes": { "6(b)(i)": "4 ms⁻² accepted", "9": "1 × 10⁵ N/m² is the same as 1.0 × 10⁵ Pa" } }
   }
 }

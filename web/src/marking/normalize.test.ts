@@ -37,6 +37,18 @@ describe('parseNumericAnswer', () => {
     expect(parseNumericAnswer('100,000 Pa').value).toBe(100000);
   });
 
+  it('reads the unit spellings students write in physics', () => {
+    expect(parseNumericAnswer('a = 20/5 = 4 ms⁻²').value).toBe(4);
+    expect(parseNumericAnswer('v = 50 × 0.4 = 20ms⁻¹').value).toBe(20);
+    expect(parseNumericAnswer('1 × 10⁵ N/m²').value).toBe(100000);
+    expect(parseNumericAnswer('100 joules').value).toBe(100);
+    expect(parseNumericAnswer('100J').value).toBe(100);
+    expect(parseNumericAnswer('s = 50m').value).toBe(50);
+    expect(parseNumericAnswer('I = 12/6 = 2A').value).toBe(2);
+    expect(parseNumericAnswer('2 Ω').value).toBe(2);
+    expect(parseNumericAnswer('1s').value).toBe(15); // still a misread 15
+  });
+
   it('reads written fractions such as 4⅜', () => {
     expect(parseNumericAnswer('35/8 = 4⅜').value).toBe(4.375);
     expect(parseNumericAnswer('2¾').value).toBe(2.75);

@@ -1,0 +1,50 @@
+{
+  "Script 1": [
+    ["1", "B"], ["2", "C"], ["3", "B"], ["4", "B"], ["5", "C"],
+    ["6(a)", "Acceleration is the rate of change of velocity."],
+    ["6(b)(i)", "a = (v − u)/t = (20 − 0)/5 = 4 m/s²"],
+    ["6(b)(ii)", "s = ½(u + v)t = ½(0 + 20) × 5 = 50 m"],
+    ["7(a)", "The current through a conductor is directly proportional to the potential difference across it."],
+    ["7(b)", "R = 4 + 2 = 6 Ω,  I = V/R = 12/6 = 2 A"],
+    ["8(a)", "In transverse waves the particles vibrate perpendicular to the direction of the wave; in longitudinal waves they vibrate parallel to it. Transverse waves can be polarised."],
+    ["8(b)", "v = fλ = 50 × 0.4 = 20 m/s"],
+    ["9", "P = hρg = 10 × 1000 × 10 = 1.0 × 10⁵ Pa"],
+    ["10", "PE = mgh = 2 × 10 × 5 = 100 J"]
+  ],
+  "Script 2": [
+    ["1", "B"], ["2", "B"], ["3", "B"], ["4", "A"], ["5", "C"],
+    ["6(a)", "Acceleration is change in speed."],
+    ["6(b)(i)", "a = 20 × 5 = 100 m/s²"],
+    ["6(b)(ii)", "s = 20 × 5 = 100 m"],
+    ["7(a)", "Current flows from positive to negative."],
+    ["7(b)", "R = 4 × 2 = 8 Ω,  I = 12/8 = 1.5 A"],
+    ["8(a)", "Transverse waves have crests and troughs, longitudinal waves have compressions and rarefactions. Sound is longitudinal."],
+    ["8(b)", "v = f/λ = 50/0.4 = 125 m/s"],
+    ["9", "P = hρg = 10 × 1000 × 10 = 10,000 Pa"],
+    ["10", "PE = mgh = 2 × 10 × 5 = 1000 J"]
+  ],
+  "Script 3": [
+    ["1", "B"], ["2", "C"], ["3", "D"], ["4", "B"], ["5", "A"],
+    ["6(a)", "Acceleration is the rate of change of velocity with time."],
+    ["6(b)(i)", "4"],
+    ["6(b)(ii)", ""],
+    ["7(a)", "I ∝ V if the temperature is constant."],
+    ["7(b)", "I = V/R = 12/6 = 2A"],
+    ["8(a)", "Longitudinal waves vibrate along the direction of travel."],
+    ["8(b)", "20 m/s"],
+    ["9", "100000 Pa"],
+    ["10", "100 joules"]
+  ],
+  "Script 4": [
+    ["1", "B"], ["2", "C"], ["3", "B"], ["4", "B"], ["5", "C"],
+    ["6(a)", "Acceleration = change in velocity ÷ time taken"],
+    ["6(b)(i)", "a = (v − u)/t = 20/5 = 4 ms⁻²"],
+    ["6(b)(ii)", "s = ut + ½at² = 0 + ½ × 4 × 5² = 50m"],
+    ["7(a)", "Ohm's law states that the current through a metallic conductor is directly proportional to the potential difference across its ends, provided the temperature and other physical conditions remain constant."],
+    ["7(b)", "2 A"],
+    ["8(a)", "(i) Transverse waves can be polarised but longitudinal waves cannot. (ii) Transverse waves have crests and troughs; longitudinal waves have compressions and rarefactions."],
+    ["8(b)", "v = fλ = 50 × 0.4 = 20ms⁻¹"],
+    ["9", "P = 1 × 10⁵ N/m²"],
+    ["10", "PE = 2 × 10 × 5 = 100J"]
+  ]
+}

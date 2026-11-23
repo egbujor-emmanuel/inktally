@@ -1,0 +1,20 @@
+WAEC-standard Physics — Objectives and Structured Questions. Marking guide, 22 marks.
+The correct final answer earns full marks, even without working. If the final answer is wrong, the method mark is given only when the working shown matches it. Accept any correct unit or equivalent form (for example 1.0 × 10^5 Pa or 100 000 Pa or 1 × 10^5 N/m²).
+
+SECTION A — OBJECTIVES (1 mark each)
+1. B (watt)
+2. C (displacement)
+3. B (virtual and upright)
+4. B (acceleration towards the centre)
+5. C (sound waves)
+
+SECTION B — STRUCTURED QUESTIONS
+6(a) Define acceleration. 1 mark: the rate of change of velocity (change in velocity per unit time).
+6(b)(i) A car starts from rest and reaches 20 m/s in 5 s. Calculate its acceleration. Answer 4 m/s². 2 marks: method (1 mark) uses a = (v − u) ÷ t; answer (1 mark).
+6(b)(ii) Calculate the distance the car covers in that time. Answer 50 m. 2 marks: method (1 mark) uses s = ½(u + v)t or s = ut + ½at²; answer (1 mark).
+7(a) State Ohm's law. 2 marks, 1 each: the current through a (metallic) conductor is directly proportional to the potential difference across it; provided the temperature (and other physical conditions) remain constant.
+7(b) Resistors of 4 Ω and 2 Ω are connected in series to a 12 V battery. Calculate the current. Answer 2 A. 2 marks: method (1 mark) total resistance 4 + 2 = 6 Ω, or I = V ÷ R with 6 Ω; answer (1 mark).
+8(a) Give two differences between transverse and longitudinal waves. 2 marks, any two, 1 each: in transverse waves the particles vibrate perpendicular to the direction of travel, in longitudinal waves parallel to it; transverse waves have crests and troughs, longitudinal waves have compressions and rarefactions; transverse waves can be polarised, longitudinal waves cannot. Do not accept: examples of waves (e.g. "sound is longitudinal") as a difference.
+8(b) A wave has a frequency of 50 Hz and a wavelength of 0.4 m. Calculate its speed. Answer 20 m/s. 2 marks: method (1 mark) uses v = fλ; answer (1 mark).
+9. Calculate the pressure at a depth of 10 m in water (density of water = 1000 kg/m³, g = 10 m/s²). Answer 1.0 × 10^5 Pa (accept 100 000 Pa). 2 marks: method (1 mark) uses P = hρg; answer (1 mark).
+10. A 2 kg mass is lifted through a height of 5 m. Calculate the potential energy gained (g = 10 m/s²). Answer 100 J. 2 marks: method (1 mark) uses PE = mgh; answer (1 mark).

@@ -49,6 +49,15 @@ class EngineTest {
         assertEquals("6(b)(i)", m.label); assertEquals(2, m.awarded)
         assertEquals("6(b)(i)", app.redpen.teacher.domain.qLabel(m.q, m.label)); assertEquals("3", app.redpen.teacher.domain.qLabel(3, null))
     }
+    @Test fun readsPhysicsUnitSpellings() {
+        assertEquals(4.0, parseNumericAnswer("a = 20/5 = 4 ms⁻²").value!!, 0.0)
+        assertEquals(20.0, parseNumericAnswer("v = 50 × 0.4 = 20ms⁻¹").value!!, 0.0)
+        assertEquals(100000.0, parseNumericAnswer("1 × 10⁵ N/m²").value!!, 0.0)
+        assertEquals(100.0, parseNumericAnswer("100 joules").value!!, 0.0)
+        assertEquals(100.0, parseNumericAnswer("100J").value!!, 0.0)
+        assertEquals(50.0, parseNumericAnswer("s = 50m").value!!, 0.0)
+        assertEquals(15.0, parseNumericAnswer("1s").value!!, 0.0)
+    }
     @Test fun readsWrittenFractions() {
         assertEquals(4.375, parseNumericAnswer("35/8 = 4⅜").value!!, 0.0)
         assertEquals(2.75, parseNumericAnswer("2¾").value!!, 0.0)

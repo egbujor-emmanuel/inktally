@@ -28,7 +28,7 @@ private val VULGAR_CHAR = Regex("""\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝�
  * A unit after the answer ("50 km/h", "8 g/cm³") is dropped BEFORE look-alike letters are mapped to digits. Multi-letter
  * units may touch the number; one-letter units ("50 s") only count after a space, so "1s" (a misread 15) is never cut short.
  */
-private val UNIT = Regex("""(?:\s*(?:g\/cm\^3|kg\/m\^3|cm\^3|cm\^2|m\^3|m\^2|m\/s\^2|km\/hr?|kmh|kph|m\/s²|m\/s2|m\/s|ms-1|g\/cm³|g\/cm3|kg\/m³|kg\/m3|cm³|cm3|cm²|cm2|m³|m²|mm|cm|km|kg|mg|ml|litres?|liters?|secs?|seconds?|mins?|minutes?|hrs?|hours?|°c|°f|°|pa|units?)|\s+(?:s|m|g|h|l|k|n|j|w|v|a))\.?\s*$""", RegexOption.IGNORE_CASE)
+private val UNIT = Regex("""(?:\s*(?:ms⁻²|ms⁻¹|ms-2|ms-1|m s⁻²|m s⁻¹|m\/s\/s|n\/m²|n\/m2|n\/m\^2|nm⁻²|kg\/m²|joules?|newtons?|watts?|volts?|amperes?|amps?|ohms?|Ω|khz|hz|kpa|kj|kw|mj|g\/cm\^3|kg\/m\^3|cm\^3|cm\^2|m\^3|m\^2|m\/s\^2|km\/hr?|kmh|kph|m\/s²|m\/s2|m\/s|ms-1|g\/cm³|g\/cm3|kg\/m³|kg\/m3|cm³|cm3|cm²|cm2|m³|m²|mm|cm|km|kg|mg|ml|litres?|liters?|secs?|seconds?|mins?|minutes?|hrs?|hours?|°c|°f|°|pa|units?)|(?:m|h|n|j|w|v|a|k)|\s+(?:s|g|l))\.?\s*$""", RegexOption.IGNORE_CASE)
 
 /** Superscript/subscript digits and the fraction slash ("4³/₈") become ordinary "4 3/8" (same as web normalize.ts). */
 private val SMALL_DIGITS = Regex("""([0-9])?([⁰¹²³⁴⁵⁶⁷⁸⁹]+)\s*[/⁄]\s*([₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹0-9]+)""")
