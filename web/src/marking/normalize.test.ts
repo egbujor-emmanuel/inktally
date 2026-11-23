@@ -50,6 +50,7 @@ describe('parseNumericAnswer', () => {
     expect(parseNumericAnswer('a = 20/5 = 4 ms− 2').value).toBe(4);
     expect(parseNumericAnswer('v = 50 × 0.4 = 20m− 1').value).toBe(20);
     expect(parseNumericAnswer('p = 3 kg m s⁻¹').value).toBe(3);
+    expect(parseNumericAnswer('PE = 2 × 10 × 5 = 100]').value).toBe(100);
   });
 
   it('reads written fractions such as 4⅜', () => {

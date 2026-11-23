@@ -58,7 +58,7 @@ fun parseNumericAnswer(raw: String): NumericParse {
         val whole = m.groupValues[1]
         (if (whole.isNotEmpty()) "$whole " else "") + plainDigits(m.groupValues[2]) + "/" + plainDigits(m.groupValues[3])
     }
-    val afterEquals = dropUnitTail(lastPart.replace(UNIT, "")).replace(VULGAR_CHAR) { m -> " " + VULGAR.getValue(m.groupValues[1][0]) }
+    val afterEquals = dropUnitTail(lastPart.replace(Regex("""[\])}|.;,]+\s*$"""), "").replace(UNIT, "")).replace(VULGAR_CHAR) { m -> " " + VULGAR.getValue(m.groupValues[1][0]) }
     val signAfterEquals = hasEquals && Regex("""^\s*[-−–]""").containsMatchIn(afterEquals)
     standardForm(afterEquals.replace(",", ""))?.let { return NumericParse(it, true, signAfterEquals) }
     var clean = true

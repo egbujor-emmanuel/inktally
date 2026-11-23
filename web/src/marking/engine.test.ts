@@ -17,6 +17,16 @@ describe('sub-part labels', () => {
   });
 });
 
+describe('definitions with filler words', () => {
+  it('matches when every word of the accepted answer appears in order', () => {
+    const q = { q: 6, type: 'short' as const, prompt: 'Define acceleration', max: 1, accept: ['the rate of change of velocity'] };
+    expect(markShort(q as never, 'Acceleration is the rate of change of velocity.', 'in_cloud').awarded).toBe(1);
+    expect(markShort(q as never, 'Acceleration is the rate of change of velocity with time.', 'in_cloud').awarded).toBe(1);
+    expect(markShort(q as never, 'Acceleration is change in speed.', 'in_cloud').awarded).toBe(0);
+    expect(markShort(q as never, 'It is not the rate of change of velocity.', 'in_cloud').awarded).toBe(0);
+  });
+});
+
 describe('short answers that are really numbers', () => {
   const q = { q: 8, type: 'short' as const, prompt: 'Solve', max: 2, accept: ['x = 8', '8'] };
   const frac = { q: 10, type: 'short' as const, prompt: 'Simplify', max: 2, accept: ['4⅜', '35/8', '4.375'] };

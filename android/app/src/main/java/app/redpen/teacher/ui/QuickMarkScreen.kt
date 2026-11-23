@@ -75,7 +75,7 @@ fun QuickMarkScreen(onOpenAssignment: (String) -> Unit) {
         scope.launch {
             runCatching { Ai.draftScheme(listOf(bmp), null, subject, level, isStudentPage = true) }
                 .onSuccess { if (subject.isBlank()) subject = it.subject; if (level.isBlank()) level = it.level
-                    if (it.missing.isNotEmpty()) error = app.redpen.teacher.ai.missingNotice(it.missing)
+                    if (it.missing.isNotEmpty()) error = app.redpen.teacher.ai.missingNotice(if (it.missingShown.isNotEmpty()) it.missingShown else it.missing)
                     step = QuickStep.Confirm(it.questions) }
                 .onFailure { error = Repo.friendly(it); step = QuickStep.Snap }
         }

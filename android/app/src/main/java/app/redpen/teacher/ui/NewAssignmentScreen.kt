@@ -113,7 +113,7 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
             runCatching { Ai.draftScheme(images, typed.ifBlank { null }, subject, level, pdf = pdf?.second,
                 guide = Ai.Guide(guideImages, guideTyped.ifBlank { null }, guidePdf?.second)) }
                 .onSuccess { questions = it.questions; if (subject.isBlank()) subject = it.subject; if (level.isBlank()) level = it.level
-                    if (it.missing.isNotEmpty()) error = app.redpen.teacher.ai.missingNotice(it.missing) }
+                    if (it.missing.isNotEmpty()) error = app.redpen.teacher.ai.missingNotice(if (it.missingShown.isNotEmpty()) it.missingShown else it.missing) }
                 .onFailure { error = Repo.friendly(it) }
             drafting = false
         }

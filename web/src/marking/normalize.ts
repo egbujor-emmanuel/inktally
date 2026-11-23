@@ -64,7 +64,7 @@ function dropUnitTail(text: string): string {
 /** Reads the numeric answer a pupil wrote, preferring whatever follows the last "=". */
 export function parseNumericAnswer(raw: string): NumericParse {
   const lastPart = (raw.includes('=') ? raw.slice(raw.lastIndexOf('=') + 1) : raw).replace(SMALL_DIGITS, smallToDigits);
-  const afterEquals = dropUnitTail(lastPart.replace(UNIT, '')).replace(/\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (_, f: string) => ` ${VULGAR[f]}`);
+  const afterEquals = dropUnitTail(lastPart.replace(/[\])}|.;,]+\s*$/, '').replace(UNIT, '')).replace(/\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (_, f: string) => ` ${VULGAR[f]}`);
   const signAfterEquals = /^\s*[-−–]/.test(afterEquals) && raw.includes('=');
   const scientific = standardForm(afterEquals.replace(/,/g, ''));
   if (scientific !== null) return { value: scientific, clean: true, signAfterEquals };

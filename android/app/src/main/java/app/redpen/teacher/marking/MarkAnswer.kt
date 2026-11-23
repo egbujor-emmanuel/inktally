@@ -28,20 +28,26 @@ object Marker {
     private suspend fun markFromRead(question: Question, read: String, source: ReadSource, force: InferenceMode?): Mark = when (question) {
         is Question.Objective -> markObjective(question, read, source)
         is Question.Short -> markShort(question, read, source)
-        is Question.Numeric -> {
-            val base = markNumeric(question, read, source)
-            val steps = workingSteps(question.methodPoints)
-            if (base.awarded > 0 || steps.isEmpty() || base.status == MarkStatus.FLAGGED) base
-            else {
-                val (found, _) = judgePoints(read, steps, emptyList(), source, force)
-                if (found.isEmpty()) base else base.copy(awarded = minOf(found.size, question.max - 1), engine = app.redpen.teacher.domain.MarkEngine.AI_POINTS, pointsFound = found,
-                    reasons = base.reasons + "Method marks for: ${found.joinToString("; ")}.")
-            }
-        }
+        is Question.Numeric -> withMethodMarks(question, markNumeric(question, read, source), read) { steps -> judgePoints(read, steps, emptyList(), source, force).first }
         is Question.Points -> {
             val (found, rejected) = judgePoints(read, question.points, question.reject, source, force)
             markPoints(question, read, source, found, rejected)
         }
+    }
+
+    /**
+     * A wrong final answer earns method marks only when the working follows the key (same as web withMethodMarks):
+     * correct arithmetic landing on the student's own wrong answer means a different formula, so the teacher checks it.
+     */
+    private suspend fun withMethodMarks(question: Question.Numeric, base: Mark, read: String, judge: suspend (List<String>) -> List<String>): Mark {
+        val steps = workingSteps(question.methodPoints)
+        if (base.awarded > 0 || steps.isEmpty() || base.status == MarkStatus.FLAGGED) return base
+        workingContradictsKey(read, parseNumericAnswer(read).value, question.accept)?.let { c ->
+            return base.copy(status = MarkStatus.FLAGGED, reasons = base.reasons + contradictionReason(c))
+        }
+        val found = judge(steps)
+        return if (found.isEmpty()) base else base.copy(awarded = minOf(found.size, question.max - 1), engine = app.redpen.teacher.domain.MarkEngine.AI_POINTS, pointsFound = found,
+            reasons = base.reasons + "Method marks for: ${found.joinToString("; ")}.")
     }
 
     /** Cloud marking of a whole sheet in as few requests as possible (same as web markAnswersBatch). */
@@ -53,14 +59,7 @@ object Marker {
                 is Question.Objective -> markObjective(q, read, ReadSource.IN_CLOUD)
                 is Question.Short -> markShort(q, read, ReadSource.IN_CLOUD)
                 is Question.Points -> Ai.checkPointsBatch(read, q.points, q.reject).let { (found, rejected) -> markPoints(q, read, ReadSource.IN_CLOUD, found, rejected) }
-                is Question.Numeric -> {
-                    val base = markNumeric(q, read, ReadSource.IN_CLOUD)
-                    if (base.awarded > 0 || workingSteps(q.methodPoints).isEmpty() || base.status == MarkStatus.FLAGGED) base
-                    else Ai.checkPointsBatch(read, workingSteps(q.methodPoints), emptyList()).first.let { found ->
-                        if (found.isEmpty()) base else base.copy(awarded = minOf(found.size, q.max - 1), engine = app.redpen.teacher.domain.MarkEngine.AI_POINTS, pointsFound = found,
-                            reasons = base.reasons + "Method marks for: ${found.joinToString("; ")}.")
-                    }
-                }
+                is Question.Numeric -> withMethodMarks(q, markNumeric(q, read, ReadSource.IN_CLOUD), read) { steps -> Ai.checkPointsBatch(read, steps, emptyList()).first }
             }
         }
     }

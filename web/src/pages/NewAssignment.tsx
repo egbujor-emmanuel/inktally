@@ -86,7 +86,7 @@ export function NewAssignment() {
         guideImages: guidePhotos, guidePdf: guidePdf ?? undefined, guideText: guideText || undefined,
       }, subject, level);
       setQuestions(scheme.questions);
-      if (scheme.missing.length) setError(missingNotice(scheme.missing));
+      if (scheme.missing.length) setError(missingNotice(scheme.missingShown ?? scheme.missing));
       if (!subject.trim()) setSubject(scheme.subject);
       if (!level.trim()) setLevel(scheme.level);
     } catch (e: unknown) {

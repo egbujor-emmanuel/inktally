@@ -61,7 +61,17 @@ fun markShort(q: Question.Short, read: String, source: ReadSource): Mark {
     // Working before the answer ("4x − 2x = 16, x = 8"): the final answer is what follows the last "=" (same as web).
     val tail = if (read.contains('=')) read.substring(read.lastIndexOf('=') + 1).trim() else read
     val best = q.accept.maxOfOrNull { a -> maxOf(textSimilarity(read, a), if (tail != read) textSimilarity(tail, a) else 0.0) } ?: 0.0
+    // "not", "never" or "no" that the accepted answers don't have can flip the meaning: the teacher decides (same as web).
+    val neg = Regex("""\b(not|never|no)\b""", RegexOption.IGNORE_CASE)
+    val negated = neg.containsMatchIn(read) && q.accept.none { neg.containsMatchIn(it) }
+    if (negated && best >= SHORT_UNSURE) return result(q, read, source, 0, MarkStatus.FLAGGED, listOf("\"$read\" says \"not\" / \"no\" — check it means the accepted answer."))
     if (best >= threshold) return result(q, read, source, q.max, settled(source), listOf("\"$read\" matches an accepted answer."))
+    // A definition with filler words: every word of a 3-word-or-longer accepted answer appears, in order (same as web).
+    fun words(t: String) = t.lowercase().replace(Regex("[^a-z0-9 ]+"), " ").split(Regex("\\s+")).filter { it.isNotEmpty() }
+    fun inOrder(hay: List<String>, needle: List<String>): Boolean { var i = 0; for (w in hay) if (i < needle.size && w == needle[i]) i++; return i == needle.size }
+    if (!negated) q.accept.firstOrNull { a -> words(a).size >= 3 && inOrder(words(read), words(a)) }?.let { a ->
+        return result(q, read, source, q.max, settled(source), listOf("\"$read\" contains the accepted answer \"$a\"."))
+    }
     // The same number written another way ("4 3/8" for "4⅜", "8" for "x = 8").
     val value = parseNumericAnswer(read).value
     if (value != null && q.accept.any { a -> parseNumericAnswer(a).value?.let { kotlin.math.abs(it - value) < 1e-9 } == true }) {

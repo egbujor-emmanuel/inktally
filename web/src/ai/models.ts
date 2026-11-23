@@ -165,6 +165,24 @@ const FALLBACK_ATTEMPTS = 2;
  * stronger one is overloaded or slow (we measured "high demand" errors during testing).
  */
 export async function authorGenerate(schema: ObjectSchema, request: string | (string | Part)[]): Promise<{ text: string; model: string }> {
+  // An overload can last a minute or more (seen in the WAEC dry run, 23 Nov): go round every model again after a pause
+  // instead of making the teacher press the button again.
+  for (let round = 0; ; round++) {
+    try {
+      return await authorRound(schema, request);
+    } catch (error: unknown) {
+      const busy = isTransient(error) || /quota|RESOURCE_EXHAUSTED|429/i.test(error instanceof Error ? error.message : String(error));
+      const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      if (round >= AUTHOR_ROUND_WAITS_MS.length || !busy || offline) throw error;
+      await new Promise((resolve) => setTimeout(resolve, AUTHOR_ROUND_WAITS_MS[round]));
+    }
+  }
+}
+
+/** Pauses between full rounds over the cloud models when all of them are overloaded. */
+const AUTHOR_ROUND_WAITS_MS = [10_000, 30_000];
+
+async function authorRound(schema: ObjectSchema, request: string | (string | Part)[]): Promise<{ text: string; model: string }> {
   const primary = config('cloud_author_model');
   try {
     const r = await withRetry(() => authorModel(schema, primary).generateContent(request), AUTHOR_ATTEMPTS);

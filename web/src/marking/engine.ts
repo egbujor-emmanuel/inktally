@@ -73,7 +73,17 @@ export function markShort(question: ShortQuestion, read: string, readSource: Rea
   // Working before the answer ("4x − 2x = 16, x = 8"): the final answer is what follows the last "=" or comma.
   const tail = read.includes('=') ? read.slice(read.lastIndexOf('=') + 1).trim() : read;
   const best = Math.max(...question.accept.map((a) => Math.max(textSimilarity(read, a), tail !== read ? textSimilarity(tail, a) : 0)));
+  // "not", "never" or "no" that the accepted answers don't have can flip the meaning: the teacher decides.
+  const NEG = /\b(not|never|no)\b/i;
+  const negated = NEG.test(read) && !question.accept.some((a) => NEG.test(a));
+  if (negated && best >= SHORT_UNSURE) return result(input, 0, 'flagged', [`"${read}" says "not" / "no" — check it means the accepted answer.`]);
   if (best >= threshold) return result(input, question.max, settled(readSource), [`"${read}" matches an accepted answer.`]);
+  // A definition with filler words ("Acceleration is the rate of change of velocity." for "the rate of change of
+  // velocity"): every word of a 3-word-or-longer accepted answer appears, in order, in what the student wrote.
+  const words = (t: string) => t.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter(Boolean);
+  const inOrder = (hay: string[], needle: string[]) => { let i = 0; for (const w of hay) if (w === needle[i]) i += 1; return i === needle.length; };
+  const contained = negated ? undefined : question.accept.find((a) => words(a).length >= 3 && inOrder(words(read), words(a)));
+  if (contained) return result(input, question.max, settled(readSource), [`"${read}" contains the accepted answer "${contained}".`]);
   // The same number written another way ("4 3/8" for "4⅜", "8" for "x = 8").
   const value = parseNumericAnswer(read).value;
   if (value !== null && question.accept.some((a) => { const v = parseNumericAnswer(a).value; return v !== null && Math.abs(v - value) < DEFAULT_TOLERANCE; })) {

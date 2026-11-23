@@ -8,7 +8,8 @@ import { readPage } from '../ai/readPage';
 import { checkPointsBatch, readAnswersBatch, type CropToRead } from '../ai/batch';
 import type { ReadMode } from '../ai/models';
 import { markNumeric, markObjective, markPoints, markShort } from './engine';
-import { textSimilarity, workingSteps } from './normalize';
+import { parseNumericAnswer, textSimilarity, workingSteps } from './normalize';
+import { contradictionReason, workingContradictsKey } from './working';
 import { batchingEnabled } from '../ai/batch';
 import { isHeld } from './learning';
 
@@ -36,14 +37,22 @@ async function markFromRead(question: Question, read: string, source: ReadSource
 
 /** Wrong final answer but correct working still earns method marks (WAEC-style). */
 async function markNumericWithMethod(question: NumericQuestion, read: string, source: ReadSource, mode?: ReadMode): Promise<Mark> {
-  const base = markNumeric(question, read, source);
+  return withMethodMarks(question, markNumeric(question, read, source), read, async (steps) => (await judgePoints(read, steps, [], source, mode)).found);
+}
+
+/**
+ * A wrong final answer can still earn method marks, but only when the working follows the key: correct arithmetic
+ * that lands on the student's own wrong answer means a different formula, so no method mark and the teacher checks it.
+ */
+async function withMethodMarks(question: NumericQuestion, base: Mark, read: string, judge: (steps: string[]) => Promise<string[]>): Promise<Mark> {
   const steps = workingSteps(question.methodPoints);
   if (base.awarded > 0 || !steps.length || base.status === 'flagged') return base;
-  const { found } = await judgePoints(read, steps, [], source, mode);
+  const contradiction = workingContradictsKey(read, parseNumericAnswer(read).value, question.accept);
+  if (contradiction) return { ...base, status: 'flagged', reasons: [...base.reasons, contradictionReason(contradiction)] };
+  const found = await judge(steps);
   if (!found.length) return base;
-  const methodMarks = Math.min(found.length, question.max - 1);
   return {
-    ...base, awarded: methodMarks, engine: 'ai-points', pointsFound: found,
+    ...base, awarded: Math.min(found.length, question.max - 1), engine: 'ai-points', pointsFound: found,
     reasons: [...base.reasons, `Method marks for: ${found.join('; ')}.`],
   };
 }
@@ -62,12 +71,7 @@ export async function markAnswersBatch(questions: Question[], crops: CropToRead[
       const { found, rejected } = await checkPointsBatch(read, question.points, question.reject);
       marks.push(markPoints(question, read, 'in_cloud', found, rejected));
     } else if (question.type === 'numeric') {
-      const base = markNumeric(question, read, 'in_cloud');
-      const steps = workingSteps(question.methodPoints);
-      if (base.awarded > 0 || !steps.length || base.status === 'flagged') { marks.push(base); continue; }
-      const { found } = await checkPointsBatch(read, steps);
-      marks.push(found.length ? { ...base, awarded: Math.min(found.length, question.max - 1), engine: 'ai-points', pointsFound: found,
-        reasons: [...base.reasons, `Method marks for: ${found.join('; ')}.`] } : base);
+      marks.push(await withMethodMarks(question, markNumeric(question, read, 'in_cloud'), read, async (steps) => (await checkPointsBatch(read, steps)).found));
     } else {
       marks.push(question.type === 'objective' ? markObjective(question, read, 'in_cloud') : markShort(question, read, 'in_cloud'));
     }

@@ -200,6 +200,19 @@ object Ai {
      * (same as web authorGenerate). Non-transient failures (App Check, permission, bad request) are not retried.
      */
     private suspend fun authorGenerate(schema: Schema, request: Content): com.google.firebase.ai.type.GenerateContentResponse {
+        // An overload can last a minute or more: go round the models again after a pause (same as web).
+        var round = 0
+        while (true) {
+            try { return authorRound(schema, request) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
+                if (round >= AUTHOR_ROUND_WAITS_MS.size || !isTransient(e)) throw e
+                delay(AUTHOR_ROUND_WAITS_MS[round]); round++
+            }
+        }
+    }
+
+    private val AUTHOR_ROUND_WAITS_MS = longArrayOf(10_000L, 30_000L)
+
+    private suspend fun authorRound(schema: Schema, request: Content): com.google.firebase.ai.type.GenerateContentResponse {
         val primary = cfg("cloud_author_model")
         return try {
             retry(AUTHOR_ATTEMPTS, pick = { routing.activeCloudModel(primary) }) { m -> authorModel(schema, m).generateContent(request) }
@@ -367,7 +380,7 @@ object Ai {
         val q = o.optInt("q", 0).takeIf { it > 0 } ?: return null
         val prompt = o.optString("prompt")
         val max = o.optInt("max", 1).coerceIn(1, 20)
-        val label = o.optString("label").replace(Regex("""[<>"]"""), "").trim().take(16).takeIf { it.isNotEmpty() && it != q.toString() }
+        val label = o.optString("label").replace(Regex("""[<>"]"""), "").trim().take(16).takeIf { it.isNotEmpty() }
         return when (o.optString("type")) {
             "objective" -> o.strings("correctOptions").map { it.uppercase() }.takeIf { it.isNotEmpty() }?.let { Question.Objective(q, prompt, max, it, label) }
             "numeric" -> o.optJSONArray("acceptNumbers")?.let { a -> (0 until a.length()).mapNotNull { a.optDouble(it).takeIf { d -> !d.isNaN() } } }
@@ -409,24 +422,31 @@ object Ai {
                 guide.pdf?.let { inlineData(it, "application/pdf") }
             }
         }
-        val (draft, firstQs) = draftOnce(request)
-        var questions = firstQs
-        var missing = missingQuestions(questions.map { it.q }, draft.optInt("questionCount", 0))
+        // A typed guide prints its own question labels: code reads them, so the list does not depend on the model (same as web).
+        val printed = printedLabels(guide.typed ?: "").ifEmpty { printedLabels(typed ?: "") }
+        val pinned = if (printed.isEmpty()) request else content(request.role) { request.parts.forEach { part(it) }; text(printedLabelsNote(printed)) }
+        fun shape(drafted: List<Question>, count: Int): Pair<List<Question>, List<Int>> =
+            if (printed.isNotEmpty()) alignToPrinted(drafted, printed) else drafted to missingQuestions(drafted.map { it.q }, count)
+        val (draft, firstQs) = draftOnce(pinned)
+        var (questions, missing) = shape(firstQs, draft.optInt("questionCount", 0))
         // A long paper sometimes comes back with questions left out: ask once more, naming them (same as web).
         if (missing.isNotEmpty()) {
             runCatching {
-                val note = "IMPORTANT: your previous answer left out question(s) ${missing.joinToString(", ")}. Return the complete list, including every question."
-                val again = content(request.role) { request.parts.forEach { part(it) }; text(note) }
+                val named = if (printed.isNotEmpty()) missing.map { "$it (\"${printed[it - 1]}\")" } else missing.map { it.toString() }
+                val note = "IMPORTANT: your previous answer left out question(s) ${named.joinToString(", ")}. Return the complete list, including every question."
+                val again = content(pinned.role) { pinned.parts.forEach { part(it) }; text(note) }
                 val (retryDraft, retryQs) = draftOnce(again)
+                val count = maxOf(draft.optInt("questionCount", 0), retryDraft.optInt("questionCount", 0))
                 val byNumber = questions.associateBy { it.q }.toMutableMap()
-                retryQs.forEach { if (it.q !in byNumber) byNumber[it.q] = it }
+                shape(retryQs, count).first.forEach { if (it.q !in byNumber) byNumber[it.q] = it }
                 questions = byNumber.values.sortedBy { it.q }
-                missing = missingQuestions(questions.map { it.q }, maxOf(draft.optInt("questionCount", 0), retryDraft.optInt("questionCount", 0)))
+                missing = if (printed.isNotEmpty()) printed.indices.map { it + 1 }.filter { it !in byNumber } else missingQuestions(questions.map { it.q }, count)
             }
         }
         if (questions.isEmpty()) throw IllegalStateException("No questions could be found. Make sure the questions are visible, or type them.")
         val (s, l) = resolveLabels(subject, level, draft.optString("subject"), draft.optString("level"))
-        return MarkingScheme(s, l, questions, missing)
+        return MarkingScheme(s, l, if (printed.isNotEmpty()) questions else inferLabels(questions), missing,
+            if (printed.isNotEmpty()) missing.map { printed[it - 1] } else emptyList())
     }
 
     private suspend fun draftOnce(request: Content): Pair<JSONObject, List<Question>> {

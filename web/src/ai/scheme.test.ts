@@ -35,14 +35,27 @@ describe('toQuestion', () => {
     expect(toQuestion({ q: 8, type: 'numeric', prompt: 'No method', max: 2, acceptNumbers: [8] })).not.toHaveProperty('methodPoints');
   });
 
-  test('a WAEC-style sub-part keeps its printed label; a plain number gets none', () => {
+  test('a WAEC-style sub-part keeps its printed label (inferLabels drops a label equal to the number)', () => {
     expect(toQuestion({ q: 7, label: '6(b)(i)', type: 'numeric', prompt: 'Acceleration', max: 2, acceptNumbers: [4] })).toMatchObject({ q: 7, label: '6(b)(i)' });
-    expect(toQuestion({ q: 3, label: '3', type: 'objective', prompt: 'Pick', max: 1, correctOptions: ['B'] })).not.toHaveProperty('label');
+    expect(toQuestion({ q: 3, type: 'objective', prompt: 'Pick', max: 1, correctOptions: ['B'] })).not.toHaveProperty('label');
   });
 
   test('questions with no usable answer are dropped', () => {
     expect(toQuestion({ q: 1, type: 'objective', prompt: 'Pick one', max: 1 })).toBeNull();
     expect(toQuestion({ q: 2, type: 'numeric', prompt: '7 x 8', max: 1, acceptNumbers: [] })).toBeNull();
+  });
+});
+
+describe('labels the model left out', async () => {
+  const { inferLabels } = await import('./scheme');
+  const q = (n: number, label?: string) => ({ q: n, type: 'objective' as const, prompt: '', max: 1, correct: ['A'], ...(label ? { label } : {}) });
+  test('a missing 7(a) and 8(a) are filled from their neighbours, and labels are unique', () => {
+    const labelled = inferLabels([q(6, '6(a)'), q(7, '6(b)(i)'), q(8, '6(b)(ii)'), q(9), q(10, '7(b)'), q(11), q(12, '8(b)'), q(13, '9'), q(14, '10')]);
+    expect(labelled.map((x) => x.label ?? String(x.q))).toEqual(['6(a)', '6(b)(i)', '6(b)(ii)', '7(a)', '7(b)', '8(a)', '8(b)', '9', '10']);
+  });
+  test('a paper with no sub-parts is left alone; a label equal to the number is dropped', () => {
+    expect(inferLabels([q(1, '1'), q(2)])).toEqual([q(1, '1'), q(2)]);
+    expect(inferLabels([q(1, '1(a)'), q(2, '2')]).map((x) => x.label)).toEqual(['1(a)', undefined]);
   });
 });
 

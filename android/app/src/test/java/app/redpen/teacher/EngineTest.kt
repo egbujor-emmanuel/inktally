@@ -82,6 +82,42 @@ class EngineTest {
 
     @Test fun shortSpellingSlipAccepted() = assertEquals(1, markShort(Question.Short(3, "x", 1, listOf("photosynthesis")), "Fotosynthesis", ReadSource.IN_CLOUD).awarded)
     @Test fun shortRejectedAnswer() = assertEquals(0, markShort(Question.Short(5, "x", 1, listOf("ran"), listOf("runned"), false), "runned", ReadSource.IN_CLOUD).awarded)
+    @Test fun definitionWithFillerWords() {
+        val q = Question.Short(6, "Define acceleration", 1, listOf("the rate of change of velocity"))
+        assertEquals(1, markShort(q, "Acceleration is the rate of change of velocity.", ReadSource.IN_CLOUD).awarded)
+        assertEquals(0, markShort(q, "Acceleration is change in speed.", ReadSource.IN_CLOUD).awarded)
+        assertEquals(0, markShort(q, "It is not the rate of change of velocity.", ReadSource.IN_CLOUD).awarded)
+    }
+    @Test fun strayBracketAfterNumber() = assertEquals(100.0, parseNumericAnswer("PE = 2 × 10 × 5 = 100]").value!!, 0.0)
+    @Test fun workingThatFollowsAnotherFormula() {
+        assertEquals("50/0.4", app.redpen.teacher.marking.substitutedArithmetic("v = f/λ = 50/0.4 = 125 m/s"))
+        assertEquals(125.0, app.redpen.teacher.marking.evaluateArithmetic("50/0.4")!!, 0.0)
+        assertEquals(12.0, app.redpen.teacher.marking.evaluateArithmetic("(4+2)*2")!!, 0.0)
+        assertEquals("50/0.4", app.redpen.teacher.marking.workingContradictsKey("v = fλ = 50/0.4 = 125 m/s", 125.0, listOf(20.0))?.step)
+        assertEquals(null, app.redpen.teacher.marking.workingContradictsKey("v = fλ = 50 × 0.4 = 25 m/s", 25.0, listOf(20.0)))
+        assertEquals(null, app.redpen.teacher.marking.workingContradictsKey("I = 12/6 = 2 A", 2.0, listOf(2.0)))
+    }
+    @Test fun printedLabelsFromTypedGuide() {
+        assertEquals(listOf("1", "2(a)", "2(b)(i)", "2(b)(ii)", "3"),
+            app.redpen.teacher.ai.printedLabels("1. Define work.
+2. (a) State Newton's first law.
+(b) A 2 kg mass...
+(i) Find the force.
+(ii) Find the work done.
+3. B"))
+        assertEquals(listOf("6(a)", "6(b)(i)", "7"), app.redpen.teacher.ai.printedLabels("6(a) Define acceleration. 1 mark
+6(b)(i) A car starts from rest
+7. A 2 kg mass"))
+        assertEquals(listOf("1", "2"), app.redpen.teacher.ai.printedLabels("1. B
+2 marks for the method
+2. C
+10 m is the height"))
+    }
+    @Test fun missingSubpartLabelsInferred() {
+        fun o(n: Int, l: String? = null) = Question.Objective(n, "", 1, listOf("A"), l)
+        val got = app.redpen.teacher.ai.inferLabels(listOf(o(6, "6(a)"), o(7, "6(b)(i)"), o(8, "6(b)(ii)"), o(9), o(10, "7(b)"), o(11), o(12, "8(b)"), o(13, "9"), o(14, "10")))
+        assertEquals(listOf("6(a)", "6(b)(i)", "6(b)(ii)", "7(a)", "7(b)", "8(a)", "8(b)", "9", "10"), got.map { it.label ?: it.q.toString() })
+    }
     @Test fun shortTruncationFlagged() = assertEquals(MarkStatus.FLAGGED, markShort(Question.Short(3, "x", 1, listOf("photosynthesis")), "photo", ReadSource.IN_CLOUD).status)
     @Test fun similarityKeepsDifferentWordsApart() = assertTrue(textSimilarity("runned", "ran") < 0.6)
 

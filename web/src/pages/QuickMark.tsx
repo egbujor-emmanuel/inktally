@@ -45,7 +45,7 @@ export function QuickMark() {
       if (!scheme.questions.length) throw new Error('No questions could be found on that page. Make sure the questions are visible.');
       if (!subject.trim()) setSubject(scheme.subject);
       if (!level.trim()) setLevel(scheme.level);
-      if (scheme.missing.length) setError(missingNotice(scheme.missing));
+      if (scheme.missing.length) setError(missingNotice(scheme.missingShown ?? scheme.missing));
       setStep({ kind: 'confirm', questions: scheme.questions });
     } catch (e: unknown) {
       setError(friendlyCloudError(e).message);

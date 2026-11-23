@@ -20,8 +20,41 @@ fun missingQuestions(found: List<Int>, declaredCount: Int = 0): List<Int> {
 }
 
 /** The sentence shown when questions are still missing after the second try (same as web). */
-fun missingNotice(missing: List<Int>) =
+fun missingNotice(missing: List<Any>) =
     "REDPEN could not find question${if (missing.size == 1) "" else "s"} ${missing.joinToString(", ")}. Check the paper, and add ${if (missing.size == 1) "it" else "them"} with \"+ Add question\"."
+
+private val SUBPART = Regex("""^(\d+)\(([a-z])\)""", RegexOption.IGNORE_CASE)
+
+/** Fills in labels the model left out from the questions around them; labels end up unique (same as web inferLabels). */
+fun inferLabels(questions: List<app.redpen.teacher.domain.Question>): List<app.redpen.teacher.domain.Question> {
+    if (questions.none { it.label?.let { l -> SUBPART.containsMatchIn(l) } == true }) return questions
+    val labels = questions.map { it.label }.toMutableList()
+    fun lead(l: String?) = l?.let { Regex("""^\d+""").find(it)?.value?.toIntOrNull() }
+    for (i in labels.indices) {
+        if (labels[i] != null) continue
+        val prev = labels.getOrNull(i - 1); val next = labels.getOrNull(i + 1)
+        val nextSub = next?.let { SUBPART.find(it) }; val prevSub = prev?.let { SUBPART.find(it) }
+        labels[i] = when {
+            nextSub != null && nextSub.groupValues[2].equals("b", true) -> "${nextSub.groupValues[1]}(a)"
+            prevSub != null && Regex("""^\d+\(a\)$""", RegexOption.IGNORE_CASE).matches(prev) -> "${prevSub.groupValues[1]}(b)"
+            lead(prev) != null && (next == null || (lead(next) ?: -99) - lead(prev)!! == 2) -> (lead(prev)!! + 1).toString()
+            else -> null
+        }
+    }
+    val seen = mutableSetOf<String>()
+    return questions.mapIndexed { i, q ->
+        val l = labels[i]?.trim()
+        val keep = l != null && l.isNotEmpty() && seen.add(l) && l != q.q.toString()
+        withLabel(q, if (keep) l else null)
+    }
+}
+
+private fun withLabel(q: app.redpen.teacher.domain.Question, label: String?) = when (q) {
+    is app.redpen.teacher.domain.Question.Objective -> q.copy(label = label)
+    is app.redpen.teacher.domain.Question.Numeric -> q.copy(label = label)
+    is app.redpen.teacher.domain.Question.Short -> q.copy(label = label)
+    is app.redpen.teacher.domain.Question.Points -> q.copy(label = label)
+}
 
 private const val MAX_LABEL = 60
 private val LABEL_BREAKERS = Regex("""[<>"]""")
