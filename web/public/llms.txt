@@ -1,0 +1,50 @@
+# InkTally
+
+> InkTally marks handwritten classwork on the teacher's own phone or laptop, even offline. Gemini Nano reads each answer on the device, ordinary code marks it against the teacher's marking guide, and Gemini in the cloud re-reads every on-device mark when the device is back online. Web (Chrome) and Android, one Firestore data model. Built for #BuildHybridAI 2026 on Firebase AI Logic hybrid inference.
+
+## Try it (no account; you start as a private guest)
+
+- [Live web app](https://inktally.web.app): Home → "Quick mark a page" → upload samples/maths.png from the repo → confirm the drafted key → 4/6, both wrong answers caught.
+- [Code](https://github.com/egbujor-emmanuel/inktally) (Apache-2.0)
+- [Android APK](https://github.com/egbujor-emmanuel/inktally/releases)
+- [Five-minute judging path](https://github.com/egbujor-emmanuel/inktally/blob/main/JUDGES.md)
+
+## Screens
+
+- `/` Home: samples, active and finished assignments, on-device/cloud status.
+- `/quick` Quick mark: one photo of a student's page → answer key drafted from the questions → marked.
+- `/new` New assignment: from the question paper (photo, PDF, typed) or the teacher's own marking guide, copied exactly; WAEC-style sub-parts such as 6(b)(ii), method marks and theory points.
+- `/a/{id}/print` Printable answer sheets with corner markers.
+- `/a/{id}/mark` Mark: printed sheet or exercise-book page, camera or a stack of photos; works offline.
+- `/a/{id}/review` Flagged answers beside the student's handwriting; accept an answer for everyone.
+- `/a/{id}/register` Mark register, Excel and CSV.
+- `/a/{id}/key` Answer key, editable after marking; every student re-marked from stored readings.
+- `/a/{id}/insights` Per-question results and a catch-up worksheet.
+- `/school` Institution details printed on sheets, copies and the register.
+
+## How Firebase AI Logic is used
+
+- `PREFER_ON_DEVICE`: Gemini Nano reads one cut-out answer box at a time (it never sees the question, so it cannot "correct" the student). Offline capable. web/src/ai/read.ts, android/app/src/main/java/app/redpen/teacher/ai/Ai.kt
+- `ONLY_IN_CLOUD`: the cloud check. Back online, Gemini re-reads every on-device mark. "Verified" needs both readings to agree on what is written and on the score; otherwise the teacher sees both. web/src/marking/markAnswer.ts (reconcile)
+- `ONLY_IN_CLOUD`: authoring. Answer keys from the questions (never from students' answers) and catch-up sheets, with structured output. web/src/ai/scheme.ts
+- `PREFER_IN_CLOUD`: reads on devices without Gemini Nano.
+- `inferenceSource` on every response drives the label the teacher sees (On-device · Cloud read · Verified · Check this).
+- App Check on every call, Remote Config for models/prompts/switches, Firestore offline persistence, anonymous Auth with Google linking, Hosting with a service worker.
+
+## Design rules
+
+- The model reads; code decides every mark (numbers with units, objectives, short answers, method marks, theory points).
+- An on-device mark is Provisional until the cloud agrees. A failed or unsure read is never confirmed.
+- Misreads the cloud finds are remembered per assignment; later on-device readings that match one are held as "Check this". The reading itself is never changed.
+- Method marks need working that follows the key: correct arithmetic that lands on a wrong answer means a different formula, so no method mark.
+
+## What goes to the cloud
+
+- Printed InkTally sheets: only the cut-out answer boxes, never the name line or the page photo.
+- Quick mark and exercise-book pages: the page photo (needed to find the answers).
+- Answer-key drafting: the question paper and/or the teacher's marking guide. Quick mark drafts from the student's own page and is told to use the questions only, never the answers written on it.
+- Catch-up sheets: anonymised wrong answers only.
+
+## Evidence
+
+Every public number maps to a file in the repo and is re-checked by `npm run evidence:verify` (evidence/claims.json).

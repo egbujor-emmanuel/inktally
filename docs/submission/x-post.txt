@@ -1,0 +1,40 @@
+X launch posts for submission day. Post from the InkTally account; pin option A. Upload the MP4 to X directly (native video plays inline; a YouTube link does not).
+Required: tag @Firebase and use #BuildHybridAI. Every number must match evidence/claims.json (run `npm run evidence:verify` first).
+Never ask people to test or sign up.
+
+=== OPTION A — thread (6 posts) ===
+
+1/
+InkTally marks handwritten classwork on the teacher's own phone, even with no internet.
+
+Built for #BuildHybridAI with @Firebase AI Logic. 2-minute demo ↓
+[video]
+
+2/
+The phone reads each answer with Gemini Nano, on the device.
+Plain code does the marking against the teacher's own marking guide: objectives, numbers with units, method marks, theory points.
+
+3/
+When the signal is back, Gemini in the cloud reads every answer again.
+A mark is "Verified" only when both readings agree. Anything else goes to the teacher, with both readings side by side.
+
+4/
+It handles real exam papers: paste a WAEC-style marking guide and it keeps the paper's own labels, like 6(b)(ii).
+Wrong formula but tidy arithmetic? No method mark, and it's flagged.
+
+5/
+Web and Android, identical. Records sync through Firestore when you're back online.
+Every number we publish is re-checked against its evidence file by one command.
+
+6/
+Try it: https://inktally.web.app
+Code (Apache-2.0): https://github.com/egbujor-emmanuel/inktally
+Devpost: [link]
+
+=== OPTION B — single post ===
+
+InkTally: photograph a page of handwritten classwork and the teacher's phone marks it, even offline. Gemini Nano reads, code marks, the cloud double-checks. Web + Android.
+
+https://inktally.web.app
+#BuildHybridAI @Firebase
+[video]

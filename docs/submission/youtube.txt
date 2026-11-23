@@ -1,0 +1,24 @@
+YouTube upload: set visibility to PUBLIC (the rules say "publicly visible"). Upload English captions (the .srt from the render). Keep it under 2:55.
+
+=== Title (≤100 characters) ===
+InkTally — handwritten classwork marked on the teacher's phone, even offline (#BuildHybridAI)
+
+=== Description ===
+InkTally marks handwritten classwork on the teacher's own phone or laptop, even with no internet. Gemini Nano reads each answer on the device, plain code marks it against the teacher's own marking guide, and when the signal comes back Gemini in the cloud reads every answer again. A mark is "Verified" only when both readings agree.
+
+Built for #BuildHybridAI 2026 with Firebase AI Logic hybrid inference (PREFER_ON_DEVICE, ONLY_IN_CLOUD, PREFER_IN_CLOUD), App Check, Remote Config, Firestore offline, Authentication and Hosting. Web (Chrome) and Android.
+
+Try it: https://inktally.web.app
+Code (Apache-2.0): https://github.com/egbujor-emmanuel/inktally
+Judges, start here: https://github.com/egbujor-emmanuel/inktally/blob/main/JUDGES.md
+
+0:00 The problem
+0:12 How it works
+0:28 A WAEC-style paper, marked from the teacher's own guide
+1:08 Offline, on-device with Gemini Nano, then the cloud check
+1:46 Android
+2:12 Register, Excel, answer-key fixes
+2:30 Proof
+
+=== Tags ===
+Firebase, Firebase AI Logic, Gemini Nano, Gemini, hybrid AI, on-device AI, Chrome built-in AI, Android, education, marking, grading, teachers, WAEC, BuildHybridAI

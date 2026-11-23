@@ -25,7 +25,7 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 6_000_000,
         navigateFallback: '/index.html',
         // /__/: Firebase Hosting's reserved paths. /trial/: printable PDFs for the teacher trial, opened directly.
-        navigateFallbackDenylist: [/^\/__\//, /^\/trial\//],
+        navigateFallbackDenylist: [/^\/__\//, /^\/trial\//, /^\/llms\.txt$/],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {

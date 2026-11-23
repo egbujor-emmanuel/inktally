@@ -1,0 +1,72 @@
+{
+  "title": "InkTally — handwritten classwork marked on the teacher's phone, even offline",
+  "target_seconds": 165,
+  "hard_cap_seconds": 175,
+  "rules": [
+    "Every product shot is a screen recording of the real app (web in Chrome, Android on a real phone). No mock-ups.",
+    "Every on-screen number comes from evidence/claims.json by its id (figure_claims), never typed by hand.",
+    "No secrets, emails, access codes or real student names in any frame.",
+    "English voice (local Kokoro), captions burned in, at most 8 words per caption chunk."
+  ],
+  "scenes": [
+    {
+      "id": "hook",
+      "start": 0, "seconds": 12,
+      "criterion": "Impact",
+      "footage": "A real stack of handwritten scripts on a desk; a phone photographing one.",
+      "voice": "One teacher. Eighty handwritten scripts. Data that comes and goes. Marking takes the whole weekend.",
+      "director": "Real paper, natural light. No stock footage."
+    },
+    {
+      "id": "idea",
+      "start": 12, "seconds": 16,
+      "criterion": "Idea",
+      "footage": "InkTally home screen, then a three-step diagram: device reads, code marks, cloud checks.",
+      "voice": "InkTally marks them on the teacher's own phone or laptop, even offline. Gemini Nano reads each answer on the device. Plain code does the marking. And when the signal comes back, Gemini in the cloud checks every mark.",
+      "director": "Diagram animates one step per sentence."
+    },
+    {
+      "id": "waec",
+      "start": 28, "seconds": 40,
+      "criterion": "Design, Tech",
+      "footage": "Web: New assignment → paste the WAEC physics marking guide → key with 14 questions and the paper's own labels 6(a), 6(b)(i)… → Mark → exercise-book page → a real handwritten script → the total; zoom on Q8(b) flagged.",
+      "voice": "Here is a WAEC-style physics paper. I paste my own marking guide, and InkTally copies it exactly, sub-parts and method marks included. Now a student's handwritten script. Every answer is marked by code. Look at this one: the student used the wrong formula, but the reading looked right. The arithmetic gives them away, so there is no method mark, and InkTally flags it for me.",
+      "director": "Use the user's real handwritten WAEC script photo. Hold 2 s on the Q8(b) flag.",
+      "figure_claims": []
+    },
+    {
+      "id": "offline-on-device",
+      "start": 68, "seconds": 38,
+      "criterion": "Tech, Idea",
+      "footage": "Chrome with real Gemini Nano: connection off → mark printed sheets → 'On-device · Provisional'; one answer held as 'Check this' → connection on → 'Cloud check: N on-device marks confirmed, 1 needs you'.",
+      "voice": "Now with no connection at all. Gemini Nano reads each answer box right here, and never sees the question, so it can't correct the student. This one is held for me: the cloud caught the device misreading it before. Back online, the cloud has already confirmed the rest.",
+      "director": "Recorded live in the Codespace Chrome with Nano. Show the network indicator going off and on.",
+      "figure_claims": ["on-device-loop", "held-out-misreads"]
+    },
+    {
+      "id": "android",
+      "start": 106, "seconds": 26,
+      "criterion": "Tech, Design",
+      "footage": "Android phone: airplane mode → photograph a page → 'Saved for marking' → airplane mode off → marked by itself.",
+      "voice": "Same app on Android, same data. With no signal it keeps the photos and marks them the moment the signal is back. If the phone has no Gemini Nano, InkTally says so and reads in the cloud.",
+      "director": "Screen recording from the user's phone (or scrcpy over USB)."
+    },
+    {
+      "id": "teacher-tools",
+      "start": 132, "seconds": 18,
+      "criterion": "Design, Impact",
+      "footage": "A stack of photos → mark register → Excel; fix the answer key → 'Re-marked N students'; insights → catch-up sheet.",
+      "voice": "A whole stack at once, a register, an Excel file. Spot a mistake in the answer key? Fix it, and everyone is re-marked from what InkTally already read.",
+      "director": "Fast cuts, 3–4 s each."
+    },
+    {
+      "id": "proof",
+      "start": 150, "seconds": 15,
+      "criterion": "All",
+      "footage": "Captions over app shots, then the end card: inktally.web.app · github.com/egbujor-emmanuel/inktally · Firebase AI Logic hybrid inference · App Check · Remote Config · Firestore offline.",
+      "voice": "Every number here is checked against its evidence in the repo. InkTally, built on Firebase AI Logic.",
+      "director": "Numbers pulled from evidence/claims.json at render time.",
+      "figure_claims": ["cloud-whole-page", "held-out-misreads", "live-walkthrough", "web-unit-tests"]
+    }
+  ]
+}

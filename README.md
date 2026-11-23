@@ -6,6 +6,10 @@ the moment the device is back online Gemini in the cloud double-checks every on-
 teaches InkTally which on-device readings to hold for the teacher next time. Built on **Firebase AI Logic hybrid inference** for **Web (Chrome)** and **Android**,
 sharing one Firestore data model.
 
+**[Live app](https://inktally.web.app)** · **[Judges, start here (5 min)](JUDGES.md)** · **[Safety rules and their tests](THREAT_MODEL.md)** · **[Reproduce](REPRODUCE.md)** · **[Android APK](../../releases)**
+
+> **Judges:** [JUDGES.md](JUDGES.md) is a timed five-minute path through the live app with files from this repo: a real handwritten page marked 4/6, a WAEC physics paper marked from its own marking guide, offline marking, and `npm run ci:clean`, which re-checks every number on this page against its evidence file.
+
 ---
 
 ## Try it in 2 minutes
@@ -35,12 +39,13 @@ No Gemini Nano hardware to hand? Watch the recorded runs on the live site, curre
 **Run locally**
 ```bash
 git clone https://github.com/egbujor-emmanuel/inktally && cd inktally/web
-cp .env.example .env.local        # fill in your Firebase web config
-npm install && npm run dev        # http://localhost:5173
-npm test                          # 96 unit tests (hybrid core: routing, reconcile, held misreads replayed on real Nano data, strict yes/no, batch fallback; engine; scanner; exports)
+npm ci && npm run ci:clean        # lint, unit tests, build + secret scan, every README number re-checked against its evidence
+cp .env.example .env.local        # then fill in your Firebase web config
+npm run dev                       # http://localhost:5173
 node e2e/live-walkthrough.mjs [url] [--mobile]   # 18-step click-through of every feature on the live site
 node e2e/offline-coldstart.mjs [url]             # open with no connection, add a stack offline, marked on reconnect
 ```
+Everything else, including Android and on-device runs: [REPRODUCE.md](REPRODUCE.md).
 Android: open `android/` in Android Studio, add your `app/google-services.json`, run. CI unit-tests and builds every push ([workflow](.github/workflows/android.yml)), then installs the APK on an Android emulator and taps through every screen with Maestro ([e2e workflow](.github/workflows/android-e2e.yml), [flows](android/e2e/)).
 
 ---
@@ -65,6 +70,13 @@ The pain is measured and large: US teachers spend **9.9 hours a week** marking, 
 | On-device reads are sometimes wrong. | Measured on real Gemini Nano: on-device marks are **Provisional** until the **cloud check** (Gemini via Firebase AI Logic) re-reads them — automatically, as soon as the device is back online. **Verified** needs two readings that agree on what is written *and* on the score; a different score → the teacher sees both readings. An answer the device could not read, or a single cloud reading, is labelled **Cloud read**, never Verified. |
 | A small model misreads some handwriting the same way again and again (on our sheets, Nano read "D" as "A" and "runned" as "raned"). | **The cloud teaches InkTally where the device goes wrong.** Every misread the cloud check finds ("the device read A, it was D") is saved on the assignment; from then on, an offline reading that matches one is held as **Check this** for the teacher, so the teacher sees the shaky marks before the connection is back. InkTally never changes what the device read, so it cannot push an answer towards the key — we measured that putting corrections into the prompt instead gave no gain and could turn a true "A" into "D". Switchable in Remote Config (`device_learning`). |
 | Free-tier quotas and "high demand" errors (both hit during testing). | Cloud reads are **batched** (one request per sheet, one per theory answer); a model out of quota is skipped for a minute (rate limit) or hours (daily quota) and the next Remote Config fallback model is used; each error is attributed to the request that caused it; the on-device path keeps teachers working. |
+
+## Why Firebase AI Logic hybrid inference is essential here
+
+- **No on-device model, no offline marking.** Without Gemini Nano through `PREFER_ON_DEVICE`, a teacher with no data cannot mark at all, and every page costs a cloud call.
+- **No cloud model, no trustworthy marks.** Nano misreads some handwriting the same way again and again. Without the `ONLY_IN_CLOUD` check, those misreads would become wrong marks that nobody sees.
+- **No `inferenceSource`, no honest labels.** The teacher must know which marks were read on the device and are still provisional. The SDK says where each answer was read, and that drives every label.
+- **No one SDK across platforms, no identical app.** The same calls, modes and Remote Config prompts run on web and Android, so a teacher can start on a laptop and finish on a phone.
 
 ## Architecture
 
@@ -101,6 +113,7 @@ Because the Firebase console does not show on-device inference, InkTally records
 
 - **Quick mark** — one photo of a student's page → AI answer key from the questions → teacher confirms → marked. Key saved for the class.
 - **Assignments** — draft a marking scheme from photos, a PDF or typed questions, **or upload your own marking scheme and InkTally copies it exactly** (alternatives, "do not accept", mark allocations); print answer sheets with corner markers.
+- **Real exam formats (WAEC, WASSCE, NECO, GCSE-style)** — sub-parts keep the paper's own labels (6(a), 6(b)(i), 6(b)(ii)); a typed guide's labels are read by code, so the key never depends on which cloud model answered. Calculations accept units written any way (m/s², ms⁻², 100 joules, 1.0 × 10⁵ Pa). **Method marks** follow the examiner's rule: correct working with a wrong final answer earns them, but correct arithmetic on the wrong formula ("v = f/λ = 50/0.4 = 125") does not, and is flagged. Theory answers are checked point by point, with "do not accept" lists.
 - **Answer key, editable after marking** — fix a wrong answer or a mark at any time; every student already marked is re-marked on the spot from what InkTally already read (no new photos, no new AI reading); theory answers whose marking points changed are flagged for you.
 - **Two capture modes** — printed InkTally sheet (fully offline, names private) or any exercise-book page; camera, or **choose a whole stack of photos at once** — each script is queued and marked in the background (on-device when Gemini Nano is ready, otherwise as soon as there is a connection).
 - **Automatic cloud check** — back online, on-device marks are re-read by the cloud on whatever screen is open: *"Cloud check: 8 on-device marks confirmed, 1 needs you."*
@@ -119,7 +132,7 @@ Every number below comes from a file in this repo or a check anyone can re-run.
 
 | Test | Result | Source |
 |---|---|---|
-| Unit tests — web (Vitest) | **96 / 96 pass**, incl. 33 for the hybrid core and 11 for editing the answer key after marking (incl. keeping flags, held readings and cloud confirmations): quota routing and expiry, per-request error attribution, no retry when every model is exhausted, thinking-level fallback, batch fallback on a missing answer, reconcile (a failed or unsure read is never "confirmed"; different readings with the same score are not a confirmation), keep-reviewed, learned misreads held (incl. a replay of the held-out Nano run), strict yes/no point checks, re-marking, labels | [`routing.test.ts`](web/src/ai/routing.test.ts), [`hybrid.test.ts`](web/src/marking/hybrid.test.ts) |
+| Unit tests — web (Vitest) | **128 unit tests pass**: the hybrid safety net (a failed or unsure read is never "confirmed"; learned misreads held, never rewritten; replay of the held-out Nano run), quota routing that can never loop, the on-device reader never given the question, answer keys pinned to the guide's printed labels, method marks that need working following the key, re-marking after key edits, scanner geometry, exports, CSP. Each safety rule and its test: [THREAT_MODEL.md](THREAT_MODEL.md) | [`web/src/**/*.test.ts`](web/src/), [`evidence/vitest.json`](evidence/vitest.json) |
 | Unit tests — Android (JUnit, same hybrid-core cases + register exports) | pass in CI | [android.yml](.github/workflows/android.yml) |
 | Web click-through of every feature on the live site — school details, typed + photo drafting, copying a teacher's own scheme from a photo and from text, print, Quick mark, sheet marking, exercise-book marking, comment → marked copy, answer key edited after marking → everyone re-marked, offline queue, rename → Excel content check, review, insights + catch-up, finish/reopen, delete | **18 / 18**, desktop and mobile (the exercise-book step must give the true score, 3/5; editing the answer key after marking must re-mark both students) | [`live-walkthrough.mjs`](web/e2e/live-walkthrough.mjs), [logs](bench/evidence/walkthrough-2026-11-14/) |
 | Web cold start with no connection: open → assignment from cache → add a stack of 3 scripts offline → reconnect | **6 / 6**; all 3 scripts marked 3/5 automatically | [`offline-coldstart.mjs`](web/e2e/offline-coldstart.mjs), [result + screenshots](bench/evidence/web-offline-coldstart-2026-11-14/) |
@@ -133,7 +146,7 @@ Every number below comes from a file in this repo or a check anyone can re-run.
 | Earlier offline → online run (Chrome + Gemini Nano) | 5 answers marked on-device with no connection; on reconnect the cloud check flagged the one device misread | [`bench/evidence/ondevice-offline-to-online-2026-11-12/`](bench/evidence/ondevice-offline-to-online-2026-11-12/) |
 | Gemini Nano shown the whole page with the question (rejected design) | read "7 x 8 = 56" as **54** and judged it wrong — why InkTally only ever shows the device a cut-out answer box | [`bench/evidence/nano-whole-page-probe-2026-11-12/`](bench/evidence/nano-whole-page-probe-2026-11-12/) |
 | Quick mark on the sample page, repeated on the live site | **5 runs in a row: 4/6 every time** = the true score (12–27 s each); the key is drafted at temperature 0 with 1 mark per question unless the paper shows marks | [`repeatability.mjs`](web/e2e/repeatability.mjs), [results](bench/evidence/repeatability-2026-11-14/) |
-| Saving an assignment from the teacher's own marking scheme | typed scheme **3/3** saved, photographed scheme **2/2** saved | same script and results folder |
+| Saving an assignment from the teacher's own marking scheme | photographed scheme **2/2** saved; typed scheme **3/3** saved (a first typed run failed 0/2 because the test script typed into reCAPTCHA's hidden text box; fixed and re-run) | same script and results folder |
 
 Benchmark scripts live in [`bench/`](bench/) (`node bench/cloud.mjs <model>`; every run is saved to its own file, and sections that did not run are reported as "not run").
 
