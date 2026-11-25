@@ -7,7 +7,7 @@ import { fillTemplate } from './config';
 import { authorGenerate, blobToPart, config } from './models';
 import { recordInference } from './telemetry';
 import { workingSteps } from '../marking/normalize';
-import { alignToPrinted, printedLabels, printedLabelsNote } from './printedLabels';
+import { alignToPrinted, printedLabels, printedLabelsNote, pinCalculations, printedSections } from './printedLabels';
 
 const QUESTION_TYPES = ['objective', 'numeric', 'short', 'points'] as const;
 
@@ -95,7 +95,7 @@ const PUPIL_PAGE_NOTE = "IMPORTANT: this photo shows a student's exercise page �
 export const SUBPARTS_NOTE = 'Treat every sub-part that earns its own marks as its own question: number them 1, 2, 3 and so on in order in "q", and always put the label printed on the paper in "label", for every question (for example "1", "6(a)", "6(b)(ii)", "9").';
 
 /** Marks for working on calculations (WAEC-style partial credit). Same text on Android. */
-export const METHOD_MARKS_NOTE = 'Method marks: only when the question paper or the teacher’s scheme itself gives a calculation more than 1 mark, list what earns marks for working in "methodPoints" (for example "uses speed = distance ÷ time" or "finds the profit, 9,000"), one item per mark, never the final answer itself, and put only the final answer in "acceptNumbers". Never give a question more marks than the paper or scheme shows. When the teacher’s scheme gives method marks, copy them exactly.';
+export const METHOD_MARKS_NOTE = 'Method marks: only when the question paper or the teacher’s scheme itself gives a calculation more than 1 mark, list what earns marks for working in "methodPoints" (for example "uses speed = distance ÷ time" or "finds the profit, 9,000"), one item per mark, never the final answer itself, and put only the final answer in "acceptNumbers". Never give a question more marks than the paper or scheme shows. When the teacher’s scheme gives method marks, copy them exactly. A calculation whose answer is a number is always type "numeric" (its working in "methodPoints"), never "points".';
 
 /** Asks the model to name the subject and level so an untouched form never prints the wrong ones. Same text on Android. */
 export const DETECT_LABELS_NOTE = 'Also return "questionCount": how many numbered questions the paper or scheme has in total. Also return "subject" and "level": the subject and the class or level this paper is for, as short labels '
@@ -180,10 +180,11 @@ export async function draftScheme(source: SchemeSource, subject: string, level: 
   const first = await draftOnce(parts);
   let { questions, missing } = shape(first.questions, first.count);
   // A long paper sometimes comes back with questions left out: ask once more, naming them, and keep what was found.
+  // With printed labels only the missing ones are asked for: half the reply, so it finishes even when the cloud is slow.
   if (missing.length) {
     try {
       const named = printed.length ? missing.map((n) => `${n} ("${printed[n - 1]}")`) : missing;
-      const retry = await draftOnce([...parts, `IMPORTANT: your previous answer left out question(s) ${named.join(', ')}. Return the complete list, including every question.`]);
+      const retry = await draftOnce([...parts, missingRequest(named, printed.length > 0)]);
       const again = shape(retry.questions, Math.max(first.count, retry.count));
       const byNumber = new Map(questions.map((q) => [q.q, q]));
       for (const q of again.questions) if (!byNumber.has(q.q)) byNumber.set(q.q, q);
@@ -193,6 +194,7 @@ export async function draftScheme(source: SchemeSource, subject: string, level: 
         : missingQuestions(questions.map((q) => q.q), Math.max(first.count, retry.count));
     } catch { /* keep the first draft; the teacher is told what is missing */ }
   }
+  if (printed.length) questions = pinCalculations(questions, printedSections(source.guideText ?? source.text ?? ''));
   return { ...resolveLabels(subject, level, first.labels), questions: printed.length ? questions : inferLabels(questions), missing, ...(printed.length && missing.length ? { missingShown: missing.map((n) => printed[n - 1]) } : {}) };
 }
 
@@ -205,6 +207,11 @@ async function draftOnce(parts: (string | Part)[]): Promise<{ questions: Questio
   const questions = parsed.data.questions.map(toQuestion).filter((q): q is Question => q !== null).sort((a, b) => a.q - b.q);
   return { questions, count: parsed.data.questionCount ?? 0, labels: parsed.data };
 }
+
+/** The second request when a draft left questions out (same wording on Android). Printed labels let the reply be just those. */
+export const missingRequest = (named: ReadonlyArray<number | string>, printed: boolean): string => printed
+  ? `IMPORTANT: your previous answer left out question(s) ${named.join(', ')}. Return only those question(s) now, each with its printed label in "label", following every rule above.`
+  : `IMPORTANT: your previous answer left out question(s) ${named.join(', ')}. Return the complete list, including every question.`;
 
 /** The sentence shown when questions are still missing after the second try. */
 export const missingNotice = (missing: ReadonlyArray<number | string>): string =>

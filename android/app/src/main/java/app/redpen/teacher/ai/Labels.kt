@@ -10,7 +10,7 @@ const val DETECT_LABELS_NOTE = "Also return \"questionCount\": how many numbered
 const val SUBPARTS_NOTE = "Treat every sub-part that earns its own marks as its own question: number them 1, 2, 3 and so on in order in \"q\", and always put the label printed on the paper in \"label\", for every question (for example \"1\", \"6(a)\", \"6(b)(ii)\", \"9\")."
 
 /** Marks for working on calculations (WAEC-style partial credit). Same text as web. */
-const val METHOD_MARKS_NOTE = "Method marks: only when the question paper or the teacher’s scheme itself gives a calculation more than 1 mark, list what earns marks for working in \"methodPoints\" (for example \"uses speed = distance ÷ time\" or \"finds the profit, 9,000\"), one item per mark, never the final answer itself, and put only the final answer in \"acceptNumbers\". Never give a question more marks than the paper or scheme shows. When the teacher’s scheme gives method marks, copy them exactly."
+const val METHOD_MARKS_NOTE = "Method marks: only when the question paper or the teacher’s scheme itself gives a calculation more than 1 mark, list what earns marks for working in \"methodPoints\" (for example \"uses speed = distance ÷ time\" or \"finds the profit, 9,000\"), one item per mark, never the final answer itself, and put only the final answer in \"acceptNumbers\". Never give a question more marks than the paper or scheme shows. When the teacher’s scheme gives method marks, copy them exactly. A calculation whose answer is a number is always type \"numeric\" (its working in \"methodPoints\"), never \"points\"."
 
 /** Question numbers a draft left out: gaps in 1..N, where N is the highest number found or the count the model saw (same as web). */
 fun missingQuestions(found: List<Int>, declaredCount: Int = 0): List<Int> {
@@ -20,6 +20,11 @@ fun missingQuestions(found: List<Int>, declaredCount: Int = 0): List<Int> {
 }
 
 /** The sentence shown when questions are still missing after the second try (same as web). */
+/** The second request when a draft left questions out (same wording as web scheme.ts). Printed labels let the reply be just those. */
+fun missingRequest(named: List<String>, printed: Boolean): String = if (printed)
+    "IMPORTANT: your previous answer left out question(s) ${named.joinToString(", ")}. Return only those question(s) now, each with its printed label in \"label\", following every rule above."
+else "IMPORTANT: your previous answer left out question(s) ${named.joinToString(", ")}. Return the complete list, including every question."
+
 fun missingNotice(missing: List<Any>) =
     "InkTally could not find question${if (missing.size == 1) "" else "s"} ${missing.joinToString(", ")}. Check the paper, and add ${if (missing.size == 1) "it" else "them"} with \"+ Add question\"."
 

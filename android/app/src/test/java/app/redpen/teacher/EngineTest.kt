@@ -164,6 +164,25 @@ class EngineTest {
         assertEquals(1280 + app.redpen.teacher.scan.Stitch.GAP, plan.boxes[1].y)
         assertEquals(app.redpen.teacher.scan.Stitch.MAX_WIDTH, app.redpen.teacher.scan.Stitch.layout(listOf(3000 to 4000)).width)
     }
+    // Same as web printedLabels.test.ts: a fallback model drafted the WAEC pressure question as a theory answer (25 Nov).
+    @Test fun theGuideDecidesWhichQuestionsAreCalculations() {
+        val guide = listOf(
+            "6(a) Define acceleration. 1 mark: the rate of change of velocity.",
+            "6(b)(i) A car starts from rest and reaches 20 m/s in 5 s. Calculate its acceleration. Answer 4 m/s². 2 marks: method (1 mark) uses a = (v − u) ÷ t; answer (1 mark).",
+            "9. Calculate the pressure at a depth of 10 m in water. Answer 1.0 × 10^5 Pa (accept 100 000 Pa). 2 marks: method (1 mark) uses P = hρg; answer (1 mark).",
+            "10. A 2 kg mass is lifted through a height of 5 m. Calculate the potential energy gained. Answer 100 J.",
+        ).joinToString("\n")
+        val sections = app.redpen.teacher.ai.printedSections(guide)
+        assertEquals(listOf(100000.0), app.redpen.teacher.ai.statedAnswers(sections["9"]!!))
+        assertEquals(listOf(4.0), app.redpen.teacher.ai.statedAnswers(sections["6(b)(i)"]!!))
+        assertEquals(emptyList<Double>(), app.redpen.teacher.ai.statedAnswers(sections["6(a)"]!!))
+        assertEquals(emptyList<Double>(), app.redpen.teacher.ai.statedAnswers("Answer any two of the following reasons."))
+        val drafted = app.redpen.teacher.domain.Question.Points(q = 13, prompt = "Calculate the pressure", max = 2, points = listOf("uses P = hρg", "answer 1.0 × 10^5 Pa"), label = "9")
+        assertEquals(app.redpen.teacher.domain.Question.Numeric(13, "Calculate the pressure", 2, listOf(100000.0), methodPoints = listOf("uses P = hρg"), label = "9"),
+            app.redpen.teacher.ai.pinCalculations(listOf(drafted), sections).single())
+        val theory = app.redpen.teacher.domain.Question.Points(q = 6, prompt = "Define", max = 1, points = listOf("the rate of change of velocity"), label = "6(a)")
+        assertEquals(listOf(theory), app.redpen.teacher.ai.pinCalculations(listOf(theory), sections))
+    }
     @Test fun printedLabelsFromTypedGuide() {
         assertEquals(listOf("1", "2(a)", "2(b)(i)", "2(b)(ii)", "3"),
             app.redpen.teacher.ai.printedLabels(listOf("1. Define work.", "2. (a) State Newton's first law.", "(b) A 2 kg mass...", "(i) Find the force.", "(ii) Find the work done.", "3. B").joinToString("\n")))

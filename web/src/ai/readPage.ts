@@ -22,7 +22,7 @@ const PAGE_PROMPT = 'This is a photo of a student\'s handwritten exercise-book p
   + 'everything written after it up to the next label, character by character (for example "7a) I ∝ V if the temperature is constant"). '
   + 'If nothing is written after a label before the next label, text is just the label. Put the label alone in label. '
   + 'Keep every mistake — do NOT calculate, '
-  + 'solve or correct anything. Write a fraction set out with one number above another as (top)/(bottom), for example 50/0.4. '
+  + 'solve or correct anything. Write a fraction set out with one number above another as (top)/(bottom), for example 50/0.4. Copy scientific and mathematical signs as the sign itself, for example ∝ (is proportional to), λ, ρ, Ω, √, ² and ⁻¹. '
   + 'Ignore the student\'s name, the date and any teacher marks. Only include these questions, and put the number on the left of '
   + 'the student\'s label into q: {numbers}.';
 

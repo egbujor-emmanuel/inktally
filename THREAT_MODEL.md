@@ -18,6 +18,7 @@ A wrong mark costs a student. The threats here are mostly the AI itself: a model
 | A script over several pages is one student, with answers that continue onto the next page | Script 4 runs over two exercise-book pages | `stitch.test.ts` › joining the pages of one student's script | `EngineTest.scriptPagesStackAtOneWidth` |
 | An answer that adds "not"/"no" is flagged, not awarded | "It is not the rate of change of velocity" is close in letters, opposite in meaning | `engine.test.ts` › definitions with filler words | `EngineTest.definitionWithFillerWords` |
 | The answer key follows the teacher's printed labels | A model numbering 7(a) as "9" sent answers to the wrong question (WAEC dry run, 23 Nov) | `printedLabels.test.ts` › the WAEC physics guide; a short draft keeps matching labels and names the rest | `EngineTest.printedLabelsFromTypedGuide` |
+| A question the guide calculates and answers with a number is marked as a number, whichever model drafted it | A fallback model drafted the WAEC pressure question as a theory answer, so method marks were lost (25 Nov) | `printedLabels.test.ts` › the guide decides which questions are calculations | `EngineTest.theGuideDecidesWhichQuestionsAreCalculations` |
 | A draft that misses questions says which ones | A silent gap would mark a script out of the wrong total | `scheme.test.ts` › drafts that leave questions out | (same `missingQuestions`) |
 
 ## 2. The hybrid safety net (device reads, cloud checks)

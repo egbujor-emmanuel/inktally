@@ -23,7 +23,7 @@
     },
     "prompt_read_crop": {
       "defaultValue": {
-        "value": "Transcribe exactly what is handwritten in this image, character by character. {hint} Do NOT calculate, solve or correct anything; if the writing is wrong, copy it wrong. Write a fraction set out with one number above another as (top)/(bottom), for example 50/0.4. If nothing is written, return an empty string."
+        "value": "Transcribe exactly what is handwritten in this image, character by character. {hint} Do NOT calculate, solve or correct anything; if the writing is wrong, copy it wrong. Write a fraction set out with one number above another as (top)/(bottom), for example 50/0.4. Copy scientific and mathematical signs as the sign itself, for example ∝ (is proportional to), λ, ρ, Ω, √, ² and ⁻¹. If nothing is written, return an empty string."
       },
       "description": "Prompt template (shared by web and Android)",
       "valueType": "STRING"
@@ -93,7 +93,7 @@
     },
     "prompt_read_batch": {
       "defaultValue": {
-        "value": "Each image below is ONE answer box cut from a student's answer sheet, labelled with its question number and the kind of answer it holds. Transcribe exactly what is handwritten in each image, character by character. Do NOT calculate, solve or correct anything; if the writing is wrong, copy it wrong. Write a fraction set out with one number above another as (top)/(bottom), for example 50/0.4. Read each image on its own — never use one answer to read another. If an image is blank, return an empty string for it. Return one entry per labelled answer."
+        "value": "Each image below is ONE answer box cut from a student's answer sheet, labelled with its question number and the kind of answer it holds. Transcribe exactly what is handwritten in each image, character by character. Do NOT calculate, solve or correct anything; if the writing is wrong, copy it wrong. Write a fraction set out with one number above another as (top)/(bottom), for example 50/0.4. Copy scientific and mathematical signs as the sign itself, for example ∝ (is proportional to), λ, ρ, Ω, √, ² and ⁻¹. Read each image on its own — never use one answer to read another. If an image is blank, return an empty string for it. Return one entry per labelled answer."
       },
       "description": "Prompt template (shared by web and Android)",
       "valueType": "STRING"

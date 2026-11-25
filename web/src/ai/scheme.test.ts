@@ -66,6 +66,16 @@ describe('drafts that leave questions out', async () => {
     expect(missingQuestions([1, 2, 3, 4, 5], 6)).toEqual([6]);
     expect(missingQuestions([1, 2, 3], 0)).toEqual([]);
   });
+  test('with printed labels the second request asks only for the missing ones, which merge back by label', async () => {
+    const { missingRequest } = await import('./scheme');
+    const { alignToPrinted } = await import('./printedLabels');
+    expect(missingRequest(['7 ("6(b)(i)")', '8 ("6(b)(ii)")'], true)).toMatch(/Return only those question\(s\) now/);
+    expect(missingRequest([6, 7], false)).toMatch(/Return the complete list/);
+    const labels = ['1', '2', '6(a)', '6(b)(i)'];
+    const q = (label: string) => ({ q: 99, type: 'objective' as const, prompt: '', max: 1, correct: ['A'], label });
+    const reply = alignToPrinted([q('6(b)(i)')], labels); // the retry returned only the missing question
+    expect(reply.questions.map((x) => [x.q, x.label])).toEqual([[4, '6(b)(i)']]);
+  });
   test('the teacher is told exactly which questions to add', () => {
     expect(missingNotice([6, 7])).toBe('InkTally could not find questions 6, 7. Check the paper, and add them with "+ Add question".');
   });
