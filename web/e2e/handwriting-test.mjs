@@ -58,11 +58,11 @@ for (const { name, files } of scripts.filter((s) => !ONLY || ONLY.includes(s.nam
   await page.getByLabel('Student name or number').fill(name);
   if (files.length > 1) await page.getByRole('checkbox', { name: /pages of one student/i }).check();
   await page.locator('input[aria-label^="Choose photo"]').setInputFiles(files.map((f) => join(DIR, f)));
-  const done = await page.getByText(/^Total:/).waitFor({ timeout: 300_000 }).then(() => true, () => false);
+  const done = await page.getByText(/^Total:/).waitFor({ timeout: Number(process.env.MARK_TIMEOUT_MS ?? 300_000) }).then(() => true, () => false);
   if (!done) {
     await page.screenshot({ path: `${OUT}/stuck-${n}.png`, fullPage: true });
     console.log(`
-${name}: NO RESULT after 300 s. On screen: ${(await page.locator('main').innerText()).replace(/\s+/g, ' ').slice(0, 600)}`);
+${name}: NO RESULT after ${Math.round(Number(process.env.MARK_TIMEOUT_MS ?? 300_000) / 1000)} s. On screen: ${(await page.locator('main').innerText()).replace(/\s+/g, ' ').slice(0, 600)}`);
     results.push({ name, stuck: true, marks: [], diffs: [] });
     continue;
   }

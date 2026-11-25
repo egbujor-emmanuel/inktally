@@ -8,6 +8,7 @@ import { authorGenerate, blobToPart, config } from './models';
 import { recordInference } from './telemetry';
 import { workingSteps } from '../marking/normalize';
 import { alignToPrinted, printedLabels, printedLabelsNote, pinCalculations, printedSections } from './printedLabels';
+import { TEACHER_MATERIAL } from './privacy';
 
 const QUESTION_TYPES = ['objective', 'numeric', 'short', 'points'] as const;
 
@@ -156,6 +157,7 @@ export async function draftScheme(source: SchemeSource, subject: string, level: 
     subject: subject.trim() || 'the subject shown on the paper', level: level.trim() || 'the class or level shown on the paper',
   }), DETECT_LABELS_NOTE, SUBPARTS_NOTE, METHOD_MARKS_NOTE];
   if (source.isPupilPage) parts.push(PUPIL_PAGE_NOTE);
+  else parts.push(TEACHER_MATERIAL); // the only kind of request Private mode lets reach the cloud
   if (hasGuide(source)) parts.push(config('prompt_scheme_from_guide'));
   if (hasPaper(source)) {
     parts.push('QUESTION PAPER:');

@@ -89,6 +89,8 @@ object Repo {
     fun friendly(e: Throwable): String {
         val raw = "${e::class.simpleName} ${e.message}"
         return when {
+            e is app.redpen.teacher.ai.PrivateModeException || "Private mode is on" in raw ->
+                "private mode is on, so pupils’ work stays on this phone. This needs Gemini Nano on this phone (see the status strip), or turn Private mode off in School details."
             Regex("app.?check|attestation", RegexOption.IGNORE_CASE).containsMatchIn(raw) -> "this device could not be verified by App Check. Reopen the app and try again. ($raw)"
             Regex("PERMISSION_DENIED|permission", RegexOption.IGNORE_CASE).containsMatchIn(raw) -> "the server refused it (permission denied). ($raw)"
             Regex("quota|RESOURCE_EXHAUSTED|429", RegexOption.IGNORE_CASE).containsMatchIn(raw) -> "the free cloud quota is used up for the moment. Try again in a minute."

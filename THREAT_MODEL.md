@@ -45,6 +45,16 @@ A wrong mark costs a student. The threats here are mostly the AI itself: a model
 | A batch reply that leaves an answer out falls back to one-by-one reads | `routing.test.ts` › a missing answer in the batch reply throws | — |
 | The app opens and queues marking with no connection | live: [`offline-coldstart.mjs`](web/e2e/offline-coldstart.mjs) ([result](bench/evidence/web-offline-coldstart-2026-11-14/)) | Maestro offline flow ([android/e2e/](android/e2e/)) |
 
+## 3b. Private mode: pupils' work never reaches a cloud AI
+
+| Rule | Web test | Android test |
+|---|---|---|
+| With Private mode on, every reading and marking-point check asks for on-device inference only | `privacyRouting.test.ts` › reading and marking-point checks ask for on-device inference only | `PrivacyTest.aPupilReadRunsOnlyWhenGeminiNanoIsReady…` |
+| The network refuses any cloud AI request carrying pupils' work, before it is sent, even if the SDK falls back to the cloud by itself | `privacy.test.ts` › the guard refuses before anything is sent; every Gemini endpoint is covered | `PrivacyTest.theCloudCheckAndAnyUntaggedCloudCallAreRefused` (checked before any request is built) |
+| The cloud check makes no request in Private mode | `privacyRouting.test.ts` › the cloud check does nothing: no request is made | (`CloudCheckRun.run` returns before reading) |
+| Only a key drafted from the teacher's own material may reach the cloud; a key drafted from a pupil's page may not | `privacyRouting.test.ts` › a key drafted from the teacher's own guide is tagged; a key drafted from a pupil's page never is | `PrivacyTest.theTeachersOwnGuideMayStillDraftAKey` |
+| Photos never leave the device, in any mode | photos and answer boxes are stored only in IndexedDB (`data/store.ts` `saveCrop`), never in Firestore | stored only in app files (`Repo.saveCrop`) |
+
 ## 4. Data and platform security
 
 | Rule | How it is enforced | Check |

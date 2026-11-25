@@ -1,6 +1,10 @@
 package app.redpen.teacher.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -53,6 +58,7 @@ fun SchoolScreen(onDone: () -> Unit) {
                 GhostButton("Back to my assignments", onDone, Modifier.fillMaxWidth())
             }
         }
+        item { PrivacyCard() }
         if (institution.isNotBlank() || details.isNotBlank()) item {
             Paper(borderColor = RP.Rule) {
                 Text("PREVIEW", fontSize = 11.sp, color = RP.InkSoft, fontWeight = FontWeight.SemiBold)
@@ -62,5 +68,26 @@ fun SchoolScreen(onDone: () -> Unit) {
             }
         }
         item { Spacer(Modifier.height(40.dp)) }
+    }
+}
+
+/** Same wording as the web PrivacyCard. */
+@Composable
+private fun PrivacyCard() {
+    val on by app.redpen.teacher.ai.Privacy.on.collectAsState()
+    Paper {
+        Row(Modifier.fillMaxWidth().toggleable(on, role = androidx.compose.ui.semantics.Role.Checkbox) { app.redpen.teacher.ai.Privacy.set(it) },
+            verticalAlignment = Alignment.Top) {
+            androidx.compose.material3.Checkbox(on, onCheckedChange = null)
+            Column(Modifier.padding(start = 8.dp)) {
+                Text("Private mode: pupils’ work stays on this device", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                Text("Every answer is read and marked here by Gemini Nano. No photo, answer or name is sent to any cloud AI, and the cloud check is off, " +
+                    "so you confirm uncertain marks yourself. The cloud is used only to draft an answer key from your own question paper or marking guide. " +
+                    "Needs Gemini Nano on this device.", color = RP.InkSoft, fontSize = 13.sp)
+            }
+        }
+        Text("With Private mode off, answers also go to Gemini in the cloud for a second reading, which is what lets InkTally mark an answer “Verified”: " +
+            "a printed InkTally sheet sends only the cut-out answer boxes, an exercise-book page sends the page. Names you type are never sent to any AI.",
+            color = RP.InkSoft, fontSize = 13.sp)
     }
 }

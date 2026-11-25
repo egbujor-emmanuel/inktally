@@ -3,6 +3,10 @@ import { PHOTO_KEY, deleteCrop, finishQueued, loadCrop, type Assignment, type Su
 import { markSubmission } from '../marking/markSubmission';
 import { useOnline } from './useStatus';
 import { canReadOffline } from '../ai/models';
+import { isPrivate } from '../ai/privacy';
+
+/** Online, or Gemini Nano ready on this device; in Private mode only the on-device reader may mark. */
+const canMarkNow = (online: boolean): boolean => (isPrivate() ? canReadOffline() : online || canReadOffline());
 
 export interface QueueState {
   /** Students saved offline and still waiting to be marked. */
@@ -44,7 +48,7 @@ export function useMarkingQueue(assignment: Assignment | null | undefined, submi
 
   useEffect(() => {
     // Online, or offline with Gemini Nano ready on this device (then the queue marks on-device).
-    if (!assignment || (!isOnline && !canReadOffline()) || running.current || !waiting.length) return;
+    if (!assignment || !canMarkNow(isOnline) || running.current || !waiting.length) return;
     running.current = true;
     const done = new Set<string>();
     let failed = false;
@@ -53,7 +57,7 @@ export function useMarkingQueue(assignment: Assignment | null | undefined, submi
       try {
         for (;;) {
           const a = assignmentRef.current;
-          if (!a || (!navigator.onLine && !canReadOffline())) break;
+          if (!a || !canMarkNow(navigator.onLine)) break;
           // Re-read the newest list every time: students finished by us (or another device) drop out.
           const next = latest.current.find((s) => s.queued && !done.has(s.id) && !finishedHere.has(s.id));
           if (!next?.queued) break;

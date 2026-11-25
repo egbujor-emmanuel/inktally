@@ -12,6 +12,7 @@ import { canReadOffline } from '../../ai/models';
 import { markSubmission, type CaptureMode } from '../../marking/markSubmission';
 import type { QueueState } from '../../hooks/useMarkingQueue';
 import { Card, Field, GhostButton, PenButton, PhotoButtons, Pill } from '../../ui/Kit';
+import { isPrivate } from '../../ai/privacy';
 
 type Props = { assignment: Assignment; submissions: Submission[]; queue: QueueState };
 
@@ -86,7 +87,7 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
     const label = pupil.trim() || `Student ${submissions.length + 1}`;
     try {
       // No connection and no on-device AI: keep the photo on this device and mark it when the connection is back.
-      if (!navigator.onLine && !canReadOffline()) {
+      if (isPrivate() ? !canReadOffline() : !navigator.onLine && !canReadOffline()) {
         const submissionId = newSubmissionId(assignment.id);
         await saveCrop(submissionId, PHOTO_KEY, photo); // photo first, so the queue never sees a record without it
         await createSubmission(assignment.id, label, [], { mode, page: pageIndex }, submissionId);
@@ -158,8 +159,9 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
         <Card flag>
           <p className="font-display text-xl font-bold" role="status">Saved for marking: {phase.pupil}</p>
           <p className="text-sm text-ink-soft">
-            You’re offline and this device can’t read handwriting without a connection. The photo stays on this device and InkTally marks it
-            automatically as soon as you’re back online. Keep photographing the rest of the class.
+            {isPrivate()
+              ? 'Private mode is on and Gemini Nano is not ready on this device yet. The photo stays on this device and InkTally marks it here as soon as Nano is ready (see the status bar). Nothing is sent to the cloud.'
+              : 'You’re offline and this device can’t read handwriting without a connection. The photo stays on this device and InkTally marks it automatically as soon as you’re back online. Keep photographing the rest of the class.'}
           </p>
         </Card>
       )}

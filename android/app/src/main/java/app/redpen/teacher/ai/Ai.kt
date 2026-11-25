@@ -94,7 +94,7 @@ object Ai {
     private const val MAX_MISTAKES_SENT = 25
     private val TRANSIENT = Regex("high demand|overloaded|unavailable|deadline|timeout|\\b50[0-4]\\b|network|BUSY", RegexOption.IGNORE_CASE)
 
-    private fun mode(force: InferenceMode?): InferenceMode = force ?: when (cfg("read_mode")) {
+    private fun mode(force: InferenceMode?): InferenceMode = if (Privacy.isPrivate && force != InferenceMode.ONLY_IN_CLOUD) InferenceMode.ONLY_ON_DEVICE else force ?: when (cfg("read_mode")) {
         "prefer_in_cloud" -> InferenceMode.PREFER_IN_CLOUD
         "only_in_cloud" -> InferenceMode.ONLY_IN_CLOUD
         "only_on_device" -> InferenceMode.ONLY_ON_DEVICE
@@ -148,7 +148,14 @@ object Ai {
     fun activeCloudModel(primary: String = cfg("cloud_read_model")): String = routing.activeCloudModel(primary)
 
     /** [cloudModel] is chosen per request and passed in, so errors are always attributed to the model that failed. */
-    private fun model(schema: Schema, force: InferenceMode?, cloudModel: String) = Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel(
+    private fun model(schema: Schema, force: InferenceMode?, cloudModel: String): com.google.firebase.ai.GenerativeModel {
+        // Private mode: a pupil call goes nowhere unless Gemini Nano is ready on this phone (so the SDK cannot fall back
+        // to the cloud), and a cloud-only call (the cloud check) is refused.
+        Privacy.check(cloud = mode(force) == InferenceMode.ONLY_IN_CLOUD, deviceReady = app.redpen.teacher.DeviceModel.state.value == app.redpen.teacher.DeviceModel.State.Ready)
+        return pupilModel(schema, force, cloudModel)
+    }
+
+    private fun pupilModel(schema: Schema, force: InferenceMode?, cloudModel: String) = Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel(
         modelName = cloudModel,
         generationConfig = generationConfig {
             responseMimeType = "application/json"; responseSchema = schema; temperature = 0f
@@ -198,6 +205,8 @@ object Ai {
      * (same as web authorGenerate). Non-transient failures (App Check, permission, bad request) are not retried.
      */
     private suspend fun authorGenerate(schema: Schema, request: Content): com.google.firebase.ai.type.GenerateContentResponse {
+        // Private mode: only a request built from the teacher's own material may reach the cloud.
+        Privacy.check(cloud = true, deviceReady = false, requestText = request.parts.filterIsInstance<com.google.firebase.ai.type.TextPart>().joinToString("\n") { it.text })
         // Every allowed cloud model in turn; when all are overloaded, pause and go round again. One overall budget, so the
         // teacher gets an answer or a clear message, never an endless wait (same as web).
         val deadline = System.currentTimeMillis() + AUTHOR_BUDGET_MS
@@ -254,7 +263,7 @@ object Ai {
     private fun asPromptData(text: String) = text.replace(Regex("[<>]"), " ").take(2000)
 
     /** True when reads will go to the cloud (so they can be batched), honouring read_mode like web cloudWillRead(). */
-    fun cloudWillRead(deviceReady: Boolean): Boolean = when (cfg("read_mode")) {
+    fun cloudWillRead(deviceReady: Boolean): Boolean = if (Privacy.isPrivate) false else when (cfg("read_mode")) {
         "only_on_device" -> false
         "only_in_cloud", "prefer_in_cloud" -> true
         else -> !deviceReady
@@ -423,7 +432,7 @@ object Ai {
             text(DETECT_LABELS_NOTE)
             text(SUBPARTS_NOTE)
             text(METHOD_MARKS_NOTE)
-            if (isStudentPage) text(STUDENT_PAGE_NOTE)
+            if (isStudentPage) text(STUDENT_PAGE_NOTE) else text(Privacy.TEACHER_MATERIAL) // the only kind of request Private mode lets reach the cloud
             if (guide.isPresent) text(cfg("prompt_scheme_from_guide"))
             if (hasPaper) {
                 text("QUESTION PAPER:")

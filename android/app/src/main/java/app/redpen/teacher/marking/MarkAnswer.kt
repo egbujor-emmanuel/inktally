@@ -13,6 +13,7 @@ import com.google.firebase.ai.type.PublicPreviewAPI
 /** AI reads (hybrid) -> code marks. Mirrors web/src/marking/markAnswer.ts. */
 @OptIn(PublicPreviewAPI::class)
 object Marker {
+    private const val PAGE_PRIVATE_WARNING = "Read on this device from the whole page (Private mode: nothing goes to the cloud). On-device page reading can auto-correct mistakes, so check this mark."
     private const val PAGE_ON_DEVICE_WARNING = "Read offline from the whole page — on-device page reading can auto-correct mistakes, so this waits for the cloud check."
 
     /** [learned]: what the cloud check taught the device about this class's handwriting (never used on cloud checks). */
@@ -69,7 +70,7 @@ object Marker {
         val page = Ai.readPage(photo, questions, force)
         return questions.map { q ->
             val m = markFromRead(q, page.answers[q.q] ?: "", page.source, force)
-            if (page.source == ReadSource.ON_DEVICE && m.status != MarkStatus.FLAGGED) m.copy(status = MarkStatus.PROVISIONAL, reasons = m.reasons + PAGE_ON_DEVICE_WARNING) else m
+            if (page.source == ReadSource.ON_DEVICE && m.status != MarkStatus.FLAGGED) m.copy(status = MarkStatus.PROVISIONAL, reasons = m.reasons + if (app.redpen.teacher.ai.Privacy.isPrivate) PAGE_PRIVATE_WARNING else PAGE_ON_DEVICE_WARNING) else m
         }
     }
 

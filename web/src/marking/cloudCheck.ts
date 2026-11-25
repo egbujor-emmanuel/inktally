@@ -8,6 +8,7 @@ import { awaitsCheck, verifyMark, verifyMarksBatch, verifyPage } from './markAns
 import { isCrossChecked } from './statusLabel';
 import { learnFromCheck, type ReadingHint } from './learning';
 import { addReadingHints } from '../data/store';
+import { isPrivate } from '../ai/privacy';
 
 export const needsCheck = awaitsCheck;
 
@@ -73,6 +74,8 @@ async function checkOne(assignment: Assignment, s: Submission): Promise<Mark[]> 
 
 /** Checks every student with marks that need it. One failing student never stops the rest. */
 export async function cloudCheck(assignment: Assignment, submissions: Submission[], hooks: CheckHooks): Promise<CheckSummary> {
+  // Private mode: pupils' work never goes to the cloud, so there is no second reading; the teacher checks instead.
+  if (isPrivate()) return { checked: 0, confirmed: 0, needTeacher: 0 };
   const targets = submissions.filter((s) => !s.queued && s.marks.some(needsCheck));
   const total = targets.reduce((n, s) => n + s.marks.filter(needsCheck).length, 0);
   const summary: CheckSummary = { checked: 0, confirmed: 0, needTeacher: 0 };

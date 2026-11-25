@@ -53,6 +53,8 @@ object CloudCheckRun {
         onProgress: (done: Int, total: Int) -> Unit = { _, _ -> },
         onError: (String) -> Unit = {},
     ): CheckSummary {
+        // Private mode: pupils' work never goes to the cloud, so there is no second reading; the teacher checks instead.
+        if (app.redpen.teacher.ai.Privacy.isPrivate) return CheckSummary()
         val targets = submissions.filter { s -> s.queued == null && s.marks.any { it.needsCheck() } }
         val total = targets.sumOf { s -> s.marks.count { it.needsCheck() } }
         var summary = CheckSummary()

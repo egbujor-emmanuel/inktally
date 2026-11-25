@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useDeviceAI, useInferenceCounts, useOnline } from '../hooks/useStatus';
+import { usePrivateMode } from '../ai/privacy';
 
 /** Same wording as the Android StatusStrip. */
 const DEVICE_COPY: Record<string, string> = {
@@ -25,6 +26,7 @@ export function StatusBar({ trailing }: { trailing?: ReactNode }) {
   const isOnline = useOnline();
   const device = useDeviceAI();
   const counts = useInferenceCounts();
+  const privateMode = usePrivateMode();
   const total = counts.on_device + counts.in_cloud;
   const ready = device.availability === 'available';
   const offlineText = ready ? 'Offline — marking on this device' : 'Offline — marked when back online';
@@ -36,6 +38,7 @@ export function StatusBar({ trailing }: { trailing?: ReactNode }) {
         <Chip dot={ready ? 'var(--color-device)' : 'var(--color-cloud)'}>
           {device.progress !== null ? `Downloading Gemini Nano… ${Math.round(device.progress * 100)}%` : DEVICE_COPY[device.availability]}
         </Chip>
+        {privateMode && <Chip dot="var(--color-device)" strong>Private: pupils’ work stays here</Chip>}
         {total > 0 && <Chip strong>{counts.on_device} on-device · {counts.in_cloud} cloud</Chip>}
         {trailing}
       </div>

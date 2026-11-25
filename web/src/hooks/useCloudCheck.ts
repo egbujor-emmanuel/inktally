@@ -3,6 +3,7 @@ import type { Assignment, Submission } from '../data/store';
 import type { Mark } from '../domain/types';
 import { cloudCheck, needsCheck, type CheckSummary } from '../marking/cloudCheck';
 import { useOnline } from './useStatus';
+import { isPrivate } from '../ai/privacy';
 
 export interface CloudCheckState {
   progress: { done: number; total: number } | null;
@@ -54,7 +55,7 @@ export function useCloudCheck(assignment: Assignment | null | undefined, submiss
   useEffect(() => { if (!isOnline) tried.current.clear(); }, [isOnline]);
 
   useEffect(() => {
-    if (!isOnline || running.current) return;
+    if (!isOnline || running.current || isPrivate()) return;
     const untried = submissions.some((s) => !s.queued && s.marks.some((m) => awaitsAutoCheck(m) && !tried.current.has(`${s.id}:${m.q}`)));
     if (untried) void run();
   }, [isOnline, submissions, run, runs]);

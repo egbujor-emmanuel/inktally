@@ -5,6 +5,7 @@ import { ai, remoteConfig } from '../firebase/app';
 import type { RemoteKey } from './config';
 import { isTransient, setModelErrorHandler, withRetry } from './retry';
 import { friendlyCloudError } from './errors';
+import { isPrivate } from './privacy';
 
 export type ReadMode = (typeof InferenceMode)[keyof typeof InferenceMode];
 const REQUEST_TIMEOUT_MS = 120_000;
@@ -114,6 +115,8 @@ export function cloudWillRead(override?: ReadMode): boolean {
 }
 
 function readMode(override?: ReadMode): ReadMode {
+  // Private mode: pupils' work is read only on this device. (A cloud request still asked for is refused by the guard.)
+  if (isPrivate() && override !== InferenceMode.ONLY_IN_CLOUD) return InferenceMode.ONLY_ON_DEVICE;
   if (override) return override;
   const fromConfig = config('read_mode') as ReadMode;
   const mode = Object.values(InferenceMode).includes(fromConfig) ? fromConfig : InferenceMode.PREFER_ON_DEVICE;

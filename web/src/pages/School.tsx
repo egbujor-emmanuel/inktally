@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PROFILE_LIMITS, saveProfile, useProfile, type Profile } from '../data/profile';
 import { friendlyCloudError } from '../ai/errors';
 import { Card, ErrorText, Field, GhostButton, PageTitle, PenButton } from '../ui/Kit';
+import { PrivacyCard } from '../components/PrivacyCard';
 
 /** Same screen as the Android SchoolScreen: institution details printed on sheets, copies, the register and Excel. */
 export function School() {
@@ -43,6 +44,7 @@ export function School() {
         <GhostButton className="w-full" onClick={() => navigate('/')}>Back to my assignments</GhostButton>
       </Card>
       <ErrorText message={error} />
+      <PrivacyCard />
       {(draft.institution || draft.details) && (
         <Card className="!border-rule">
           <p className="text-[11px] font-semibold text-ink-soft">PREVIEW</p>

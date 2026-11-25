@@ -111,7 +111,7 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
         scope.launch {
             try {
                 // No connection and no on-device AI: keep the photo on this phone and mark it when the connection is back.
-                if (!online && device != app.redpen.teacher.DeviceModel.State.Ready) {
+                if (if (app.redpen.teacher.ai.Privacy.isPrivate) device != app.redpen.teacher.DeviceModel.State.Ready else !online && device != app.redpen.teacher.DeviceModel.State.Ready) {
                     val sid = Repo.newSubmissionId(a.id)
                     withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PHOTO_KEY, photo) } // photo first
                     Repo.createSubmission(a.id, label, app.redpen.teacher.data.Queued(mode, page), sid)
@@ -282,7 +282,9 @@ fun rememberMarkingQueue(a: Assignment, submissions: List<Submission>): QueueSta
     val online by Connectivity.online.collectAsState()
     val device by DeviceModel.state.collectAsState()
     // Online, or offline with Gemini Nano ready on this phone (then the queue marks on-device).
-    val canMark = online || device == DeviceModel.State.Ready
+    val privateMode by app.redpen.teacher.ai.Privacy.on.collectAsState()
+    // Private mode: only Gemini Nano on this phone may mark the queue.
+    val canMark = if (privateMode) device == DeviceModel.State.Ready else online || device == DeviceModel.State.Ready
     var current by remember { mutableStateOf<Submission?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var tick by remember { mutableIntStateOf(0) }

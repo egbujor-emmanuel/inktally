@@ -1,6 +1,7 @@
 // Turns raw Firebase / Gemini failures into messages a teacher can act on, without hiding the cause.
 
 const RULES: ReadonlyArray<readonly [RegExp, string]> = [
+  [/PrivateModeError|Private mode is on/, 'Private mode is on, so pupils’ work stays on this device. This needs Gemini Nano on this device (see the status bar), or turn Private mode off in School details.'],
   [/app.?check|attestation|appCheck\//i, 'This browser could not be verified by App Check, so the cloud refused the request. Reload the page; if it keeps happening, tell us.'],
   [/permission|insufficient|PERMISSION_DENIED/i, 'The server refused to save this (permission denied). Reload the page and try again.'],
   [/quota|RESOURCE_EXHAUSTED|429/i, 'The free cloud quota is used up for the moment. Try again in a minute.'],

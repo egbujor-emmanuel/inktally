@@ -4,11 +4,11 @@
     {
       "id": "web-unit-tests",
       "check": "webUnitTests",
-      "value": "159",
+      "value": "168",
       "shows": [
-        "159"
+        "168"
       ],
-      "text": "**159 unit tests pass**",
+      "text": "**168 unit tests pass**",
       "statedIn": [
         "README.md"
       ],
@@ -21,11 +21,11 @@
     {
       "id": "judges-unit-tests",
       "check": "webUnitTests",
-      "value": "159",
+      "value": "168",
       "shows": [
-        "159"
+        "168"
       ],
-      "text": "Lint, 159 unit tests",
+      "text": "Lint, 168 unit tests",
       "statedIn": [
         "JUDGES.md"
       ],

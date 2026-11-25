@@ -30,6 +30,7 @@ class RedpenApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Firebase.initialize(this)
+        app.redpen.teacher.ai.Privacy.init(this)
         // Sideloaded test builds use the App Check debug provider with a pre-registered token
         // (R.string.firebase_app_check_debug_token, injected from CI). Store builds use Play Integrity.
         Firebase.appCheck.installAppCheckProviderFactory(

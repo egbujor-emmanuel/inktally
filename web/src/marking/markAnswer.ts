@@ -12,6 +12,7 @@ import { parseNumericAnswer, textSimilarity, workingSteps } from './normalize';
 import { contradictionReason, workingContradictsKey } from './working';
 import { batchingEnabled } from '../ai/batch';
 import { isHeld } from './learning';
+import { isPrivate } from '../ai/privacy';
 
 /**
  * Marking-point checks: one request for all of a question's points when the answer was read in the cloud (fast, and
@@ -90,6 +91,7 @@ export async function markAnswer(question: Question, crop: Blob, mode?: ReadMode
   return markFromRead(question, text, source, mode);
 }
 
+const PAGE_PRIVATE_WARNING = 'Read on this device from the whole page (Private mode: nothing goes to the cloud). On-device page reading can auto-correct mistakes, so check this mark.';
 const PAGE_ON_DEVICE_WARNING = 'Read offline from the whole page — on-device page reading can auto-correct mistakes, so this waits for the cloud check.';
 
 /** Exercise-book mode: one page read, then code marks each question. On-device page reads are never trusted as final. */
@@ -99,7 +101,7 @@ export async function markPage(questions: Question[], photo: Blob, mode?: ReadMo
   for (const question of questions) {
     const mark = await markFromRead(question, answers.get(question.q) ?? '', source, mode);
     marks.push(source === 'on_device' && mark.status !== 'flagged'
-      ? { ...mark, status: 'provisional', reasons: [...mark.reasons, PAGE_ON_DEVICE_WARNING] }
+      ? { ...mark, status: 'provisional', reasons: [...mark.reasons, isPrivate() ? PAGE_PRIVATE_WARNING : PAGE_ON_DEVICE_WARNING] }
       : mark);
   }
   return marks;
