@@ -198,6 +198,24 @@
           "sha256": "fbb230e8d45007b5a9e26513fa67b0b0add3aea9b3f403065ec7a22a399056ae"
         }
       ]
+    },
+    {
+      "id": "private-mode-live",
+      "check": "privacyLive",
+      "value": "5/5 checks, 0 pupil requests sent",
+      "shows": [
+        "5 / 5 checks, 0 pupil requests sent"
+      ],
+      "text": "**5 / 5 checks, 0 pupil requests sent**",
+      "statedIn": [
+        "README.md"
+      ],
+      "sources": [
+        {
+          "path": "bench/evidence/privacy-check-2026-11-26/privacy-check.json",
+          "sha256": "cf869461e91718ee88e89e52ae533c915a2d3decba6ea835a42746c39f41427b"
+        }
+      ]
     }
   ]
 }

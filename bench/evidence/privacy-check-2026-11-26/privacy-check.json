@@ -1,0 +1,38 @@
+{
+  "at": "2026-11-25T23:28:58.487Z",
+  "site": "https://redpen-hybrid.web.app",
+  "steps": [
+    {
+      "name": "Private mode switched on in School details",
+      "ok": true,
+      "detail": "status bar shows \"Private: pupils’ work stays here\""
+    },
+    {
+      "name": "a printed sheet photo is saved for on-device marking, not read in the cloud",
+      "ok": true,
+      "detail": "shown: \"Saved for marking … Nothing is sent to the cloud.\""
+    },
+    {
+      "name": "Quick mark refuses to send a pupil’s page to the cloud to draft a key",
+      "ok": true,
+      "detail": "Private mode is on, so pupils’ work stays on this device. This needs Gemini Nano on this device (see the status bar), or turn Private mode o"
+    },
+    {
+      "name": "a key drafted from the teacher’s own typed guide may still use the cloud",
+      "ok": true,
+      "detail": "answer key drafted"
+    },
+    {
+      "name": "no request carrying pupil work reached any Gemini endpoint",
+      "ok": true,
+      "detail": "1 Gemini request(s), all teacher material, none with an image"
+    }
+  ],
+  "geminiRequests": [
+    {
+      "url": "https://firebasevertexai.googleapis.com/v1beta/projects/redpen-hybrid/models/gemini-3.5-flash-lite:generateContent",
+      "image": false,
+      "teacherMaterial": true
+    }
+  ]
+}

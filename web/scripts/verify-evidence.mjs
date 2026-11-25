@@ -6,6 +6,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { mnistStats, sciEntsBankStats } from '../bench/stats.mjs';
 
 const ROOT = resolve(import.meta.dirname, '../..');
 const read = (p) => readFileSync(resolve(ROOT, p), 'utf8');
@@ -59,6 +60,19 @@ const CHECKS = {
     return `${shown}/${misreads}`;
   },
   handwritingDryRun: ([p]) => { const r = json(p); return `${r.agree}/${r.all}`; },
+  // Public benchmarks: every answer must be marked (no errors left), then agreement is recomputed from the rows.
+  sciEntsBank: ([p]) => {
+    const r = json(p);
+    if (r.results.length !== r.total || r.results.some((x) => x.error)) throw new Error('benchmark incomplete');
+    const st = sciEntsBankStats(r.results);
+    return `${st.agree}/${st.n}`;
+  },
+  privacyLive: ([p]) => {
+    const r = json(p);
+    const pupil = r.geminiRequests.filter((x) => x.image || !x.teacherMaterial).length;
+    return `${r.steps.filter((x) => x.ok).length}/${r.steps.length} checks, ${pupil} pupil requests sent`;
+  },
+  mnistSheets: ([p]) => { const st = mnistStats(json(p).results); return `${st.exact}/${st.answers} read exactly, ${st.unflaggedWrong} wrong without a flag`; },
 };
 
 const { claims } = json('evidence/claims.json');

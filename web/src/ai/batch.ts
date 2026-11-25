@@ -53,9 +53,10 @@ export async function readAnswersBatch(crops: CropToRead[], kind: 'read' | 'veri
 }
 
 /** Checks every marking point (and, if none are found, every "do not accept" statement) in ONE cloud request. */
-export async function checkPointsBatch(answer: string, points: readonly string[], reject: readonly string[] = []): Promise<{ found: string[]; rejected: string[] }> {
+/** template: the Remote Config prompt by default; the benchmark passes a candidate prompt to compare wordings. */
+export async function checkPointsBatch(answer: string, points: readonly string[], reject: readonly string[] = [], template = config('prompt_points_batch')): Promise<{ found: string[]; rejected: string[] }> {
   if (!answer.trim() || !points.length) return { found: [], rejected: [] };
-  const prompt = fillTemplate(config('prompt_points_batch'), {
+  const prompt = fillTemplate(template, {
     answer: asPromptData(answer),
     points: points.map((p, i) => `${i + 1}. ${p}`).join('\n'),
     reject: reject.length ? reject.map((r, i) => `${i + 1}. ${r}`).join('\n') : 'none',
