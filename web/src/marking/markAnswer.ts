@@ -47,7 +47,7 @@ async function markNumericWithMethod(question: NumericQuestion, read: string, so
 async function withMethodMarks(question: NumericQuestion, base: Mark, read: string, judge: (steps: string[]) => Promise<string[]>): Promise<Mark> {
   const steps = workingSteps(question.methodPoints);
   if (base.awarded > 0 || !steps.length || base.status === 'flagged') return base;
-  const contradiction = workingContradictsKey(read, parseNumericAnswer(read).value, question.accept);
+  const contradiction = workingContradictsKey(read, parseNumericAnswer(read).value, question.accept, steps);
   if (contradiction) return { ...base, status: 'flagged', reasons: [...base.reasons, contradictionReason(contradiction)] };
   const found = await judge(steps);
   if (!found.length) return base;

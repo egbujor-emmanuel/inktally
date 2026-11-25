@@ -19,6 +19,11 @@ const UNSUPPORTED_THINKING = /thinking level .* not supported|thinking.*not supp
 /** Model -> time (ms) until which it is skipped. Rate limits expire in a minute; daily quotas in hours. */
 const exhausted = new Map<string, number>();
 const isExhausted = (m: string) => (exhausted.get(m) ?? 0) > Date.now();
+/** "High demand" from one model: give it a minute and send requests to the next model meanwhile (25 Nov). */
+const OVERLOADED = /high demand|overloaded|\b503\b|UNAVAILABLE/i;
+const BUSY_MS = 60_000;
+const busy = new Map<string, number>();
+const isBusy = (m: string) => (busy.get(m) ?? 0) > Date.now();
 const noThinking = new Set<string>();
 const errorText = (e: unknown) => (e instanceof Error ? `${e.name} ${e.message}` : String(e));
 /** Which cloud model each failed request used, so concurrent requests never blame the wrong model. */
@@ -37,10 +42,10 @@ function attributed(model: GenerativeModel, name: string): GenerativeModel {
   return model;
 }
 
-/** Primary cloud model, then the Remote Config fallbacks, skipping any whose quota is used up this session. */
+/** Primary cloud model, then the Remote Config fallbacks, skipping any whose quota is used up or that is overloaded right now. */
 export function activeCloudModel(primary = config('cloud_read_model')): string {
   const chain = [primary, ...config('cloud_fallback_models').split(',').map((m) => m.trim()).filter(Boolean)];
-  return chain.find((m) => !isExhausted(m)) ?? primary;
+  return chain.find((m) => !isExhausted(m) && !isBusy(m)) ?? chain.find((m) => !isExhausted(m)) ?? primary;
 }
 
 /** Decides whether a failed request should be retried on another model. Exported for tests. */
@@ -58,12 +63,19 @@ export function handleModelError(error: unknown): boolean {
     const next = activeCloudModel();
     return next !== model && !isExhausted(next); // only retry if a model with quota left remains
   }
+  if (OVERLOADED.test(text)) {
+    // Already benched and still asked for: every model is busy, so back off on this one instead of switching again.
+    if (isBusy(model)) return false;
+    busy.set(model, Date.now() + BUSY_MS);
+    const next = activeCloudModel();
+    return next !== model && !isBusy(next);
+  }
   return false;
 }
 setModelErrorHandler(handleModelError);
 
 /** Test hook: forget every exhausted / no-thinking model. */
-export function resetModelRouting(): void { exhausted.clear(); noThinking.clear(); }
+export function resetModelRouting(): void { exhausted.clear(); busy.clear(); noThinking.clear(); }
 
 /** Thinking level from Remote Config; anything unrecognised (or unsupported by the model) uses the model's default. */
 function thinking(key: 'read_thinking' | 'author_thinking', model: string): { thinkingConfig?: ThinkingConfig } {

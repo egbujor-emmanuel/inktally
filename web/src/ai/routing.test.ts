@@ -47,6 +47,33 @@ describe('when every model is out of quota or failing (the 23 Nov loop)', () => 
   });
 });
 
+describe('when a cloud model is overloaded (25 Nov: "high demand" on every page read)', () => {
+  const highDemand = () => Promise.reject(new Error('[500 ] This model is currently experiencing high demand. Spikes in demand are usually temporary.'));
+  test('the read moves to the next model at once instead of waiting on the busy one', async () => {
+    behaviour = { 'model-a': highDemand, 'model-b': reply('ok') };
+    const r = await withRetry(() => models.readerModel({} as never).generateContent('x'));
+    expect(r.response.text()).toBe('ok');
+    expect(calls).toEqual(['model-a', 'model-b']);
+    expect(models.activeCloudModel()).toBe('model-b');
+  });
+  test('a busy model is tried again after a minute', async () => {
+    vi.useFakeTimers();
+    behaviour = { 'model-a': highDemand, 'model-b': reply('ok') };
+    await withRetry(() => models.readerModel({} as never).generateContent('x'));
+    expect(models.activeCloudModel()).toBe('model-b');
+    vi.advanceTimersByTime(61_000);
+    expect(models.activeCloudModel()).toBe('model-a');
+  });
+  test('when every model is busy it backs off and stops, never loops', async () => {
+    vi.useFakeTimers();
+    behaviour = { 'model-a': highDemand, 'model-b': highDemand, 'model-c': highDemand };
+    const run = withRetry(() => models.readerModel({} as never).generateContent('x')).catch((e: unknown) => e);
+    await vi.runAllTimersAsync();
+    expect(String(await run)).toMatch(/high demand/);
+    expect(calls.length).toBeLessThan(10);
+  });
+});
+
 describe('quota-aware model routing', () => {
   test('a quota error on the primary model switches to the first fallback at once', async () => {
     behaviour = { 'model-a': quota(), 'model-b': reply('ok') };

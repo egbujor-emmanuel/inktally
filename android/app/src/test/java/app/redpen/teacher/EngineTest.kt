@@ -97,6 +97,73 @@ class EngineTest {
         assertEquals(null, app.redpen.teacher.marking.workingContradictsKey("v = fλ = 50 × 0.4 = 25 m/s", 25.0, listOf(20.0)))
         assertEquals(null, app.redpen.teacher.marking.workingContradictsKey("I = 12/6 = 2 A", 2.0, listOf(2.0)))
     }
+    // The real handwritten WAEC scripts (samples/waec-handwritten): same cases as web working.test.ts.
+    @Test fun realScriptsWrongNumberIsASlipDifferentOperationIsAnotherFormula() {
+        assertEquals("", app.redpen.teacher.marking.operationSignature("uses P = hρg"))
+        assertEquals("-/", app.redpen.teacher.marking.operationSignature("uses a = (v − u) ÷ t"))
+        assertEquals("+", app.redpen.teacher.marking.operationSignature("1/2*(0+20)*5"))
+        assertEquals(null, app.redpen.teacher.marking.workingContradictsKey("P=hρg=10X1000X1=10,000Pa", 10000.0, listOf(100000.0), listOf("uses P = hρg")))
+        assertEquals(null, app.redpen.teacher.marking.workingContradictsKey("PE=mgh=2X10X50=1000J", 1000.0, listOf(100.0), listOf("uses PE = mgh")))
+        assertEquals("50/0.4", app.redpen.teacher.marking.workingContradictsKey("V=fλ=50/0.4=125 m/s", 125.0, listOf(20.0), listOf("uses v = fλ"))?.step)
+        assertEquals("4*2", app.redpen.teacher.marking.workingContradictsKey("R=4X2=8Ω I=12/8=1.5A", 1.5, listOf(2.0), listOf("total resistance 4 + 2 = 6 Ω, or I = V ÷ R with 6 Ω"))?.step)
+        assertEquals("20*5", app.redpen.teacher.marking.workingContradictsKey("a=20X5=100m/s^2", 100.0, listOf(4.0), listOf("uses a = (v − u) ÷ t"))?.step)
+        assertEquals(null, app.redpen.teacher.marking.workingContradictsKey("P = ρgh = 10 x 1000 x 10 = 10 x 10^5 Pa", 1000000.0, listOf(100000.0), listOf("uses P = hρg")))
+    }
+    // Same cases as web pageAlign.test.ts: Script 3 (sideways photo) came back with every number from 7(a) on shifted.
+    @Test fun pageAnswersMatchTheLabelTheStudentWrote() {
+        val labels = listOf("1", "2", "3", "4", "5", "6(a)", "6(b)(i)", "6(b)(ii)", "7(a)", "7(b)", "8(a)", "8(b)", "9", "10")
+        val waec = labels.mapIndexed { i, l -> app.redpen.teacher.domain.Question.Short(q = i + 1, prompt = "Q", max = 1, accept = listOf("x"), label = l) }
+        assertEquals("7a", app.redpen.teacher.ai.labelKey("7a)"))
+        assertEquals(app.redpen.teacher.ai.labelKey("6(b)(ii)"), app.redpen.teacher.ai.labelKey("6b(ii)"))
+        assertEquals("10", app.redpen.teacher.ai.labelKey("Q10."))
+        val aligned = app.redpen.teacher.ai.alignPageAnswers(listOf(
+            app.redpen.teacher.ai.PageAnswer(10, "7a)", "I ∝ V if the temperature is constant"),
+            app.redpen.teacher.ai.PageAnswer(11, "7b)", "I = V/R = 12/6 = 2A"),
+            app.redpen.teacher.ai.PageAnswer(2, "", "C"),
+        ), waec)
+        assertEquals("I ∝ V if the temperature is constant", aligned[9])
+        assertEquals("I = V/R = 12/6 = 2A", aligned[10])
+        assertEquals("C", aligned[2])
+        val keys = waec.map { app.redpen.teacher.ai.labelKey(it.label!!) }.toSet()
+        assertEquals(app.redpen.teacher.ai.LeadingLabel("8a", "(i) Transverse"), app.redpen.teacher.ai.leadingLabel("8a)(i) Transverse", keys))
+        assertEquals(app.redpen.teacher.ai.LeadingLabel("6bii", ""), app.redpen.teacher.ai.leadingLabel("6b(ii)", keys))
+        assertEquals(app.redpen.teacher.ai.LeadingLabel("2", "2 m/s"), app.redpen.teacher.ai.leadingLabel("2) 2 m/s", setOf("2", "22")))
+        // 25 Nov run 1: 7(a)'s line came back under the blank 6(b)(ii), but the line carries its own label.
+        val shifted = app.redpen.teacher.ai.alignPageAnswers(listOf(
+            app.redpen.teacher.ai.PageAnswer(8, "6b(ii)", "7a) I ∝ V if the temperature is constant"),
+            app.redpen.teacher.ai.PageAnswer(13, "9)", "10) 100 joules"),
+        ), waec)
+        assertEquals("I ∝ V if the temperature is constant", shifted[9])
+        assertEquals("100 joules", shifted[14])
+        assertEquals(null, shifted[8])
+    }
+    // Same synthetic page as web orient.test.ts: lines of letter-sized blobs from one margin, ending raggedly.
+    private fun writtenPage(w: Int = 300, h: Int = 400): app.redpen.teacher.scan.Orient.Mask {
+        val ink = BooleanArray(w * h)
+        listOf(24, 9, 17, 30, 12, 26, 7, 20, 15, 28, 11, 22, 18, 25, 10, 27).forEachIndexed { line, letters ->
+            val top = 20 + line * 22
+            var l = 0
+            while (l < letters && 20 + l * 9 < w - 6) { for (y in top until top + 5) for (x in 20 + l * 9 until 25 + l * 9) ink[y * w + x] = true; l++ }
+        }
+        return app.redpen.teacher.scan.Orient.Mask(w, h, ink)
+    }
+    @Test fun sidewaysPagesAreTurnedUpright() {
+        val o = app.redpen.teacher.scan.Orient
+        assertEquals(0, o.uprightTurn(writtenPage()))
+        assertEquals(270, o.uprightTurn(o.quarterTurn(writtenPage(), cw = true)))
+        assertEquals(90, o.uprightTurn(o.quarterTurn(writtenPage(), cw = false)))
+        assertEquals(0, o.uprightTurn(app.redpen.teacher.scan.Orient.Mask(50, 80, BooleanArray(50 * 80))))
+        val gray = IntArray(60 * 60) { if (it % 60 < 30) 120 else 220 }.also { it[30 * 60 + 10] = 60; it[30 * 60 + 45] = 150 }
+        val ink = o.inkMask(gray, 60, 60).ink
+        assertTrue(ink[30 * 60 + 10] && ink[30 * 60 + 45] && !ink[10 * 60 + 5] && !ink[10 * 60 + 50])
+    }
+    @Test fun scriptPagesStackAtOneWidth() {
+        val plan = app.redpen.teacher.scan.Stitch.layout(listOf(960 to 1280, 960 to 1280))
+        assertEquals(960, plan.width)
+        assertEquals(2 * 1280 + app.redpen.teacher.scan.Stitch.GAP, plan.height)
+        assertEquals(1280 + app.redpen.teacher.scan.Stitch.GAP, plan.boxes[1].y)
+        assertEquals(app.redpen.teacher.scan.Stitch.MAX_WIDTH, app.redpen.teacher.scan.Stitch.layout(listOf(3000 to 4000)).width)
+    }
     @Test fun printedLabelsFromTypedGuide() {
         assertEquals(listOf("1", "2(a)", "2(b)(i)", "2(b)(ii)", "3"),
             app.redpen.teacher.ai.printedLabels(listOf("1. Define work.", "2. (a) State Newton's first law.", "(b) A 2 kg mass...", "(i) Find the force.", "(ii) Find the work done.", "3. B").joinToString("\n")))

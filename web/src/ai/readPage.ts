@@ -8,16 +8,23 @@ import type { ReadSource } from '../domain/types';
 import { blobToPart, readerModel, type ReadMode } from './models';
 import { withRetry } from './retry';
 import { recordInference } from './telemetry';
+import { alignPageAnswers } from './pageAlign';
 
 const PAGE_SCHEMA = Schema.object({
-  properties: { answers: Schema.array({ items: Schema.object({ properties: { q: Schema.integer(), text: Schema.string() } }) }) },
+  properties: { answers: Schema.array({ items: Schema.object({ properties: { label: Schema.string(), q: Schema.integer(), text: Schema.string() } }) }) },
 });
-const PageResponse = z.object({ answers: z.array(z.object({ q: z.number().int(), text: z.string() })) });
+const PageResponse = z.object({ answers: z.array(z.object({ label: z.string().optional(), q: z.number().int(), text: z.string() })) });
 
-const PAGE_PROMPT = 'This is a photo of a student\'s handwritten exercise-book page. For each numbered answer, transcribe exactly what the student '
-  + 'wrote after the question number, character by character. Keep every mistake — do NOT calculate, solve or correct anything. '
-  + 'Ignore the student\'s name, the date and any teacher marks. Only include these questions. The student labels each one as shown, '
-  + 'and you return it with the number on the left: {numbers}.';
+/** Same wording on Android (Ai.kt PAGE_PROMPT). */
+const PAGE_PROMPT = 'This is a photo of a student\'s handwritten exercise-book page (several pages may be joined one above the other, '
+  + 'separated by a grey band; an answer can continue onto the next page). The photo may be sideways or upside down. '
+  + 'Go through the page in reading order. For each answer, text is the question label exactly as the student wrote it followed by '
+  + 'everything written after it up to the next label, character by character (for example "7a) I ∝ V if the temperature is constant"). '
+  + 'If nothing is written after a label before the next label, text is just the label. Put the label alone in label. '
+  + 'Keep every mistake — do NOT calculate, '
+  + 'solve or correct anything. Write a fraction set out with one number above another as (top)/(bottom), for example 50/0.4. '
+  + 'Ignore the student\'s name, the date and any teacher marks. Only include these questions, and put the number on the left of '
+  + 'the student\'s label into q: {numbers}.';
 
 export interface PageRead { answers: Map<number, string>; source: ReadSource }
 
@@ -31,5 +38,5 @@ export async function readPage(photo: Blob, questions: { q: number; label?: stri
   const raw = response.response.text().replace(/^```(?:json)?\s*/m, '').replace(/```\s*$/m, '').trim();
   const parsed = PageResponse.safeParse(JSON.parse(raw));
   if (!parsed.success) throw new Error('Could not read the page. Try a sharper photo in good light.');
-  return { answers: new Map(parsed.data.answers.map((a) => [a.q, a.text.trim()])), source };
+  return { answers: alignPageAnswers(parsed.data.answers, questions), source };
 }

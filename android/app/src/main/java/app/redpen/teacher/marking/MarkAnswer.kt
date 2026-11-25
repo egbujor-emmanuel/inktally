@@ -42,7 +42,7 @@ object Marker {
     private suspend fun withMethodMarks(question: Question.Numeric, base: Mark, read: String, judge: suspend (List<String>) -> List<String>): Mark {
         val steps = workingSteps(question.methodPoints)
         if (base.awarded > 0 || steps.isEmpty() || base.status == MarkStatus.FLAGGED) return base
-        workingContradictsKey(read, parseNumericAnswer(read).value, question.accept)?.let { c ->
+        workingContradictsKey(read, parseNumericAnswer(read).value, question.accept, steps)?.let { c ->
             return base.copy(status = MarkStatus.FLAGGED, reasons = base.reasons + contradictionReason(c))
         }
         val found = judge(steps)

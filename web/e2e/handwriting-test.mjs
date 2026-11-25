@@ -1,7 +1,8 @@
 // Runs the InkTally handwriting test pack (docs/real-test/) on the live site and compares every mark with the truth.
 // 1) creates the assignment from the typed marking guide, 2) marks each script photo as an exercise-book page,
 // 3) prints a per-question comparison and writes e2e/out/handwriting-test.json.
-// Usage: REDPEN_CODE=... node e2e/handwriting-test.mjs <folder with script-1..N images> [url]
+// Usage: REDPEN_CODE=... [TRUTH=path/to/truth.json] node e2e/handwriting-test.mjs <folder with script-1..N images> [url]
+// A truth file with "pages" maps each script to its photo(s); a script on several pages is marked as one student.
 import { chromium } from '@playwright/test';
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -11,13 +12,14 @@ const URL_ = process.argv[3]?.startsWith('http') ? process.argv[3] : 'https://re
 if (!DIR) throw new Error('Pass the folder with script photos');
 const OUT = resolve(import.meta.dirname, 'out');
 mkdirSync(OUT, { recursive: true });
-const truth = JSON.parse(readFileSync(resolve(import.meta.dirname, '../../docs/real-test/truth.json'), 'utf8'));
+const TRUTH = resolve(process.env.TRUTH ?? resolve(import.meta.dirname, '../../docs/real-test/truth.json'));
+const truth = JSON.parse(readFileSync(TRUTH, 'utf8'));
 
 const GUIDE = readFileSync(resolve(import.meta.dirname, '../../docs/real-test/guide.txt'), 'utf8');
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
-await page.goto(URL_);
+await page.goto(URL_, { timeout: 120_000 });
 if (await page.getByText('InkTally preview').count()) { await page.fill('input', process.env.REDPEN_CODE ?? ''); await page.click('button[type=submit]'); }
 await page.getByText('Try it with a sample').waitFor({ timeout: 60_000 });
 
@@ -43,17 +45,19 @@ const base = page.url().replace(/\/print$/, '');
 
 // 2) Each script, as an exercise-book page.
 const ONLY = process.env.ONLY?.split(',');
-const photos = readdirSync(DIR).filter((f) => /^script-\d+\.(png|jpe?g)$/i.test(f) && (!ONLY || ONLY.includes(f.match(/\d+/)[0]))).sort();
+const scripts = truth.pages
+  ? Object.entries(truth.pages).map(([name, files]) => ({ name, files }))
+  : readdirSync(DIR).filter((f) => /^script-\d+\.(png|jpe?g)$/i.test(f)).sort().map((f) => ({ name: `Script ${f.match(/\d+/)[0]}`, files: [f] }));
 const results = [];
-for (const f of photos) {
-  const n = f.match(/\d+/)[0];
-  const name = `Script ${n}`;
+for (const { name, files } of scripts.filter((s) => !ONLY || ONLY.includes(s.name.match(/\d+/)[0]))) {
+  const n = name.match(/\d+/)[0];
   const started = Date.now();
   await page.goto(`${base}/mark`);
   await page.getByText('Photograph answer sheet').waitFor({ timeout: 60_000 });
   await page.getByRole('radio', { name: /Exercise book page/ }).click();
   await page.getByLabel('Student name or number').fill(name);
-  await page.locator('input[aria-label^="Choose photo"]').setInputFiles(join(DIR, f));
+  if (files.length > 1) await page.getByRole('checkbox', { name: /pages of one student/i }).check();
+  await page.locator('input[aria-label^="Choose photo"]').setInputFiles(files.map((f) => join(DIR, f)));
   const done = await page.getByText(/^Total:/).waitFor({ timeout: 300_000 }).then(() => true, () => false);
   if (!done) {
     await page.screenshot({ path: `${OUT}/stuck-${n}.png`, fullPage: true });
@@ -80,5 +84,5 @@ ${name}: NO RESULT after 300 s. On screen: ${(await page.locator('main').innerTe
 const agree = results.reduce((n, r) => n + r.marks.filter((m) => m.index >= 0).length - r.diffs.length, 0);
 const all = results.filter((r) => !r.stuck).length * truth.labels.length;
 console.log(`\nquestions where InkTally = truth: ${agree}/${all}`);
-writeFileSync(`${OUT}/handwriting-test.json`, JSON.stringify({ at: new Date().toISOString(), site: URL_, key, results, agree, all }, null, 2));
+writeFileSync(process.env.OUT_JSON ?? `${OUT}/handwriting-test.json`, JSON.stringify({ at: new Date().toISOString(), site: URL_, truth: TRUTH.replace(/^.*?docs/, 'docs').replaceAll('\\', '/'), key, results, agree, all }, null, 2));
 await browser.close();

@@ -4,6 +4,7 @@ import { draftScheme, missingNotice, resolveLabels } from '../ai/scheme';
 import { PAGE_KEY, createAssignment, createSubmission, saveCrop, saveMarks } from '../data/store';
 import type { Mark, Question } from '../domain/types';
 import { markPage } from '../marking/markAnswer';
+import { uprightPhoto } from '../scan/orient';
 import { SchemeEditor, isComplete } from '../components/SchemeEditor';
 import { MarkRow } from '../components/MarkRow';
 import { useOnline } from '../hooks/useStatus';
@@ -64,8 +65,9 @@ export function QuickMark() {
       const labels = resolveLabels(subject, level, {});
       const assignmentId = await createAssignment({ title: `Quick mark — ${labels.subject}, ${today}`, className: labels.level, scheme: { ...labels, questions: usable } });
       const submissionId = await createSubmission(assignmentId, pupil.trim() || 'Student', []);
-      await saveCrop(submissionId, PAGE_KEY, photo);
-      const marks = await markPage(usable, photo);
+      const page = await uprightPhoto(photo); // a sideways photo is turned upright before it is read
+      await saveCrop(submissionId, PAGE_KEY, page);
+      const marks = await markPage(usable, page);
       await saveMarks(assignmentId, submissionId, marks);
       setStep({ kind: 'done', assignmentId, marks });
     } catch (e: unknown) {

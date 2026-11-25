@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedButton
@@ -100,6 +101,8 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
     var busy by remember { mutableStateOf(false) }
     var done by remember { mutableStateOf<Pair<String, Bitmap?>?>(null) } // submission id + marked copy
     var stackAdded by remember { mutableStateOf<Int?>(null) } // "N scripts added"
+    /** Exercise-book mode: several photos are the pages of one student's script, not a stack of students. */
+    var onePupil by remember { mutableStateOf(false) }
 
     fun markPhoto(photo: Bitmap) {
         busy = true; marks = emptyList(); crops = emptyMap(); done = null; queuedFor = null; status = null; stackAdded = null
@@ -135,8 +138,28 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
             } finally { busy = false }
         }
     }
+    /** One student's script over several exercise-book pages: join the pages into one image, then mark it as one script. */
+    fun markPages(photos: List<android.net.Uri>) {
+        if (photos.size > app.redpen.teacher.scan.Stitch.MAX_PAGES) { status = "Choose at most ${app.redpen.teacher.scan.Stitch.MAX_PAGES} pages for one student."; return }
+        busy = true; status = "Joining ${photos.size} pages…"
+        scope.launch {
+            val joined = try {
+                withContext(Dispatchers.Default) {
+                    val bitmaps = photos.map { loadPhoto(ctx, it, maxSide = 1800) }
+                    try { app.redpen.teacher.scan.Stitch.join(bitmaps) } finally { bitmaps.forEach { it.recycle() } }
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                status = "Could not join the pages: ${Repo.friendly(e)}"; busy = false; return@launch
+            }
+            busy = false
+            markPhoto(joined)
+        }
+    }
     /** Several photos at once (gallery multi-select): each becomes a queued student, marked one by one in the background. */
     fun markStack(photos: List<android.net.Uri>) {
+        if (!sheetMode && onePupil) { markPages(photos); return }
         busy = true; marks = emptyList(); crops = emptyMap(); done = null; queuedFor = null; status = null; stackAdded = null
         val base = submissions.size
         val typed = pupil.trim()
@@ -177,8 +200,17 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
                     pages.indices.forEach { i -> if (i == page) PenButton("${i + 1}", {}) else GhostButton("${i + 1}", { page = i }) }
                 }
                 PhotoButtons(input, if (busy) "Marking…" else if (sheetMode) "Photograph answer sheet" else "Photograph the page", enabled = !busy)
+                if (!sheetMode) Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                    .toggleable(onePupil, enabled = !busy, role = androidx.compose.ui.semantics.Role.Checkbox) { onePupil = it }.padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.material3.Checkbox(onePupil, onCheckedChange = null, enabled = !busy)
+                    Column(Modifier.padding(start = 8.dp)) {
+                        Text("These photos are pages of one student", fontSize = 15.sp)
+                        Text("Choose up to ${app.redpen.teacher.scan.Stitch.MAX_PAGES} pages in order. An answer can run onto the next page.", color = RP.InkSoft, fontSize = 13.sp)
+                    }
+                }
                 Text((if (sheetMode) "Keep all four black corner squares in the photo." else "Make sure every question number and answer is visible.") +
-                    " Got a whole stack? Choose all the photos at once.", color = RP.InkSoft, fontSize = 13.sp)
+                    (if (!sheetMode && onePupil) " Choose all of this student’s pages at once." else " Got a whole stack? Choose all the photos at once."), color = RP.InkSoft, fontSize = 13.sp)
             }
         }
         status?.let { item { Text(it, fontFamily = if (it.startsWith("Total")) RP.Display else RP.Hand, fontWeight = FontWeight.Bold,

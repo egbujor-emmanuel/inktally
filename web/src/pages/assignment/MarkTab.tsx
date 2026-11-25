@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Mark } from '../../domain/types';
 import { MARKED_KEY, PAGE_KEY, PHOTO_KEY, createSubmission, deleteSubmission, newSubmissionId, saveCrop, type Assignment, type Submission } from '../../data/store';
 import { layoutSheet } from '../../scan/layout';
+import { MAX_SCRIPT_PAGES, stitchPages } from '../../scan/stitch';
 import { MarkRow } from '../../components/MarkRow';
 import { MarkedCopy } from '../../components/MarkedCopy';
 import { PupilRecord } from '../../components/PupilRecord';
@@ -31,6 +32,8 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
   const [pupil, setPupil] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
   const [mode, setMode] = useState<CaptureMode>('sheet');
+  /** Exercise-book mode: several photos are the pages of one student's script, not a stack of students. */
+  const [onePupil, setOnePupil] = useState(false);
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
   const [marks, setMarks] = useState<Mark[]>([]);
   const [crops, setCrops] = useState<Record<number, string>>({});
@@ -62,9 +65,21 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
   }
 
   async function handlePhoto(photos: File[]) {
+    if (mode === 'page' && onePupil && photos.length > 1) {
+      let joined: Blob;
+      try { joined = await stitchPages(photos); } catch (e: unknown) {
+        setPhase({ kind: 'error', message: e instanceof Error ? e.message : 'Could not join the pages. Try again.' });
+        return;
+      }
+      await markOne(joined);
+      return;
+    }
     if (photos.length > 1) { await handleBatch(photos); return; }
     const [photo] = photos;
-    if (!photo) return;
+    if (photo) await markOne(photo);
+  }
+
+  async function markOne(photo: Blob) {
     setMarks([]);
     setCrops(mode === 'page' ? { [PAGE_KEY]: URL.createObjectURL(photo) } : {});
     setCopy(null);
@@ -116,7 +131,15 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
         )}
         <PhotoButtons takeLabel={busy ? 'Marking…' : mode === 'sheet' ? 'Photograph answer sheet' : 'Photograph the page'}
           onPhoto={(files) => void handlePhoto(files)} disabled={busy} multiple />
-        <p className="text-[13px] text-ink-soft">{mode === 'sheet' ? 'Keep all four black corner squares in the photo.' : 'Make sure every question number and answer is visible.'} Got a whole stack? Choose all the photos at once.</p>
+        {mode === 'page' && (
+          <label className="flex items-start gap-2.5 text-[15px]">
+            <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-pen" checked={onePupil} onChange={(e) => setOnePupil(e.target.checked)} disabled={busy} />
+            <span>These photos are pages of one student
+              <span className="block text-[13px] text-ink-soft">Choose up to {MAX_SCRIPT_PAGES} pages in order. An answer can run onto the next page.</span>
+            </span>
+          </label>
+        )}
+        <p className="text-[13px] text-ink-soft">{mode === 'sheet' ? 'Keep all four black corner squares in the photo.' : 'Make sure every question number and answer is visible.'} {mode === 'page' && onePupil ? 'Choose all of this student’s pages at once.' : 'Got a whole stack? Choose all the photos at once.'}</p>
       </Card>
 
       <div aria-live="polite">

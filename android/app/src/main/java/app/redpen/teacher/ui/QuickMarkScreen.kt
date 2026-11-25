@@ -92,8 +92,9 @@ fun QuickMarkScreen(onOpenAssignment: (String) -> Unit) {
                 val (s, l) = app.redpen.teacher.ai.resolveLabels(subject, level)
                 val aid = Repo.createAssignment("Quick mark — $s, $today", l, MarkingScheme(s, l, usable))
                 val sid = Repo.createSubmission(aid, pupil.ifBlank { "Student" })
-                withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PAGE_KEY, page) }
-                val marks = Marker.markPage(usable, page)
+                val upright = withContext(Dispatchers.Default) { app.redpen.teacher.scan.Orient.upright(page) } // sideways photos turned first
+                withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PAGE_KEY, upright) }
+                val marks = Marker.markPage(usable, upright)
                 Repo.saveMarks(aid, sid, marks)
                 step = QuickStep.Done(aid, marks)
             } catch (e: Exception) {

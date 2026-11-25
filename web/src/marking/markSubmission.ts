@@ -11,6 +11,7 @@ import { cloudWillRead } from '../ai/models';
 import { layoutSheet } from '../scan/layout';
 import { scanSheet } from '../scan/pipeline';
 import { markedPageCopy, markedSheetCopy } from '../scan/markedCopy';
+import { uprightPhoto } from '../scan/orient';
 import { friendlyCloudError } from '../ai/errors';
 
 export type CaptureMode = 'sheet' | 'page';
@@ -87,11 +88,12 @@ export async function markSheetSubmission(
   return { ok: true, marks: collected, copy };
 }
 
-/** Exercise-book page: one whole-page read, then code marks each question. */
+/** Exercise-book page: turned upright if needed, one whole-page read, then code marks each question. */
 export async function markPageSubmission(
-  assignment: Assignment, photo: Blob, submissionId: string, label: string,
+  assignment: Assignment, taken: Blob, submissionId: string, label: string,
   onProgress?: (p: MarkProgress) => void,
 ): Promise<MarkOutcome> {
+  const photo = await uprightPhoto(taken); // a sideways photo is turned upright first, so it is read, saved and checked upright
   await saveCrop(submissionId, PAGE_KEY, photo);
   onProgress?.({ marks: [], total: assignment.scheme.questions.length });
   const read = await markPage(assignment.scheme.questions, photo);

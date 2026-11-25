@@ -70,8 +70,20 @@ class RoutingTest {
 
     @Test fun nonQuotaErrorsDoNotSwitchModels() {
         assertFalse(routing.handleModelError("model-a", "AppCheck token is invalid"))
-        assertFalse(routing.handleModelError("model-a", "503 high demand"))
         assertEquals("model-a", routing.activeCloudModel())
+    }
+    // Same cases as web routing.test.ts "when a cloud model is overloaded" (25 Nov: "high demand" on every page read).
+    @Test fun anOverloadedModelHandsTheReadToTheNextModelAndIsTriedAgainAfterAMinute() {
+        val highDemand = "[500 ] This model is currently experiencing high demand. Spikes in demand are usually temporary."
+        assertTrue(routing.handleModelError("model-a", highDemand))
+        assertEquals("model-b", routing.activeCloudModel())
+        clock += 61_000
+        assertEquals("model-a", routing.activeCloudModel())
+    }
+    @Test fun whenEveryModelIsOverloadedItStopsSwitchingNeverLoops() {
+        val calls = failEveryAttempt("503 UNAVAILABLE high demand")
+        assertEquals(listOf("model-a", "model-b", "model-c"), calls.take(3))
+        assertTrue(calls.size < 10)
     }
 
     @Test fun theAuthorFallbackMovesToADifferentModelWithQuotaLeft() {

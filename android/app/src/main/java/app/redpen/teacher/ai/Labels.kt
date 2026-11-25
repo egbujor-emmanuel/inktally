@@ -66,3 +66,60 @@ private fun cleanLabel(text: String?) = (text ?: "").replace(LABEL_BREAKERS, " "
 fun resolveLabels(typedSubject: String, typedLevel: String, detectedSubject: String? = null, detectedLevel: String? = null): Pair<String, String> =
     (cleanLabel(typedSubject).ifEmpty { cleanLabel(detectedSubject) }.ifEmpty { "General" }) to
         cleanLabel(typedLevel).ifEmpty { cleanLabel(detectedLevel) }
+
+// ---- exercise-book pages: match each answer by the label the student wrote (same as web/src/ai/pageAlign.ts) ----
+// The model transcribes each answer with the label in front of it ("7a) I ∝ V …") and code reads the label off the start.
+// Asked for a label and a text separately, the model once moved every answer after a blank one up a question.
+
+data class PageAnswer(val q: Int, val label: String, val text: String)
+
+/** "Q7(a)" -> "7a", "6b(ii)" and "6(b)(ii)" -> "6bii", "1." -> "1". */
+fun labelKey(label: String): String =
+    label.lowercase().trim().replace(Regex("""^(?:question|q|no)\.?\s*(?=\d)"""), "").replace(Regex("[^0-9a-z]"), "")
+
+private const val LONGEST_LABEL = 16
+private val DIGIT_AFTER_END = Regex("""[).:]\s*\d""")
+private val LABEL_END = Regex("""[).:\s]$""")
+private val LEADING_PUNCT = Regex("""^[\s).:-]+""")
+
+data class LeadingLabel(val key: String, val rest: String)
+
+/** The longest start of the transcript that is one of the scheme's labels, ending at ")", ".", ":" or a space ("2) 2 m/s" is 2). */
+fun leadingLabel(text: String, keys: Set<String>): LeadingLabel? {
+    val t = text.trimStart()
+    for (m in minOf(LONGEST_LABEL, t.length) downTo 1) {
+        val prefix = t.substring(0, m)
+        val next = t.getOrNull(m)
+        if (DIGIT_AFTER_END.containsMatchIn(prefix)) continue
+        val ends = LABEL_END.containsMatchIn(prefix) || next == null || next.isWhitespace()
+        if (!ends || labelKey(prefix) !in keys) continue
+        return LeadingLabel(labelKey(prefix), t.substring(m).replace(LEADING_PUNCT, ""))
+    }
+    return null
+}
+
+/** Each answer goes to the question whose label starts its transcript; then the model's label; then the model's number. */
+fun alignPageAnswers(answers: List<PageAnswer>, questions: List<app.redpen.teacher.domain.Question>): Map<Int, String> {
+    val byKey = questions.groupBy({ labelKey(app.redpen.teacher.domain.qLabel(it.q, it.label)) }, { it.q })
+    val keys = byKey.keys
+    fun only(key: String?): Int? = key?.let { byKey[it] }?.singleOrNull()
+    val aligned = LinkedHashMap<Int, String>()
+    val later = mutableListOf<PageAnswer>()
+    for (a in answers) {
+        val lead = leadingLabel(a.text, keys)
+        val q = only(lead?.key)
+        if (lead != null && q != null && q !in aligned) aligned[q] = lead.rest.trim() else later += a
+    }
+    fun put(q: Int, a: PageAnswer) {
+        val lead = leadingLabel(a.text, keys)
+        aligned[q] = (if (lead != null && only(lead.key) == q) lead.rest else a.text).trim()
+    }
+    val unplaced = mutableListOf<PageAnswer>()
+    for (a in later) {
+        val byLabel = if (a.label.isNotBlank()) only(labelKey(a.label)) else null
+        if (byLabel != null && byLabel !in aligned) put(byLabel, a) else unplaced += a
+    }
+    val known = questions.map { it.q }.toSet()
+    for (a in unplaced) if (a.q in known && a.q !in aligned) put(a.q, a)
+    return aligned
+}

@@ -41,9 +41,11 @@ object MarkSubmission {
             ?.also { withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.MARKED_KEY, it) } }
 
     /** failFast (offline queue): a read error throws instead of becoming a flagged mark, so the student stays queued. */
-    suspend fun mark(ctx: Context, a: Assignment, mode: String, photo: Bitmap, pageIndex: Int, sid: String, label: String,
+    suspend fun mark(ctx: Context, a: Assignment, mode: String, taken: Bitmap, pageIndex: Int, sid: String, label: String,
                      onProgress: (Progress) -> Unit = {}, failFast: Boolean = false): Outcome {
         if (mode == PAGE) {
+            // A sideways photo is turned upright first, so it is read, saved and cloud-checked upright (same as web).
+            val photo = withContext(Dispatchers.Default) { app.redpen.teacher.scan.Orient.upright(taken) }
             withContext(Dispatchers.IO) { Repo.saveCrop(ctx, sid, Repo.PAGE_KEY, photo) }
             onProgress(Progress(emptyList(), a.scheme.questions.size))
             val read = Marker.markPage(a.scheme.questions, photo)
@@ -54,6 +56,7 @@ object MarkSubmission {
             Repo.saveMarks(a.id, sid, marks)
             return Outcome.Ok(marks, saveCopy(ctx, sid) { Render.pageCopy(ctx, photo, marks, label) })
         }
+        val photo = taken
         val pages = SheetLayout.pages(a.scheme.questions)
         val boxes = pages.getOrNull(pageIndex) ?: return Outcome.Failed("This assignment has no sheet page ${pageIndex + 1}.")
         return when (val scan = withContext(Dispatchers.Default) { Scanner.scan(photo, boxes) }) {
