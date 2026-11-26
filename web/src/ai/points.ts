@@ -7,6 +7,7 @@ import { asPromptData, fillTemplate } from './config';
 import { config, judgeModel, type ReadMode } from './models';
 import { withRetry } from './retry';
 import { recordInference } from './telemetry';
+import { modelJson } from './config';
 
 const YES_NO_SCHEMA = Schema.object({ properties: { present: Schema.boolean() } });
 const YesNo = z.object({ present: z.boolean() });
@@ -33,7 +34,7 @@ export function parsePresent(reply: string): boolean {
   const raw = reply.replace(/^```(?:json)?\s*/m, '').replace(/```\s*$/m, '').trim();
   if (raw.startsWith('{')) {
     let json: unknown;
-    try { json = JSON.parse(raw); } catch { throw new Error(NOT_YES_NO); }
+    try { json = modelJson(raw); } catch { throw new Error(NOT_YES_NO); }
     const parsed = YesNo.safeParse(json);
     if (!parsed.success) throw new Error(NOT_YES_NO);
     return parsed.data.present;

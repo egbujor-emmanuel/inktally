@@ -79,7 +79,7 @@
     },
     "cloud_fallback_models": {
       "defaultValue": {
-        "value": "gemini-3.5-flash,gemini-3.8-flash"
+        "value": "gemini-3.5-flash,gemini-3.8-flash,gemma-4-31b-it"
       },
       "description": "Cloud models used in order when a model quota runs out (dynamic routing, no app release needed)",
       "valueType": "STRING"

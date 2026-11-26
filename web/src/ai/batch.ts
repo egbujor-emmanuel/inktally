@@ -8,6 +8,7 @@ import { asPromptData, fillTemplate } from './config';
 import { blobToPart, config, readerModel, judgeModel } from './models';
 import { withRetry } from './retry';
 import { recordInference } from './telemetry';
+import { modelJson } from './config';
 
 const HINTS: Record<QuestionType, string> = {
   objective: 'a multiple-choice answer: a single letter A, B, C, D or E',
@@ -47,7 +48,7 @@ export async function readAnswersBatch(crops: CropToRead[], kind: 'read' | 'veri
   const started = performance.now();
   const response = await withRetry(() => readerModel(BATCH_SCHEMA, InferenceMode.ONLY_IN_CLOUD).generateContent(parts));
   recordInference({ kind, source: 'in_cloud', ms: Math.round(performance.now() - started) });
-  const parsed = BatchResponse.safeParse(JSON.parse(clean(response.response.text())));
+  const parsed = BatchResponse.safeParse(modelJson(clean(response.response.text())));
   if (!parsed.success) throw new Error('The model returned an unexpected reading format');
   return new Map(parsed.data.answers.map((a) => [a.q, a.text.trim()]));
 }
@@ -65,7 +66,7 @@ export async function checkPointsBatch(answer: string, points: readonly string[]
   const started = performance.now();
   const response = await withRetry(() => judgeModel(POINTS_SCHEMA, InferenceMode.ONLY_IN_CLOUD).generateContent(prompt));
   recordInference({ kind: 'points', source: 'in_cloud', ms: Math.round(performance.now() - started) });
-  const parsed = PointsResponse.safeParse(JSON.parse(clean(response.response.text())));
+  const parsed = PointsResponse.safeParse(modelJson(clean(response.response.text())));
   if (!parsed.success) throw new Error('The model returned an unexpected point-check format');
   const found = points.filter((_, i) => parsed.data.points[i] === true);
   // Same rule as the per-point path: "do not accept" only matters when no marking point was found.

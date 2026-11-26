@@ -7,6 +7,7 @@ import { asPromptData, fillTemplate } from './config';
 import { authorGenerate, config } from './models';
 import { isPrivate, PrivateModeError } from './privacy';
 import { recordInference } from './telemetry';
+import { modelJson } from './config';
 
 const CATCH_UP_SCHEMA = Schema.object({
   properties: {
@@ -33,7 +34,7 @@ export async function makeCatchUp(question: Question, mistakes: string[], subjec
   const started = performance.now();
   const { text } = await authorGenerate(CATCH_UP_SCHEMA, prompt);
   recordInference({ kind: 'author', source: 'in_cloud', ms: Math.round(performance.now() - started) });
-  const parsed = CatchUp.safeParse(JSON.parse(text));
+  const parsed = CatchUp.safeParse(modelJson(text));
   if (!parsed.success) throw new Error('The catch-up sheet came back incomplete. Please try again.');
   return parsed.data;
 }

@@ -9,6 +9,7 @@ import { recordInference } from './telemetry';
 import { workingSteps } from '../marking/normalize';
 import { alignToPrinted, printedLabels, printedLabelsNote, pinCalculations, printedSections } from './printedLabels';
 import { TEACHER_MATERIAL } from './privacy';
+import { modelJson } from './config';
 
 const QUESTION_TYPES = ['objective', 'numeric', 'short', 'points'] as const;
 
@@ -204,7 +205,7 @@ async function draftOnce(parts: (string | Part)[]): Promise<{ questions: Questio
   const started = performance.now();
   const { text } = await authorGenerate(DRAFT_SCHEMA, parts);
   recordInference({ kind: 'author', source: 'in_cloud', ms: Math.round(performance.now() - started) });
-  const parsed = Draft.safeParse(JSON.parse(text));
+  const parsed = Draft.safeParse(modelJson(text));
   if (!parsed.success) throw new Error('The drafted marking scheme was incomplete. Try a clearer photo or type the questions.');
   const questions = parsed.data.questions.map(toQuestion).filter((q): q is Question => q !== null).sort((a, b) => a.q - b.q);
   return { questions, count: parsed.data.questionCount ?? 0, labels: parsed.data };

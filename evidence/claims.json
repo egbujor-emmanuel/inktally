@@ -4,11 +4,11 @@
     {
       "id": "web-unit-tests",
       "check": "webUnitTests",
-      "value": "171",
+      "value": "175",
       "shows": [
-        "171"
+        "175"
       ],
-      "text": "**171 unit tests pass**",
+      "text": "**175 unit tests pass**",
       "statedIn": [
         "README.md"
       ],
@@ -21,11 +21,11 @@
     {
       "id": "judges-unit-tests",
       "check": "webUnitTests",
-      "value": "171",
+      "value": "175",
       "shows": [
-        "171"
+        "175"
       ],
-      "text": "Lint, 171 unit tests",
+      "text": "Lint, 175 unit tests",
       "statedIn": [
         "JUDGES.md"
       ],
@@ -214,6 +214,42 @@
         {
           "path": "bench/evidence/privacy-check-2026-11-26/privacy-check.json",
           "sha256": "ab16f584e3001558d46d206a3467742466b11004de9c3ab6f3dbabe11d621219"
+        }
+      ]
+    },
+    {
+      "id": "real-handwriting-waec",
+      "check": "handwritingDryRun",
+      "value": "55/56",
+      "shows": [
+        "55 / 56"
+      ],
+      "text": "**55 / 56 questions marked the same as the examiner**",
+      "statedIn": [
+        "README.md"
+      ],
+      "sources": [
+        {
+          "path": "bench/evidence/waec-handwritten-2026-11-25/handwriting-test.json",
+          "sha256": "183a86305e6f82e34587c2cd838819d2eb806ddbed60ca71a2053e92e8e2e8e2"
+        }
+      ]
+    },
+    {
+      "id": "mnist-handwriting",
+      "check": "mnistSheets",
+      "value": "229/240",
+      "shows": [
+        "229 / 240"
+      ],
+      "text": "**229 / 240 read exactly**",
+      "statedIn": [
+        "README.md"
+      ],
+      "sources": [
+        {
+          "path": "bench/evidence/mnist-sheets-2026-11-26/results.json",
+          "sha256": "a4f336bdfa7bb22e4fce9c416240b73edac6a6bc45381ee41c4713ba4df122eb"
         }
       ]
     }

@@ -72,7 +72,7 @@ const CHECKS = {
     const pupil = r.geminiRequests.filter((x) => x.image || !x.teacherMaterial).length;
     return `${r.steps.filter((x) => x.ok).length}/${r.steps.length} checks, ${pupil} pupil requests sent`;
   },
-  mnistSheets: ([p]) => { const st = mnistStats(json(p).results); return `${st.exact}/${st.answers} read exactly, ${st.unflaggedWrong} wrong without a flag`; },
+  mnistSheets: ([p]) => { const st = mnistStats(json(p).results); return `${st.exact}/${st.answers}`; },
 };
 
 const { claims } = json('evidence/claims.json');

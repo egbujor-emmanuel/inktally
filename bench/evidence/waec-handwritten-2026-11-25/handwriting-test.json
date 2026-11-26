@@ -1,0 +1,462 @@
+{
+  "at": "2026-11-25T16:26:16.289Z",
+  "site": "https://redpen-hybrid.web.app",
+  "truth": "docs/real-test/handwritten-truth.json",
+  "key": [
+    "Question 1 1 Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Correct letter(s)",
+    "Question 2 2 Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Correct letter(s)",
+    "Question 3 3 Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Correct letter(s)",
+    "Question 4 4 Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Correct letter(s)",
+    "Question 5 5 Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Correct letter(s)",
+    "Question 6 6(a) Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Marking points — 1 mark each (one per line) Do not accept",
+    "Question 7 6(b)(i) Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Accepted answer(s), separated by ; Method marks — for working when the answer is w",
+    "Question 8 6(b)(ii) Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Accepted answer(s), separated by ; Method marks — for working when the answer is ",
+    "Question 9 7(a) Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Marking points — 1 mark each (one per line) Do not accept",
+    "Question 10 7(b) Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Accepted answer(s), separated by ; Method marks — for working when the answer is wro",
+    "Question 11 8(a) Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Marking points — 1 mark each (one per line) Do not accept",
+    "Question 12 8(b) Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Accepted answer(s), separated by ; Method marks — for working when the answer is wro",
+    "Question 13 9 Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Accepted answer(s), separated by ; Method marks — for working when the answer is wrong ",
+    "Question 14 10 Question Multiple choice Number Word / phrase Theory (points) Number as printed (optional, e.g. 6(a)) Marks – + Remove Accepted answer(s), separated by ; Method marks — for working when the answer is wrong"
+  ],
+  "results": [
+    {
+      "name": "Script 1",
+      "total": "Total: 20/22",
+      "seconds": 217,
+      "truthTotal": 20,
+      "marks": [
+        {
+          "label": "1",
+          "got": 1,
+          "max": 1,
+          "row": "Q1 1/1 AI read: “B” Cloud Marked by code Cloud read Chose B — correct.",
+          "index": 0
+        },
+        {
+          "label": "2",
+          "got": 1,
+          "max": 1,
+          "row": "Q2 1/1 AI read: “C” Cloud Marked by code Cloud read Chose C — correct.",
+          "index": 1
+        },
+        {
+          "label": "3",
+          "got": 1,
+          "max": 1,
+          "row": "Q3 1/1 AI read: “B” Cloud Marked by code Cloud read Chose B — correct.",
+          "index": 2
+        },
+        {
+          "label": "4",
+          "got": 1,
+          "max": 1,
+          "row": "Q4 1/1 AI read: “B” Cloud Marked by code Cloud read Chose B — correct.",
+          "index": 3
+        },
+        {
+          "label": "5",
+          "got": 1,
+          "max": 1,
+          "row": "Q5 1/1 AI read: “C” Cloud Marked by code Cloud read Chose C — correct.",
+          "index": 4
+        },
+        {
+          "label": "6(a)",
+          "got": 1,
+          "max": 1,
+          "row": "Q6(a) 1/1 AI read: “Acceleration can be defined as the rate of change of velocity” Cloud Point check Cloud read Found: the rate of change of velocity (change in velocity per unit time).",
+          "index": 5
+        },
+        {
+          "label": "6(b)(i)",
+          "got": 2,
+          "max": 2,
+          "row": "Q6(b)(i) 2/2 AI read: “a = (v-u)/(t) = (20-0)/(5) a = 4ms^-2” Cloud Marked by code Cloud read Answer 4 matches the marking scheme.",
+          "index": 6
+        },
+        {
+          "label": "6(b)(ii)",
+          "got": 2,
+          "max": 2,
+          "row": "Q6(b)(ii) 2/2 AI read: “s = 1/2 (u+v)t = 1/2 (0+20)x5 = 50m” Cloud Marked by code Cloud read Answer 50 matches the marking scheme.",
+          "index": 7
+        },
+        {
+          "label": "7(a)",
+          "got": 1,
+          "max": 2,
+          "row": "Q7(a) 1/2 AI read: “The current through a conductor is directly proportional to the potential difference across it” Cloud Point check Cloud read Found: the current through a (metallic) conductor is directly proportional ",
+          "index": 8
+        },
+        {
+          "label": "7(b)",
+          "got": 2,
+          "max": 2,
+          "row": "Q7(b) 2/2 AI read: “R = 4+2 = 6ΙΗ I = (V)/(R) = (12)/(6) = 2A” Cloud Marked by code Cloud read Answer 2 matches the marking scheme.",
+          "index": 9
+        },
+        {
+          "label": "8(a)",
+          "got": 2,
+          "max": 2,
+          "row": "Q8(a) 2/2 AI read: “In transverse wave, the particles vibrate perpendicular to the direction of the wave. In longitudinal wave they vibrate parallel to it. Transverse wave can be polarized.” Cloud Point check Cloud read ",
+          "index": 10
+        },
+        {
+          "label": "8(b)",
+          "got": 2,
+          "max": 2,
+          "row": "Q8(b) 2/2 AI read: “v = fΗΗ 50x0.4 = 20m/s” Cloud Marked by code Cloud read Answer 20 matches the marking scheme.",
+          "index": 11
+        },
+        {
+          "label": "9",
+          "got": 1,
+          "max": 2,
+          "row": "Q9 1/2 AI read: “P = Ηgh = 10x1000x10 = 10x10^5 Pa” Cloud Point check Cloud read Answer 1000000; expected 100000. Method marks for: uses P = hρg.",
+          "index": 12
+        },
+        {
+          "label": "10",
+          "got": 2,
+          "max": 2,
+          "row": "Q10 2/2 AI read: “PE = mgh = 2x10x5 = 100J” Cloud Marked by code Cloud read Answer 100 matches the marking scheme.",
+          "index": 13
+        }
+      ],
+      "diffs": []
+    },
+    {
+      "name": "Script 2",
+      "total": "Total: 6/22",
+      "seconds": 45,
+      "truthTotal": 6,
+      "marks": [
+        {
+          "label": "1",
+          "got": 1,
+          "max": 1,
+          "row": "Q1 1/1 AI read: “B” Cloud Marked by code Cloud read Chose B — correct.",
+          "index": 0
+        },
+        {
+          "label": "2",
+          "got": 0,
+          "max": 1,
+          "row": "Q2 0/1 AI read: “B” Cloud Marked by code Cloud read Chose B; correct is C.",
+          "index": 1
+        },
+        {
+          "label": "3",
+          "got": 1,
+          "max": 1,
+          "row": "Q3 1/1 AI read: “B” Cloud Marked by code Cloud read Chose B — correct.",
+          "index": 2
+        },
+        {
+          "label": "4",
+          "got": 0,
+          "max": 1,
+          "row": "Q4 0/1 AI read: “A” Cloud Marked by code Cloud read Chose A; correct is B.",
+          "index": 3
+        },
+        {
+          "label": "5",
+          "got": 1,
+          "max": 1,
+          "row": "Q5 1/1 AI read: “C” Cloud Marked by code Cloud read Chose C — correct.",
+          "index": 4
+        },
+        {
+          "label": "6(a)",
+          "got": 0,
+          "max": 1,
+          "row": "Q6(a) 0/1 AI read: “Acceleration is charge in speed” Cloud Point check Check this No marking point found in a written answer — the handwriting may have been misread.",
+          "index": 5
+        },
+        {
+          "label": "6(b)(i)",
+          "got": 0,
+          "max": 2,
+          "row": "Q6(b)(i) 0/2 AI read: “a=20x5=100m/s\"” Cloud Marked by code Check this Could not read a number in the answer box — please check.",
+          "index": 6
+        },
+        {
+          "label": "6(b)(ii)",
+          "got": 0,
+          "max": 2,
+          "row": "Q6(b)(ii) 0/2 AI read: “S=20x5 =100m” Cloud Marked by code Check this Answer 100; expected 50. The working 20*5 = 100 is worked out correctly but does not follow the marking guide's formula, so a different formula was us",
+          "index": 7
+        },
+        {
+          "label": "7(a)",
+          "got": 0,
+          "max": 2,
+          "row": "Q7(a) 0/2 AI read: “current flows from positive to negative” Cloud Point check Check this No marking point found in a written answer — the handwriting may have been misread.",
+          "index": 8
+        },
+        {
+          "label": "7(b)",
+          "got": 0,
+          "max": 2,
+          "row": "Q7(b) 0/2 AI read: “R=4+2 = 8ͩ I = 12/8 = 1%A” Cloud Marked by code Cloud read Answer 1; expected 2.",
+          "index": 9
+        },
+        {
+          "label": "8(a)",
+          "got": 1,
+          "max": 2,
+          "row": "Q8(a) 1/2 AI read: “Transverse wave have crest and trough longitudnal wave have compressions and refractions sound is longitudenal” Cloud Point check Cloud read Found: transverse waves have crests and troughs, longitudin",
+          "index": 10
+        },
+        {
+          "label": "8(b)",
+          "got": 0,
+          "max": 2,
+          "row": "Q8(b) 0/2 AI read: “v = fΓ = 50/0.4 = 125 m/s” Cloud Marked by code Check this Answer 125; expected 20. The working 50/0.4 = 125 is worked out correctly but does not follow the marking guide's formula, so a different for",
+          "index": 11
+        },
+        {
+          "label": "9",
+          "got": 1,
+          "max": 2,
+          "row": "Q9 1/2 AI read: “P=hͩg = 10x1000x1= 10,000 Pa” Cloud Point check Cloud read Answer 10000; expected 100000. Method marks for: uses P = hρg.",
+          "index": 12
+        },
+        {
+          "label": "10",
+          "got": 1,
+          "max": 2,
+          "row": "Q10 1/2 AI read: “PE= mgh= 2 x 10x5= 1000J” Cloud Point check Cloud read Answer 1000; expected 100. Method marks for: uses PE = mgh.",
+          "index": 13
+        }
+      ],
+      "diffs": []
+    },
+    {
+      "name": "Script 3",
+      "total": "Total: 16/22",
+      "seconds": 27,
+      "truthTotal": 17,
+      "marks": [
+        {
+          "label": "1",
+          "got": 1,
+          "max": 1,
+          "row": "Q1 1/1 AI read: “B” Cloud Marked by code Cloud read Chose B — correct.",
+          "index": 0
+        },
+        {
+          "label": "2",
+          "got": 1,
+          "max": 1,
+          "row": "Q2 1/1 AI read: “C” Cloud Marked by code Cloud read Chose C — correct.",
+          "index": 1
+        },
+        {
+          "label": "3",
+          "got": 0,
+          "max": 1,
+          "row": "Q3 0/1 AI read: “D” Cloud Marked by code Cloud read Chose D; correct is B.",
+          "index": 2
+        },
+        {
+          "label": "4",
+          "got": 1,
+          "max": 1,
+          "row": "Q4 1/1 AI read: “B” Cloud Marked by code Cloud read Chose B — correct.",
+          "index": 3
+        },
+        {
+          "label": "5",
+          "got": 0,
+          "max": 1,
+          "row": "Q5 0/1 AI read: “A” Cloud Marked by code Cloud read Chose A; correct is C.",
+          "index": 4
+        },
+        {
+          "label": "6(a)",
+          "got": 1,
+          "max": 1,
+          "row": "Q6(a) 1/1 AI read: “Acceleration is the rate of change of velocity with time.” Cloud Point check Cloud read Found: the rate of change of velocity (change in velocity per unit time).",
+          "index": 5
+        },
+        {
+          "label": "6(b)(i)",
+          "got": 2,
+          "max": 2,
+          "row": "Q6(b)(i) 2/2 AI read: “4” Cloud Marked by code Cloud read Answer 4 matches the marking scheme.",
+          "index": 6
+        },
+        {
+          "label": "6(b)(ii)",
+          "got": 0,
+          "max": 2,
+          "row": "Q6(b)(ii) 0/2 AI read: “—” Cloud Marked by code Check this Could not read a number in the answer box — please check.",
+          "index": 7
+        },
+        {
+          "label": "7(a)",
+          "got": 1,
+          "max": 2,
+          "row": "Q7(a) 1/2 AI read: “I ∑ V if the temperature is constant” Cloud Point check Cloud read Found: provided the temperature (and other physical conditions) remain constant. 1 more point(s) needed for full marks.",
+          "index": 8
+        },
+        {
+          "label": "7(b)",
+          "got": 2,
+          "max": 2,
+          "row": "Q7(b) 2/2 AI read: “I = V/R = 12/6 = 2A” Cloud Marked by code Cloud read Answer 2 matches the marking scheme.",
+          "index": 9
+        },
+        {
+          "label": "8(a)",
+          "got": 1,
+          "max": 2,
+          "row": "Q8(a) 1/2 AI read: “Longitudinal waves vibrate along the direction of travel.” Cloud Point check Cloud read Found: in transverse waves the particles vibrate perpendicular to the direction of travel, in longitudinal waves",
+          "index": 10
+        },
+        {
+          "label": "8(b)",
+          "got": 2,
+          "max": 2,
+          "row": "Q8(b) 2/2 AI read: “20 m/s” Cloud Marked by code Cloud read Answer 20 matches the marking scheme.",
+          "index": 11
+        },
+        {
+          "label": "9",
+          "got": 2,
+          "max": 2,
+          "row": "Q9 2/2 AI read: “100,000 Pa” Cloud Marked by code Cloud read Answer 100000 matches the marking scheme.",
+          "index": 12
+        },
+        {
+          "label": "10",
+          "got": 2,
+          "max": 2,
+          "row": "Q10 2/2 AI read: “100 joules” Cloud Marked by code Cloud read Answer 100 matches the marking scheme.",
+          "index": 13
+        }
+      ],
+      "diffs": [
+        {
+          "label": "7(a)",
+          "got": 1,
+          "max": 2,
+          "row": "Q7(a) 1/2 AI read: “I ∑ V if the temperature is constant” Cloud Point check Cloud read Found: provided the temperature (and other physical conditions) remain constant. 1 more point(s) needed for full marks.",
+          "index": 8,
+          "want": 2
+        }
+      ]
+    },
+    {
+      "name": "Script 4",
+      "total": "Total: 22/22",
+      "seconds": 29,
+      "truthTotal": 22,
+      "marks": [
+        {
+          "label": "1",
+          "got": 1,
+          "max": 1,
+          "row": "Q1 1/1 AI read: “B” Cloud Marked by code Cloud read Chose B — correct.",
+          "index": 0
+        },
+        {
+          "label": "2",
+          "got": 1,
+          "max": 1,
+          "row": "Q2 1/1 AI read: “C” Cloud Marked by code Cloud read Chose C — correct.",
+          "index": 1
+        },
+        {
+          "label": "3",
+          "got": 1,
+          "max": 1,
+          "row": "Q3 1/1 AI read: “B” Cloud Marked by code Cloud read Chose B — correct.",
+          "index": 2
+        },
+        {
+          "label": "4",
+          "got": 1,
+          "max": 1,
+          "row": "Q4 1/1 AI read: “B” Cloud Marked by code Cloud read Chose B — correct.",
+          "index": 3
+        },
+        {
+          "label": "5",
+          "got": 1,
+          "max": 1,
+          "row": "Q5 1/1 AI read: “C” Cloud Marked by code Cloud read Chose C — correct.",
+          "index": 4
+        },
+        {
+          "label": "6(a)",
+          "got": 1,
+          "max": 1,
+          "row": "Q6(a) 1/1 AI read: “Acceleration = change in velocity / time taken” Cloud Point check Cloud read Found: the rate of change of velocity (change in velocity per unit time).",
+          "index": 5
+        },
+        {
+          "label": "6(b)(i)",
+          "got": 2,
+          "max": 2,
+          "row": "Q6(b)(i) 2/2 AI read: “a = (v-u)/t = 20/5 = 4 ms^-2” Cloud Marked by code Cloud read Answer 4 matches the marking scheme.",
+          "index": 6
+        },
+        {
+          "label": "6(b)(ii)",
+          "got": 2,
+          "max": 2,
+          "row": "Q6(b)(ii) 2/2 AI read: “s = ut + 1/2 at^2 = 0 + 1/2 x 4 x 5^2 = 50m” Cloud Marked by code Cloud read Answer 50 matches the marking scheme.",
+          "index": 7
+        },
+        {
+          "label": "7(a)",
+          "got": 2,
+          "max": 2,
+          "row": "Q7(a) 2/2 AI read: “Ohm's law states that the current through a metallic conductor is directly proportional to the potential difference across it ends, provided the temperature and other physical conditions remains const",
+          "index": 8
+        },
+        {
+          "label": "7(b)",
+          "got": 2,
+          "max": 2,
+          "row": "Q7(b) 2/2 AI read: “2A” Cloud Marked by code Cloud read Answer 2 matches the marking scheme.",
+          "index": 9
+        },
+        {
+          "label": "8(a)",
+          "got": 2,
+          "max": 2,
+          "row": "Q8(a) 2/2 AI read: “(i) Transverse waves can be polarised but longitudinal waves cannot. (ii) Transverse waves have crests and troughs; longitudinal waves have compressions and rarefactions.” Cloud Point check Cloud read",
+          "index": 10
+        },
+        {
+          "label": "8(b)",
+          "got": 2,
+          "max": 2,
+          "row": "Q8(b) 2/2 AI read: “v = fλ = 50 x 0.4 = 20ms^-1” Cloud Marked by code Cloud read Answer 20 matches the marking scheme.",
+          "index": 11
+        },
+        {
+          "label": "9",
+          "got": 2,
+          "max": 2,
+          "row": "Q9 2/2 AI read: “P = 1 x 10^5 N/m^2” Cloud Marked by code Cloud read Answer 100000 matches the marking scheme.",
+          "index": 12
+        },
+        {
+          "label": "10",
+          "got": 2,
+          "max": 2,
+          "row": "Q10 2/2 AI read: “PE = 2 x 10 x 5 = 100J” Cloud Marked by code Cloud read Answer 100 matches the marking scheme.",
+          "index": 13
+        }
+      ],
+      "diffs": []
+    }
+  ],
+  "agree": 55,
+  "all": 56
+}

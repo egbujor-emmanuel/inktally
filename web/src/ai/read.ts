@@ -7,6 +7,7 @@ import { fillTemplate } from './config';
 import { blobToPart, config, readerModel, type ReadMode } from './models';
 import { withRetry } from './retry';
 import { recordInference } from './telemetry';
+import { modelJson } from './config';
 
 const READ_SCHEMA = Schema.object({ properties: { text: Schema.string() } });
 const ReadResponse = z.object({ text: z.string() });
@@ -22,7 +23,7 @@ export interface ReadResult { text: string; source: ReadSource; ms: number }
 
 function parseJson(raw: string): unknown {
   const cleaned = raw.replace(/^```(?:json)?\s*/m, '').replace(/```\s*$/m, '').trim();
-  return JSON.parse(cleaned);
+  return modelJson(cleaned);
 }
 
 /** Transcribes one cropped answer box. `mode` forces cloud for verification passes. */

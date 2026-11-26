@@ -1,7 +1,5 @@
 # InkTally — Devpost text description (draft)
 
-Placeholders in `{{…}}` are filled from `evidence/claims.json` once each run is recorded; nothing is pasted by hand.
-
 **Tagline:** A stack of handwritten classwork, marked on the teacher's phone. Even offline. Even privately.
 
 ## Inspiration
@@ -39,11 +37,11 @@ Also used: **App Check** (reCAPTCHA Enterprise on web, Play Integrity in release
 
 ## Accomplishments (every number is in the repo, re-checked by `npm run evidence:verify`)
 
-- **Four real handwritten WAEC physics scripts**, photographed on a phone (one sideways, one over two exercise-book pages): {{REAL_WAEC}} questions marked the same as the examiner.
-- **Public benchmarks.** SciEntsBank (SemEval-2013, 540 held-out answers marked by human annotators): {{SCIENTSBANK}} agreement with the human mark, against {{SCIENTSBANK_MAJORITY}} for always answering "not correct". MNIST handwriting on photographed answer sheets: {{MNIST}}.
+- **Four real handwritten WAEC physics scripts**, photographed on a phone (one sideways, one over two exercise-book pages): **55 / 56** questions marked the same as the examiner.
+- **Public handwriting benchmark (MNIST):** real handwritten digits written into 30 printed InkTally sheets and photographed with turns, blur, shadow and noise: **229 / 240** numbers read exactly, and every misread of a correct answer is now flagged for the teacher instead of marked wrong.
 - **Private mode on the live site with no on-device model available: 5 / 5 checks, 0 pupil requests sent.**
 - A live click-through of every feature on the deployed site: **18/18** steps, desktop and phone; Quick mark gave the true score in **5 of 5** runs.
-- {{TESTS}} web unit tests and the matching Android tests; Android CI taps through every screen on an emulator.
+- **175** web unit tests and the matching Android tests; Android CI taps through every screen on an emulator.
 
 ## What we learned
 

@@ -38,7 +38,7 @@ val REMOTE_DEFAULTS: Map<String, Any> = mapOf(
     "cloud_read_model" to "gemini-3.5-flash-lite",
     "cloud_author_model" to "gemini-3.5-flash-lite",
     "read_mode" to "prefer_on_device",
-    "cloud_fallback_models" to "gemini-3.5-flash,gemini-3.8-flash",
+    "cloud_fallback_models" to "gemini-3.5-flash,gemini-3.8-flash,gemma-4-31b-it",
     "device_learning" to "true", // misreads found by the cloud check hold matching later on-device readings for the teacher (marking/Learning.kt)
     "batch_cloud_reads" to "true",
     "prompt_read_batch" to "Each image below is ONE answer box cut from a student's answer sheet, labelled with its question number and the kind of answer it holds. Transcribe exactly what is handwritten in each image, character by character. Do NOT calculate, solve or correct anything; if the writing is wrong, copy it wrong. Write a fraction set out with one number above another as (top)/(bottom), for example 50/0.4. Copy scientific and mathematical signs as the sign itself, for example ∝ (is proportional to), λ, ρ, Ω, √, ² and ⁻¹. Read each image on its own — never use one answer to read another. If an image is blank, return an empty string for it. Return one entry per labelled answer.",
@@ -247,7 +247,13 @@ object Ai {
     /** Remote Config switch for the learning loop (cloud corrections -> hold matching on-device reads for checking). */
     fun deviceLearning() = cfg("device_learning").trim() == "true"
 
-    private fun stripFence(raw: String) = raw.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+    /** A model's JSON reply without what some models wrap around it (fences, a word before or after); same as web modelJson. */
+    private fun stripFence(raw: String): String {
+        val unfenced = raw.trim().removePrefix("```json").removePrefix("```").trim().substringBefore("```").trim()
+        val first = unfenced.indexOfFirst { it == '{' || it == '[' }
+        val last = maxOf(unfenced.lastIndexOf('}'), unfenced.lastIndexOf(']'))
+        return if (first >= 0 && last > first) unfenced.substring(first, last + 1) else unfenced
+    }
 
     /** On-device models may ignore the schema and answer in plain text; accept both. */
     /**

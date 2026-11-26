@@ -9,6 +9,7 @@ import { blobToPart, readerModel, type ReadMode } from './models';
 import { withRetry } from './retry';
 import { recordInference } from './telemetry';
 import { alignPageAnswers } from './pageAlign';
+import { modelJson } from './config';
 
 const PAGE_SCHEMA = Schema.object({
   properties: { answers: Schema.array({ items: Schema.object({ properties: { label: Schema.string(), q: Schema.integer(), text: Schema.string() } }) }) },
@@ -36,7 +37,7 @@ export async function readPage(photo: Blob, questions: { q: number; label?: stri
   const source: ReadSource = response.response.inferenceSource === 'on_device' ? 'on_device' : 'in_cloud';
   recordInference({ kind: mode === InferenceMode.ONLY_IN_CLOUD ? 'verify' : 'read', source, ms: Math.round(performance.now() - started) });
   const raw = response.response.text().replace(/^```(?:json)?\s*/m, '').replace(/```\s*$/m, '').trim();
-  const parsed = PageResponse.safeParse(JSON.parse(raw));
+  const parsed = PageResponse.safeParse(modelJson(raw));
   if (!parsed.success) throw new Error('Could not read the page. Try a sharper photo in good light.');
   return { answers: alignPageAnswers(parsed.data.answers, questions), source };
 }

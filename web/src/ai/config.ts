@@ -14,7 +14,7 @@ export const REMOTE_DEFAULTS = {
    * Used in order when a model's quota runs out (free tier: 500 requests/day per model, measured 2026-11-13).
    * Each model has its own quota, so routing to the next one keeps teachers marking.
    */
-  cloud_fallback_models: 'gemini-3.5-flash,gemini-3.8-flash',
+  cloud_fallback_models: 'gemini-3.5-flash,gemini-3.8-flash,gemma-4-31b-it',
   /** prefer_on_device | prefer_in_cloud | only_on_device | only_in_cloud */
   read_mode: 'prefer_on_device',
   /**
@@ -65,4 +65,19 @@ export const asPromptData = (text: string): string => text.replace(/[<>]/g, ' ')
 /** Fills {placeholders} in a prompt template. Unknown placeholders are left as-is. */
 export function fillTemplate(template: string, values: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (match, key: string) => (key in values ? String(values[key]) : match));
+}
+
+/**
+ * A model's JSON reply, tolerating what some models wrap around it (a ```json fence, a closing fence, a word before or
+ * after): Gemma 4 as the last fallback model ended its replies with a fence, which broke drafting (26 Nov).
+ * Throws when there is no JSON at all, so a bad reply is still flagged, never guessed at.
+ */
+export function modelJson(text: string): unknown {
+  const t = text.trim();
+  try { return JSON.parse(t); } catch { /* try without the wrapping */ }
+  const unfenced = t.replace(/^```(?:json)?\s*/i, '').replace(/\s*```[\s\S]*$/, '').trim();
+  try { return JSON.parse(unfenced); } catch { /* try the outermost object */ }
+  const first = unfenced.search(/[{[]/);
+  const last = Math.max(unfenced.lastIndexOf('}'), unfenced.lastIndexOf(']'));
+  return JSON.parse(first >= 0 && last > first ? unfenced.slice(first, last + 1) : t);
 }
