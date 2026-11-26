@@ -4,6 +4,7 @@ appId: app.redpen.teacher
 ---
 - launchApp:
     clearState: true
+- startRecording: android-core
 - runFlow:
     when:
       visible: ".*isn't responding"
@@ -70,3 +71,4 @@ appId: app.redpen.teacher
     visible: "Share PDF"
     timeout: 30000
 - takeScreenshot: 09-sample-print
+- stopRecording

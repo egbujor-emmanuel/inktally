@@ -2,6 +2,7 @@
 appId: app.redpen.teacher
 ---
 - launchApp
+- startRecording: android-teacher-scheme
 - runFlow:
     when:
       visible: ".*isn't responding"
@@ -39,3 +40,4 @@ appId: app.redpen.teacher
     timeout: 20000
 - assertNotVisible: "…or type / paste your marking scheme"
 - takeScreenshot: 20-scheme-alternative-in-editor
+- stopRecording

@@ -2,6 +2,7 @@
 appId: app.redpen.teacher
 ---
 - launchApp
+- startRecording: android-offline
 - runFlow:
     when:
       visible: ".*isn't responding"
@@ -43,3 +44,4 @@ appId: app.redpen.teacher
 - assertVisible: "Offline Student"
 - assertNotVisible: "Waiting"
 - takeScreenshot: 32-offline-in-register
+- stopRecording

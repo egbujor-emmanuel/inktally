@@ -3,6 +3,7 @@
 appId: app.redpen.teacher
 ---
 - launchApp
+- startRecording: android-mark-photo
 - runFlow:
     when:
       visible: ".*isn't responding"
@@ -67,3 +68,4 @@ appId: app.redpen.teacher
 - tapOn: "Download Excel (.xlsx)"
 - waitForAnimationToEnd
 - takeScreenshot: 14-share-xlsx
+- stopRecording

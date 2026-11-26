@@ -64,6 +64,10 @@ jobs:
             maestro test android/e2e/4-offline-queue.yaml --test-output-dir e2e-out/offline --debug-output e2e-out/offline-debug || echo "OFFLINE_FAILED" >> e2e-out/status.txt
             adb logcat -d -s Repo:* AndroidRuntime:E FirebaseAI:* > e2e-out/logcat.txt || true
             touch e2e-out/status.txt; cat e2e-out/status.txt
+      # Screen recordings of each flow (Maestro startRecording), for the demo video.
+      - name: Collect screen recordings
+        if: always()
+        run: mkdir -p e2e-out/rec && find . ~/.maestro -name 'android-*.mp4' -exec cp {} e2e-out/rec/ \; ; ls -la e2e-out/rec || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
