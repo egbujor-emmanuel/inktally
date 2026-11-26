@@ -5,7 +5,7 @@
 // A truth file with "pages" maps each script to its photo(s); a script on several pages is marked as one student.
 import { chromium } from '@playwright/test';
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 const DIR = process.argv[2];
 const URL_ = process.argv[3]?.startsWith('http') ? process.argv[3] : 'https://inktally.web.app';
@@ -84,5 +84,6 @@ ${name}: NO RESULT after ${Math.round(Number(process.env.MARK_TIMEOUT_MS ?? 300_
 const agree = results.reduce((n, r) => n + r.marks.filter((m) => m.index >= 0).length - r.diffs.length, 0);
 const all = results.filter((r) => !r.stuck).length * truth.labels.length;
 console.log(`\nquestions where InkTally = truth: ${agree}/${all}`);
+if (process.env.OUT_JSON) mkdirSync(dirname(resolve(process.env.OUT_JSON)), { recursive: true });
 writeFileSync(process.env.OUT_JSON ?? `${OUT}/handwriting-test.json`, JSON.stringify({ at: new Date().toISOString(), site: URL_, truth: TRUTH.replace(/^.*?docs/, 'docs').replaceAll('\\', '/'), key, results, agree, all }, null, 2));
 await browser.close();

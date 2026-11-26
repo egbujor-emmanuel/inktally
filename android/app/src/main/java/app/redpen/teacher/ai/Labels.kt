@@ -83,6 +83,9 @@ fun labelKey(label: String): String =
     label.lowercase().trim().replace(Regex("""^(?:question|q|no)\.?\s*(?=\d)"""), "").replace(Regex("[^0-9a-z]"), "")
 
 private const val LONGEST_LABEL = 16
+/** Any label left at the start of an answer, even one matching no question ("6b) 4" for 6(b)(i)); "1.5 A" keeps its number (same as web). */
+private val ANY_LABEL = Regex("""^\s*(?:q(?:uestion)?\.?\s*)?\d{1,3}\s*(?:[a-z]|\(\s*[a-z]\s*\))?\s*(?:\(\s*[ivx]+\s*\)|[ivx]{1,4})?\s*[).:](?=\s|$)\s*""", RegexOption.IGNORE_CASE)
+fun stripLabel(text: String): String = text.replaceFirst(ANY_LABEL, "")
 private val DIGIT_AFTER_END = Regex("""[).:]\s*\d""")
 private val LABEL_END = Regex("""[).:\s]$""")
 private val LEADING_PUNCT = Regex("""^[\s).:-]+""")
@@ -117,7 +120,7 @@ fun alignPageAnswers(answers: List<PageAnswer>, questions: List<app.redpen.teach
     }
     fun put(q: Int, a: PageAnswer) {
         val lead = leadingLabel(a.text, keys)
-        aligned[q] = (if (lead != null && only(lead.key) == q) lead.rest else a.text).trim()
+        aligned[q] = (if (lead != null && only(lead.key) == q) lead.rest else stripLabel(a.text)).trim()
     }
     val unplaced = mutableListOf<PageAnswer>()
     for (a in later) {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { alignPageAnswers, labelKey, leadingLabel } from './pageAlign';
+import { alignPageAnswers, labelKey, leadingLabel, stripLabel } from './pageAlign';
 
 const WAEC = ['1', '2', '3', '4', '5', '6(a)', '6(b)(i)', '6(b)(ii)', '7(a)', '7(b)', '8(a)', '8(b)', '9', '10'].map((label, i) => ({ q: i + 1, label }));
 
@@ -60,5 +60,13 @@ describe('matching what a student wrote to the marking scheme by label', () => {
 
   test('plain numbering (no printed labels) still matches', () => {
     expect(alignPageAnswers([{ q: 5, label: '1)', text: 'B' }], [{ q: 1 }, { q: 2 }]).get(1)).toBe('B');
+  });
+
+  test('Script 3, 26 Nov: a label matching no question ("6b)" for 6(b)(i)) is still taken off the answer; numbers keep their decimals', () => {
+    expect(stripLabel('6b) 4')).toBe('4');
+    expect(stripLabel('10) 100 joules')).toBe('100 joules');
+    expect(stripLabel('1.5 A')).toBe('1.5 A');
+    expect(stripLabel('100,000 Pa')).toBe('100,000 Pa');
+    expect(alignPageAnswers([{ q: 7, label: '6b(i)', text: '6b) 4' }], [{ q: 7, label: '6(b)(i)' }]).get(7)).toBe('4');
   });
 });

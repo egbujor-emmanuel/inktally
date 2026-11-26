@@ -13,6 +13,10 @@ export function labelKey(label: string): string {
 
 const LONGEST_LABEL = 16;
 
+/** Any label left at the start of an answer, even one matching no question ("6b) 4" written for 6(b)(i)); "1.5 A" keeps its number. */
+const ANY_LABEL = /^\s*(?:q(?:uestion)?\.?\s*)?\d{1,3}\s*(?:[a-z]|\(\s*[a-z]\s*\))?\s*(?:\(\s*[ivx]+\s*\)|[ivx]{1,4})?\s*[).:](?=\s|$)\s*/i;
+export const stripLabel = (text: string): string => text.replace(ANY_LABEL, '');
+
 /**
  * The longest start of the transcript that is one of the scheme's labels, ending at a ")", ".", ":" or a space
  * ("6b(ii) 4" -> 6b(ii), "8a)(i) Transverse…" -> 8a)). A digit after ")" or "." ends the label: "2) 2 m/s" is 2.
@@ -52,7 +56,7 @@ export function alignPageAnswers(answers: readonly PageAnswer[], questions: Read
   }
   const put = (q: number, answer: PageAnswer) => {
     const lead = leadingLabel(answer.text, keys);
-    aligned.set(q, (lead && only(lead.key) === q ? lead.rest : answer.text).trim());
+    aligned.set(q, (lead && only(lead.key) === q ? lead.rest : stripLabel(answer.text)).trim());
   };
   const unplaced: PageAnswer[] = [];
   for (const answer of later) {

@@ -1,0 +1,13 @@
+s01-hook	One teacher. Eighty handwritten scripts after every test. Mobile data that comes and goes. Marking takes the whole night.
+s02-idea	InkTally marks them on the teacher's own phone or laptop. Gemini Nano reads each answer on the device, plain code does the marking, and the cloud checks every mark when the signal is back.
+s03-quick	Quick mark. Photograph one page. InkTally works out the answer key from the questions, never from the student's answers. The teacher checks it, and the page is marked.
+s04-waec	For a real exam, paste your own marking guide. This is a Wayek physics paper. InkTally copies it exactly: the paper's own labels, the marks, method marks and theory points. Code reads the labels, so no model can reshape the key.
+s05-script2	Now a real handwritten script, photographed on a phone. Question eight b: the student wrote v equals f lambda, then divided. The arithmetic gives them away, so there is no method mark, and it is flagged. Question nine: the right formula with one wrong number. The method mark stays.
+s06-messy	Real exercise books are messy. This page was photographed sideways, so InkTally turns it upright on the phone. This script runs over two pages: tick one box, and it is marked as one student.
+s07-offline	No signal? The photo stays on the phone, and InkTally marks it by itself the moment the connection comes back.
+s08-nano	With Gemini Nano in Chrome, marking runs fully offline, and every mark is provisional. Back online, the cloud reads each answer again. A mark is verified only when both readings agree.
+s09-tools	Anything uncertain goes to the teacher, with the handwriting beside the reading. There is a mark register and an Excel file. Fix the answer key, and everyone is re-marked from what InkTally already read. Then a catch-up sheet from the class's actual mistakes.
+s10-sheet	No exercise books? Print InkTally answer sheets. Only the answer boxes are read, and names never go to the A I.
+s11-private	And with Private mode, no pupil's work goes to any cloud A I at all. A network guard enforces it, and the cloud check switches off.
+s12-android	The same app runs on Android, with the same data. Mark, review and export, even offline.
+s14-end	InkTally. Photograph the page. It's marked. Built on Firebase A I Logic.
