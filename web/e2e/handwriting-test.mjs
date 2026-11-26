@@ -52,13 +52,25 @@ const results = [];
 for (const { name, files } of scripts.filter((s) => !ONLY || ONLY.includes(s.name.match(/\d+/)[0]))) {
   const n = name.match(/\d+/)[0];
   const started = Date.now();
-  await page.goto(`${base}/mark`);
-  await page.getByText('Photograph answer sheet').waitFor({ timeout: 60_000 });
-  await page.getByRole('radio', { name: /Exercise book page/ }).click();
-  await page.getByLabel('Student name or number').fill(name);
-  if (files.length > 1) await page.getByRole('checkbox', { name: /pages of one student/i }).check();
-  await page.locator('input[aria-label^="Choose photo"]').setInputFiles(files.map((f) => join(DIR, f)));
-  const done = await page.getByText(/^Total:/).waitFor({ timeout: Number(process.env.MARK_TIMEOUT_MS ?? 300_000) }).then(() => true, () => false);
+  // A dropped connection or an overloaded cloud shows an error on screen: that is not a marking result, so try the
+  // same script again (twice at most) instead of waiting out the timeout.
+  let done = false;
+  for (let attempt = 1; attempt <= 3 && !done; attempt++) {
+    await page.goto(`${base}/mark`, { timeout: 120_000 });
+    await page.getByText('Photograph answer sheet').waitFor({ timeout: 60_000 });
+    await page.getByRole('radio', { name: /Exercise book page/ }).click();
+    await page.getByLabel('Student name or number').fill(name);
+    if (files.length > 1) await page.getByRole('checkbox', { name: /pages of one student/i }).check();
+    await page.locator('input[aria-label^="Choose photo"]').setInputFiles(files.map((f) => join(DIR, f)));
+    const failed = page.getByText(/No connection to the cloud|overloaded right now|quota is used up|took too long/);
+    const outcome = await Promise.race([
+      page.getByText(/^Total:/).waitFor({ timeout: Number(process.env.MARK_TIMEOUT_MS ?? 300_000) }).then(() => 'done', () => 'timeout'),
+      failed.first().waitFor({ timeout: Number(process.env.MARK_TIMEOUT_MS ?? 300_000) }).then(() => 'error', () => 'timeout'),
+    ]);
+    done = outcome === 'done';
+    if (outcome === 'error') { console.log(`  ${name}: cloud error on screen, attempt ${attempt}: ${(await failed.first().innerText()).slice(0, 90)}`); await page.waitForTimeout(20_000); }
+    else if (outcome === 'timeout') break;
+  }
   if (!done) {
     await page.screenshot({ path: `${OUT}/stuck-${n}.png`, fullPage: true });
     console.log(`

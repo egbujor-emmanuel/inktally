@@ -11,3 +11,9 @@ android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
+
+# demo film: large media is rebuilt or kept out of git
+video/film/assets/footage/*.mp4
+video/film/assets/footage/*.webm
+video/footage/
+video/film/renders/

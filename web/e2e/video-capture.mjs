@@ -39,7 +39,7 @@ await ctx.addInitScript(CURSOR);
 const page = await ctx.newPage();
 const t0 = Date.now();
 const markers = [];
-const mark = (name, kind = 'scene') => { markers.push({ name, kind, t: +((Date.now() - t0) / 1000).toFixed(2) }); console.log(`${markers.at(-1).t}s ${kind} ${name}`); };
+const mark = (name, kind = 'scene') => { markers.push({ name, kind, t: +((Date.now() - t0) / 1000).toFixed(2) }); if (kind !== 'click') console.log(`${markers.at(-1).t}s ${kind} ${name}`); };
 const pause = (ms) => page.waitForTimeout(ms);
 const save = () => writeFileSync(`${OUT}/markers.json`, JSON.stringify(markers, null, 1));
 
@@ -47,11 +47,11 @@ const save = () => writeFileSync(`${OUT}/markers.json`, JSON.stringify(markers, 
 async function click(locator) {
   await locator.scrollIntoViewIfNeeded();
   const b = await locator.boundingBox();
-  if (b) { await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 22 }); await pause(250); await page.mouse.down(); await page.mouse.up(); }
+  if (b) { await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 22 }); await pause(250); mark('click', 'click'); await page.mouse.down(); await page.mouse.up(); }
   else await locator.click();
   await pause(400);
 }
-async function type(locator, text) { await click(locator); await locator.pressSequentially(text, { delay: 45 }); await pause(300); }
+async function type(locator, text) { await click(locator); markers.push({ name: 'typing', kind: 'typing', t: +((Date.now() - t0) / 1000).toFixed(2), chars: text.length }); await locator.pressSequentially(text, { delay: 45 }); await pause(300); }
 async function point(locator) { const b = await locator.boundingBox(); if (b) await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 22 }); await pause(500); }
 /** A wait for the AI: logged so the editor speeds it up. */
 async function waitAI(name, locator, timeout = 300_000) { mark(name, 'wait-start'); await locator.waitFor({ timeout }); mark(name, 'wait-end'); await pause(900); }

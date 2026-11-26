@@ -1,0 +1,20 @@
+{
+ "dataset": "SciEntsBank (SemEval-2013 Task 7), test split \"unseen answers\" (huggingface.co/datasets/nkazi/SciEntsBank, split test_ua)",
+ "method": "Each answer marked as a 1-mark theory question: marking point = reference answer; InkTally cloud point check (Remote Config prompt_points_batch) + code markPoints. Gold 2-way: label \"correct\" = 1, every other label = 0.",
+ "labels": [
+  "correct",
+  "contradictory",
+  "partially_correct_incomplete",
+  "irrelevant",
+  "non_domain"
+ ],
+ "total": 120,
+ "results": [
+  {
+   "id": "PS.44.255.1",
+   "gold": 0,
+   "gold2": 1,
+   "error": "page.evaluate: FirebaseError: AI: Error fetching from https://firebasevertexai.googleapis.com/v1beta/projects/redpen-hybrid/models/gemini-3.8-flash:generateContent: [429 ] You exceeded your current qu"
+  }
+ ]
+}
