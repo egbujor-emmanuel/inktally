@@ -1,0 +1,5056 @@
+{
+ "dataset": "MNIST test set (yann.lecun.com/exdb/mnist; files from storage.googleapis.com/cvdf-datasets/mnist, MD5 9fb629c4… images, ec29112d… labels)",
+ "method": "30 printed InkTally sheets × 8 numeric answers; numbers 1–999 written with MNIST test digits (each digit image used once); about 40% written wrong on purpose; seeded photo distortions; InkTally scanner + one cloud read per sheet + code marking.",
+ "seed": 20261126,
+ "results": [
+  {
+   "sheet": 1,
+   "photo": {
+    "turn": 4.396484486758709,
+    "scale": 0.7264068273361772,
+    "shear": 0.013228897117078305,
+    "blur": 1.0136343443300575,
+    "shadow": 0.27144475254463035,
+    "noise": 10.36759979557246,
+    "jpeg": 0.7409065847983584
+   },
+   "ms": 83087,
+   "marks": [
+    {
+     "q": 1,
+     "read": "897",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "317",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "52.1",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "85",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "585",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "157",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "198",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "832",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 897,
+     "written": 897,
+     "mnist": [
+      1686,
+      7827,
+      7801
+     ],
+     "read": "897",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 317,
+     "written": 317,
+     "mnist": [
+      5245,
+      8390,
+      4089
+     ],
+     "read": "317",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 521,
+     "written": 521,
+     "mnist": [
+      1046,
+      3508,
+      5661
+     ],
+     "read": "52.1",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 709,
+     "written": 85,
+     "mnist": [
+      355,
+      7676
+     ],
+     "read": "85",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 585,
+     "written": 585,
+     "mnist": [
+      8878,
+      8735,
+      951
+     ],
+     "read": "585",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 157,
+     "written": 157,
+     "mnist": [
+      176,
+      8909,
+      410
+     ],
+     "read": "157",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 198,
+     "written": 198,
+     "mnist": [
+      4653,
+      9293,
+      4230
+     ],
+     "read": "198",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 975,
+     "written": 832,
+     "mnist": [
+      8816,
+      2076,
+      7749
+     ],
+     "read": "832",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 2,
+   "photo": {
+    "turn": 4.347036376595497,
+    "scale": 0.6125209708698094,
+    "shear": -0.006083773132413626,
+    "blur": 1.068108681589365,
+    "shadow": 0.24335577115416526,
+    "noise": 3.773500612936914,
+    "jpeg": 0.7752196073764934
+   },
+   "ms": 4987,
+   "marks": [
+    {
+     "q": 1,
+     "read": "473",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "952",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "237",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "37",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "221",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "386",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "66",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "921",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 558,
+     "written": 473,
+     "mnist": [
+      103,
+      4453,
+      4638
+     ],
+     "read": "473",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 443,
+     "written": 952,
+     "mnist": [
+      6112,
+      1639,
+      5541
+     ],
+     "read": "952",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 79,
+     "written": 237,
+     "mnist": [
+      9010,
+      526,
+      679
+     ],
+     "read": "237",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 37,
+     "written": 37,
+     "mnist": [
+      7010,
+      9640
+     ],
+     "read": "37",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 221,
+     "written": 221,
+     "mnist": [
+      1459,
+      503,
+      2034
+     ],
+     "read": "221",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 386,
+     "written": 386,
+     "mnist": [
+      3045,
+      591,
+      9278
+     ],
+     "read": "386",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 811,
+     "written": 66,
+     "mnist": [
+      4787,
+      8040
+     ],
+     "read": "66",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 921,
+     "written": 921,
+     "mnist": [
+      5414,
+      5761,
+      4170
+     ],
+     "read": "921",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 3,
+   "photo": {
+    "turn": -7.892974134534597,
+    "scale": 0.6048654414247722,
+    "shear": -0.001434788014739752,
+    "blur": 0.4868123538326472,
+    "shadow": 0.03275210224092007,
+    "noise": 10.168472359422594,
+    "jpeg": 0.7746206437703221
+   },
+   "ms": 8922,
+   "marks": [
+    {
+     "q": 1,
+     "read": "579",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "2",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "261",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "8/1",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "181",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "352",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "692",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "138",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 579,
+     "written": 579,
+     "mnist": [
+      779,
+      6098,
+      3041
+     ],
+     "read": "579",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 2,
+     "written": 2,
+     "mnist": [
+      9603
+     ],
+     "read": "2",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 553,
+     "written": 261,
+     "mnist": [
+      6311,
+      286,
+      3919
+     ],
+     "read": "261",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 605,
+     "written": 811,
+     "mnist": [
+      3002,
+      5281,
+      3625
+     ],
+     "read": "8/1",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 181,
+     "written": 181,
+     "mnist": [
+      8682,
+      5876,
+      5211
+     ],
+     "read": "181",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 352,
+     "written": 352,
+     "mnist": [
+      3824,
+      8643,
+      7992
+     ],
+     "read": "352",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 692,
+     "written": 692,
+     "mnist": [
+      6881,
+      3664,
+      3510
+     ],
+     "read": "692",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 138,
+     "written": 138,
+     "mnist": [
+      4685,
+      6973,
+      9307
+     ],
+     "read": "138",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 4,
+   "photo": {
+    "turn": 1.128297097980976,
+    "scale": 0.7433494023513049,
+    "shear": 0.017143693249672652,
+    "blur": 0.34715023438911885,
+    "shadow": 0.14196280015166848,
+    "noise": 7.533416729886085,
+    "jpeg": 0.7862882724031806
+   },
+   "ms": 9973,
+   "marks": [
+    {
+     "q": 1,
+     "read": "384",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "960",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "400",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "536",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "477",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "942",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "24",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "452",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 384,
+     "written": 384,
+     "mnist": [
+      4437,
+      3313,
+      6854
+     ],
+     "read": "384",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 960,
+     "written": 960,
+     "mnist": [
+      1327,
+      9317,
+      4166
+     ],
+     "read": "960",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 400,
+     "written": 400,
+     "mnist": [
+      1342,
+      2067,
+      1995
+     ],
+     "read": "400",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 105,
+     "written": 536,
+     "mnist": [
+      1833,
+      3527,
+      6842
+     ],
+     "read": "536",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 477,
+     "written": 477,
+     "mnist": [
+      3523,
+      4800,
+      2268
+     ],
+     "read": "477",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 942,
+     "written": 942,
+     "mnist": [
+      7557,
+      7520,
+      5449
+     ],
+     "read": "942",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 24,
+     "written": 24,
+     "mnist": [
+      9168,
+      7662
+     ],
+     "read": "24",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 452,
+     "written": 452,
+     "mnist": [
+      2678,
+      1331,
+      3355
+     ],
+     "read": "452",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 5,
+   "photo": {
+    "turn": -4.405736543238163,
+    "scale": 0.7616706547793001,
+    "shear": -0.015590990670025348,
+    "blur": 1.1787886179517955,
+    "shadow": 0.40978834403213116,
+    "noise": 12.935622788965702,
+    "jpeg": 0.7929354877676814
+   },
+   "ms": 7625,
+   "marks": [
+    {
+     "q": 1,
+     "read": "124",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "410",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "274",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "101",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "628",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "593",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "285",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "873",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 124,
+     "written": 124,
+     "mnist": [
+      5193,
+      4816,
+      8039
+     ],
+     "read": "124",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 410,
+     "written": 410,
+     "mnist": [
+      7047,
+      9435,
+      2204
+     ],
+     "read": "410",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 274,
+     "written": 274,
+     "mnist": [
+      7909,
+      1361,
+      376
+     ],
+     "read": "274",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 920,
+     "written": 101,
+     "mnist": [
+      7480,
+      8117,
+      2015
+     ],
+     "read": "101",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 628,
+     "written": 628,
+     "mnist": [
+      1450,
+      7359,
+      8728
+     ],
+     "read": "628",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 593,
+     "written": 593,
+     "mnist": [
+      8652,
+      4662,
+      9654
+     ],
+     "read": "593",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 725,
+     "written": 285,
+     "mnist": [
+      4341,
+      2600,
+      8160
+     ],
+     "read": "285",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 480,
+     "written": 873,
+     "mnist": [
+      1850,
+      3585,
+      7798
+     ],
+     "read": "873",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 6,
+   "photo": {
+    "turn": -7.006612457334995,
+    "scale": 0.7263707405887544,
+    "shear": -0.0268031732365489,
+    "blur": 1.476699105114676,
+    "shadow": 0.3904297037282959,
+    "noise": 13.819933560211211,
+    "jpeg": 0.7346338127274066
+   },
+   "ms": 7520,
+   "marks": [
+    {
+     "q": 1,
+     "read": "622",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "978",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "417",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "830",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "282",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "362",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "409",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "670",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 622,
+     "written": 622,
+     "mnist": [
+      6402,
+      2260,
+      291
+     ],
+     "read": "622",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 978,
+     "written": 978,
+     "mnist": [
+      893,
+      7490,
+      3319
+     ],
+     "read": "978",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 417,
+     "written": 417,
+     "mnist": [
+      3612,
+      5893,
+      9166
+     ],
+     "read": "417",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 830,
+     "written": 830,
+     "mnist": [
+      4496,
+      6876,
+      1517
+     ],
+     "read": "830",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 282,
+     "written": 282,
+     "mnist": [
+      467,
+      5394,
+      3489
+     ],
+     "read": "282",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 362,
+     "written": 362,
+     "mnist": [
+      3131,
+      4952,
+      5366
+     ],
+     "read": "362",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 409,
+     "written": 409,
+     "mnist": [
+      2264,
+      7873,
+      8436
+     ],
+     "read": "409",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 794,
+     "written": 670,
+     "mnist": [
+      5332,
+      2240,
+      5695
+     ],
+     "read": "670",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 7,
+   "photo": {
+    "turn": 6.660627707839012,
+    "scale": 0.783739390829578,
+    "shear": -0.03693186327815056,
+    "blur": 1.2379485910059884,
+    "shadow": 0.3192008262849413,
+    "noise": 2.22377613466233,
+    "jpeg": 0.6730882181553169
+   },
+   "ms": 4742,
+   "marks": [
+    {
+     "q": 1,
+     "read": "354",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "674",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "191",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "876",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "840",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "131",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "49",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "547",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 354,
+     "written": 354,
+     "mnist": [
+      7272,
+      1629,
+      6890
+     ],
+     "read": "354",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 824,
+     "written": 674,
+     "mnist": [
+      5743,
+      6188,
+      5927
+     ],
+     "read": "674",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 191,
+     "written": 191,
+     "mnist": [
+      6961,
+      8781,
+      4050
+     ],
+     "read": "191",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 547,
+     "written": 876,
+     "mnist": [
+      3988,
+      7645,
+      973
+     ],
+     "read": "876",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 840,
+     "written": 840,
+     "mnist": [
+      1717,
+      8011,
+      6753
+     ],
+     "read": "840",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 131,
+     "written": 131,
+     "mnist": [
+      288,
+      8842,
+      6976
+     ],
+     "read": "131",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 49,
+     "written": 49,
+     "mnist": [
+      1306,
+      7236
+     ],
+     "read": "49",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 547,
+     "written": 547,
+     "mnist": [
+      2064,
+      968,
+      234
+     ],
+     "read": "547",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 8,
+   "photo": {
+    "turn": -7.408653914928436,
+    "scale": 0.7774445047136396,
+    "shear": -0.03647433200851083,
+    "blur": 1.0949629215756431,
+    "shadow": 0.04821936091175303,
+    "noise": 10.988902936689556,
+    "jpeg": 0.6527188063832
+   },
+   "ms": 10004,
+   "marks": [
+    {
+     "q": 1,
+     "read": "367",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "945",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "324",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "607",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "475",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "615",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "655",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "885",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 66,
+     "written": 367,
+     "mnist": [
+      437,
+      2383,
+      7852
+     ],
+     "read": "367",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 156,
+     "written": 945,
+     "mnist": [
+      8028,
+      7009,
+      6165
+     ],
+     "read": "945",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 324,
+     "written": 324,
+     "mnist": [
+      792,
+      5767,
+      2835
+     ],
+     "read": "324",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 607,
+     "written": 607,
+     "mnist": [
+      9475,
+      5368,
+      9567
+     ],
+     "read": "607",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 475,
+     "written": 475,
+     "mnist": [
+      3780,
+      6697,
+      9749
+     ],
+     "read": "475",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 615,
+     "written": 615,
+     "mnist": [
+      6130,
+      695,
+      5420
+     ],
+     "read": "615",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 655,
+     "written": 655,
+     "mnist": [
+      6792,
+      2545,
+      1169
+     ],
+     "read": "655",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 885,
+     "written": 885,
+     "mnist": [
+      7845,
+      1499,
+      7602
+     ],
+     "read": "885",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 9,
+   "photo": {
+    "turn": -1.94882345572114,
+    "scale": 0.7175189682748169,
+    "shear": -0.016556022707372903,
+    "blur": 1.2621631894726306,
+    "shadow": 0.10677045547636226,
+    "noise": 12.140258444007486,
+    "jpeg": 0.8736974408850073
+   },
+   "ms": 7277,
+   "marks": [
+    {
+     "q": 1,
+     "read": "263",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "270",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "971",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "921",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "67",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "443",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "1",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "607",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 203,
+     "written": 203,
+     "mnist": [
+      8830,
+      324,
+      3443
+     ],
+     "read": "263",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 80,
+     "written": 270,
+     "mnist": [
+      7249,
+      4007,
+      1121
+     ],
+     "read": "270",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 971,
+     "written": 971,
+     "mnist": [
+      92,
+      6724,
+      1137
+     ],
+     "read": "971",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 978,
+     "written": 921,
+     "mnist": [
+      9093,
+      7575,
+      8776
+     ],
+     "read": "921",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 67,
+     "written": 67,
+     "mnist": [
+      6002,
+      3423
+     ],
+     "read": "67",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 443,
+     "written": 443,
+     "mnist": [
+      1862,
+      9492,
+      2629
+     ],
+     "read": "443",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 1,
+     "written": 1,
+     "mnist": [
+      9444
+     ],
+     "read": "1",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 607,
+     "written": 607,
+     "mnist": [
+      8637,
+      5838,
+      702
+     ],
+     "read": "607",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 10,
+   "photo": {
+    "turn": 0.445110697299242,
+    "scale": 0.7449702498037368,
+    "shear": 0.010381355751305818,
+    "blur": 0.23031616187654436,
+    "shadow": 0.05899796640733257,
+    "noise": 3.3369994978420436,
+    "jpeg": 0.6296276286710053
+   },
+   "ms": 5480,
+   "marks": [
+    {
+     "q": 1,
+     "read": "397",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "502",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "162",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "439",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "110",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "941",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "825",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "924",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 698,
+     "written": 397,
+     "mnist": [
+      6517,
+      6047,
+      1875
+     ],
+     "read": "397",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 777,
+     "written": 502,
+     "mnist": [
+      3595,
+      4880,
+      8838
+     ],
+     "read": "502",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 770,
+     "written": 162,
+     "mnist": [
+      7232,
+      6824,
+      3946
+     ],
+     "read": "162",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 643,
+     "written": 439,
+     "mnist": [
+      9625,
+      245,
+      9466
+     ],
+     "read": "439",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 110,
+     "written": 110,
+     "mnist": [
+      7881,
+      5148,
+      8691
+     ],
+     "read": "110",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 335,
+     "written": 941,
+     "mnist": [
+      322,
+      3533,
+      1867
+     ],
+     "read": "941",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 825,
+     "written": 825,
+     "mnist": [
+      8963,
+      9880,
+      751
+     ],
+     "read": "825",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 557,
+     "written": 924,
+     "mnist": [
+      8782,
+      3128,
+      8941
+     ],
+     "read": "924",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 11,
+   "photo": {
+    "turn": 4.3268566727638245,
+    "scale": 0.6036747192032635,
+    "shear": -0.016016792189329863,
+    "blur": 1.358970909495838,
+    "shadow": 0.2025204934179783,
+    "noise": 13.943610041867942,
+    "jpeg": 0.8376470230752602
+   },
+   "ms": 6910,
+   "marks": [
+    {
+     "q": 1,
+     "read": "14",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "69",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "486",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "758",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "900",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "106",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "146",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "926",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 938,
+     "written": 14,
+     "mnist": [
+      3231,
+      484
+     ],
+     "read": "14",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 607,
+     "written": 69,
+     "mnist": [
+      7415,
+      3926
+     ],
+     "read": "69",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 880,
+     "written": 486,
+     "mnist": [
+      2124,
+      4629,
+      5213
+     ],
+     "read": "486",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 780,
+     "written": 758,
+     "mnist": [
+      3292,
+      3345,
+      5967
+     ],
+     "read": "758",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 634,
+     "written": 900,
+     "mnist": [
+      9023,
+      8501,
+      6719
+     ],
+     "read": "900",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 668,
+     "written": 106,
+     "mnist": [
+      2815,
+      3982,
+      3714
+     ],
+     "read": "106",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 646,
+     "written": 646,
+     "mnist": [
+      4699,
+      7494,
+      1458
+     ],
+     "read": "146",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 344,
+     "written": 926,
+     "mnist": [
+      6682,
+      8746,
+      1971
+     ],
+     "read": "926",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 12,
+   "photo": {
+    "turn": 3.902949310839176,
+    "scale": 0.648243431514129,
+    "shear": -0.02872044550254941,
+    "blur": 0.5134396265493706,
+    "shadow": 0.004926556313876063,
+    "noise": 16.349267981015146,
+    "jpeg": 0.695075054350309
+   },
+   "ms": 6789,
+   "marks": [
+    {
+     "q": 1,
+     "read": "549",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "349",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "324",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "299",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "477",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "788",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "916",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "462",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 549,
+     "written": 549,
+     "mnist": [
+      6908,
+      1649,
+      4405
+     ],
+     "read": "549",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 349,
+     "written": 349,
+     "mnist": [
+      669,
+      3517,
+      3693
+     ],
+     "read": "349",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 882,
+     "written": 324,
+     "mnist": [
+      8010,
+      4127,
+      8314
+     ],
+     "read": "324",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 299,
+     "written": 299,
+     "mnist": [
+      8880,
+      4735,
+      5029
+     ],
+     "read": "299",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 477,
+     "written": 477,
+     "mnist": [
+      7957,
+      8173,
+      4539
+     ],
+     "read": "477",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 788,
+     "written": 788,
+     "mnist": [
+      6653,
+      7776,
+      2309
+     ],
+     "read": "788",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 342,
+     "written": 916,
+     "mnist": [
+      7148,
+      1766,
+      4698
+     ],
+     "read": "916",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 462,
+     "written": 462,
+     "mnist": [
+      1816,
+      9251,
+      396
+     ],
+     "read": "462",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 13,
+   "photo": {
+    "turn": -6.493431773036718,
+    "scale": 0.6514423581305891,
+    "shear": 0.02558076035231352,
+    "blur": 0.36426440987270325,
+    "shadow": 0.017719050880987196,
+    "noise": 13.641879607457668,
+    "jpeg": 0.8709041802445426
+   },
+   "ms": 7041,
+   "marks": [
+    {
+     "q": 1,
+     "read": "232",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "319",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "223",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "508",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "317",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "212",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "485",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "422",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 737,
+     "written": 232,
+     "mnist": [
+      1349,
+      8354,
+      4889
+     ],
+     "read": "232",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 319,
+     "written": 319,
+     "mnist": [
+      6873,
+      2051,
+      1631
+     ],
+     "read": "319",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 223,
+     "written": 223,
+     "mnist": [
+      1696,
+      513,
+      8140
+     ],
+     "read": "223",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 508,
+     "written": 508,
+     "mnist": [
+      3199,
+      3413,
+      6725
+     ],
+     "read": "508",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 952,
+     "written": 317,
+     "mnist": [
+      1828,
+      725,
+      8497
+     ],
+     "read": "317",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 212,
+     "written": 212,
+     "mnist": [
+      8969,
+      8636,
+      2412
+     ],
+     "read": "212",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 485,
+     "written": 485,
+     "mnist": [
+      2046,
+      3466,
+      6525
+     ],
+     "read": "485",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 176,
+     "written": 722,
+     "mnist": [
+      726,
+      8625,
+      922
+     ],
+     "read": "422",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 14,
+   "photo": {
+    "turn": -7.704227961599827,
+    "scale": 0.6842884653713555,
+    "shear": 0.004239437896758318,
+    "blur": 0.698620512499474,
+    "shadow": 0.13145448211580515,
+    "noise": 3.9608873119577765,
+    "jpeg": 0.8865184223279357
+   },
+   "ms": 7082,
+   "marks": [
+    {
+     "q": 1,
+     "read": "379",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "697",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "382",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "935",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "253",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "758",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "828",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "436",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 379,
+     "written": 379,
+     "mnist": [
+      7484,
+      3136,
+      1851
+     ],
+     "read": "379",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 492,
+     "written": 697,
+     "mnist": [
+      3428,
+      7495,
+      6830
+     ],
+     "read": "697",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 382,
+     "written": 382,
+     "mnist": [
+      8864,
+      9722,
+      6305
+     ],
+     "read": "382",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 586,
+     "written": 935,
+     "mnist": [
+      6650,
+      6918,
+      5325
+     ],
+     "read": "935",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 253,
+     "written": 253,
+     "mnist": [
+      8550,
+      3636,
+      5638
+     ],
+     "read": "253",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 501,
+     "written": 758,
+     "mnist": [
+      4102,
+      187,
+      4879
+     ],
+     "read": "758",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 729,
+     "written": 828,
+     "mnist": [
+      1425,
+      5733,
+      4380
+     ],
+     "read": "828",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 436,
+     "written": 436,
+     "mnist": [
+      1422,
+      5181,
+      3923
+     ],
+     "read": "436",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 15,
+   "photo": {
+    "turn": -7.675269037485123,
+    "scale": 0.7514713914599269,
+    "shear": -0.037947218995541335,
+    "blur": 1.0375973854679614,
+    "shadow": 0.30021319541847336,
+    "noise": 17.205517556983978,
+    "jpeg": 0.8927013517124578
+   },
+   "ms": 6727,
+   "marks": [
+    {
+     "q": 1,
+     "read": "458",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "302",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "550",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "678",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "773",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "978",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "280",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "640",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 458,
+     "written": 458,
+     "mnist": [
+      3066,
+      5275,
+      2381
+     ],
+     "read": "458",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 574,
+     "written": 302,
+     "mnist": [
+      6382,
+      5450,
+      2572
+     ],
+     "read": "302",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 550,
+     "written": 550,
+     "mnist": [
+      8089,
+      588,
+      2106
+     ],
+     "read": "550",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 370,
+     "written": 678,
+     "mnist": [
+      834,
+      3848,
+      1248
+     ],
+     "read": "678",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 616,
+     "written": 773,
+     "mnist": [
+      2591,
+      6026,
+      9100
+     ],
+     "read": "773",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 157,
+     "written": 978,
+     "mnist": [
+      1648,
+      4297,
+      7623
+     ],
+     "read": "978",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 622,
+     "written": 280,
+     "mnist": [
+      5119,
+      8217,
+      8978
+     ],
+     "read": "280",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 640,
+     "written": 640,
+     "mnist": [
+      1420,
+      7096,
+      1294
+     ],
+     "read": "640",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 16,
+   "photo": {
+    "turn": -3.3469634763896465,
+    "scale": 0.654148296546191,
+    "shear": -0.029124776758253576,
+    "blur": 1.4382101964438334,
+    "shadow": 0.20080816971603782,
+    "noise": 3.727061361540109,
+    "jpeg": 0.6148788447724655
+   },
+   "ms": 3365,
+   "marks": [
+    {
+     "q": 1,
+     "read": "974",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "521",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "916",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "432",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "185",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "709",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "950",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "249",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 974,
+     "written": 974,
+     "mnist": [
+      1417,
+      8512,
+      4468
+     ],
+     "read": "974",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 521,
+     "written": 521,
+     "mnist": [
+      333,
+      6773,
+      647
+     ],
+     "read": "521",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 916,
+     "written": 916,
+     "mnist": [
+      4095,
+      6799,
+      5378
+     ],
+     "read": "916",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 432,
+     "written": 432,
+     "mnist": [
+      4896,
+      1066,
+      7327
+     ],
+     "read": "432",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 881,
+     "written": 185,
+     "mnist": [
+      5014,
+      3771,
+      4340
+     ],
+     "read": "185",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 42,
+     "written": 709,
+     "mnist": [
+      3225,
+      5301,
+      9416
+     ],
+     "read": "709",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 950,
+     "written": 950,
+     "mnist": [
+      9254,
+      8601,
+      3266
+     ],
+     "read": "950",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 536,
+     "written": 249,
+     "mnist": [
+      244,
+      7413,
+      4752
+     ],
+     "read": "249",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 17,
+   "photo": {
+    "turn": 5.600305333733559,
+    "scale": 0.7754238557070494,
+    "shear": -0.017142267338931563,
+    "blur": 0.5920120800146833,
+    "shadow": 0.1451113369781524,
+    "noise": 6.998526647686958,
+    "jpeg": 0.833326185378246
+   },
+   "ms": 6698,
+   "marks": [
+    {
+     "q": 1,
+     "read": "802",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "520",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "491",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "517",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "169",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "310",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "863",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "209",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 749,
+     "written": 802,
+     "mnist": [
+      718,
+      5519,
+      5840
+     ],
+     "read": "802",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 918,
+     "written": 520,
+     "mnist": [
+      3537,
+      3081,
+      8621
+     ],
+     "read": "520",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 491,
+     "written": 491,
+     "mnist": [
+      3397,
+      9676,
+      9120
+     ],
+     "read": "491",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 517,
+     "written": 517,
+     "mnist": [
+      8710,
+      6092,
+      4991
+     ],
+     "read": "517",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 39,
+     "written": 169,
+     "mnist": [
+      9071,
+      3307,
+      5790
+     ],
+     "read": "169",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 310,
+     "written": 310,
+     "mnist": [
+      2502,
+      6948,
+      884
+     ],
+     "read": "310",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 863,
+     "written": 863,
+     "mnist": [
+      1740,
+      2766,
+      7040
+     ],
+     "read": "863",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 209,
+     "written": 209,
+     "mnist": [
+      9006,
+      6454,
+      4795
+     ],
+     "read": "209",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 18,
+   "photo": {
+    "turn": -1.192945685237646,
+    "scale": 0.6596441640518605,
+    "shear": -0.025623600371181967,
+    "blur": 0.8399152153870091,
+    "shadow": 0.24866190530592577,
+    "noise": 3.120105603709817,
+    "jpeg": 0.7798819589428603
+   },
+   "ms": 3070,
+   "marks": [
+    {
+     "q": 1,
+     "read": "394",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "423",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "278",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "584",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "264",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "650",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "439",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "966",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 825,
+     "written": 394,
+     "mnist": [
+      7140,
+      1666,
+      6265
+     ],
+     "read": "394",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 423,
+     "written": 423,
+     "mnist": [
+      3568,
+      3514,
+      6030
+     ],
+     "read": "423",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 278,
+     "written": 278,
+     "mnist": [
+      8253,
+      4994,
+      6245
+     ],
+     "read": "278",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 34,
+     "written": 584,
+     "mnist": [
+      1235,
+      8408,
+      8802
+     ],
+     "read": "584",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 298,
+     "written": 264,
+     "mnist": [
+      5636,
+      4649,
+      2645
+     ],
+     "read": "264",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 978,
+     "written": 650,
+     "mnist": [
+      3524,
+      7850,
+      8172
+     ],
+     "read": "650",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 439,
+     "written": 439,
+     "mnist": [
+      6251,
+      8370,
+      7813
+     ],
+     "read": "439",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 966,
+     "written": 966,
+     "mnist": [
+      2181,
+      131,
+      1800
+     ],
+     "read": "966",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 19,
+   "photo": {
+    "turn": -0.23855678737163544,
+    "scale": 0.6217077410779893,
+    "shear": -0.023888242095708848,
+    "blur": 0.009729211335070431,
+    "shadow": 0.412157732876949,
+    "noise": 6.489836353808641,
+    "jpeg": 0.6601763404905796
+   },
+   "ms": 7908,
+   "marks": [
+    {
+     "q": 1,
+     "read": "868",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "557",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "967",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "543",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "348",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "804",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "295",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "937",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 439,
+     "written": 868,
+     "mnist": [
+      596,
+      7050,
+      1068
+     ],
+     "read": "868",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 557,
+     "written": 557,
+     "mnist": [
+      5194,
+      4381,
+      6089
+     ],
+     "read": "557",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 948,
+     "written": 967,
+     "mnist": [
+      4134,
+      7039,
+      1133
+     ],
+     "read": "967",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 62,
+     "written": 543,
+     "mnist": [
+      6095,
+      4803,
+      6432
+     ],
+     "read": "543",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 348,
+     "written": 348,
+     "mnist": [
+      9261,
+      3530,
+      4634
+     ],
+     "read": "348",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 804,
+     "written": 804,
+     "mnist": [
+      2423,
+      3185,
+      7206
+     ],
+     "read": "804",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 894,
+     "written": 295,
+     "mnist": [
+      9389,
+      3861,
+      3408
+     ],
+     "read": "295",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 693,
+     "written": 937,
+     "mnist": [
+      2538,
+      8860,
+      4865
+     ],
+     "read": "937",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 20,
+   "photo": {
+    "turn": 5.9001708291471004,
+    "scale": 0.7737278829328715,
+    "shear": 0.015194855406880379,
+    "blur": 0.352456527762115,
+    "shadow": 0.13828229641076178,
+    "noise": 2.7928207288496196,
+    "jpeg": 0.7504056273261085
+   },
+   "ms": 6485,
+   "marks": [
+    {
+     "q": 1,
+     "read": "905",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "999",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "756",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "538",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "901",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "137",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "990",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "97",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 678,
+     "written": 905,
+     "mnist": [
+      3387,
+      4650,
+      8676
+     ],
+     "read": "905",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 999,
+     "written": 999,
+     "mnist": [
+      6126,
+      9165,
+      6642
+     ],
+     "read": "999",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 756,
+     "written": 756,
+     "mnist": [
+      4530,
+      8531,
+      8454
+     ],
+     "read": "756",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 538,
+     "written": 538,
+     "mnist": [
+      5302,
+      5815,
+      6467
+     ],
+     "read": "538",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 901,
+     "written": 901,
+     "mnist": [
+      4235,
+      157,
+      6604
+     ],
+     "read": "901",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 195,
+     "written": 137,
+     "mnist": [
+      2473,
+      2347,
+      4881
+     ],
+     "read": "137",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 990,
+     "written": 990,
+     "mnist": [
+      5707,
+      8044,
+      9367
+     ],
+     "read": "990",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 97,
+     "written": 97,
+     "mnist": [
+      4325,
+      9044
+     ],
+     "read": "97",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 21,
+   "photo": {
+    "turn": 7.282840244472027,
+    "scale": 0.7749931269790977,
+    "shear": 0.02685412608087063,
+    "blur": 0.529810412437655,
+    "shadow": 0.29827067448059097,
+    "noise": 5.430322210304439,
+    "jpeg": 0.8488366567064076
+   },
+   "ms": 6180,
+   "marks": [
+    {
+     "q": 1,
+     "read": "715",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "52",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "767",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "128",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "558",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "50",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "824",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "676",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 140,
+     "written": 715,
+     "mnist": [
+      6326,
+      4085,
+      6518
+     ],
+     "read": "715",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 52,
+     "written": 52,
+     "mnist": [
+      4368,
+      9847
+     ],
+     "read": "52",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 750,
+     "written": 767,
+     "mnist": [
+      6269,
+      559,
+      6198
+     ],
+     "read": "767",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 385,
+     "written": 128,
+     "mnist": [
+      4524,
+      3909,
+      2598
+     ],
+     "read": "128",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 558,
+     "written": 558,
+     "mnist": [
+      1521,
+      6942,
+      465
+     ],
+     "read": "558",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 50,
+     "written": 50,
+     "mnist": [
+      3100,
+      3680
+     ],
+     "read": "50",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 824,
+     "written": 824,
+     "mnist": [
+      3704,
+      5167,
+      163
+     ],
+     "read": "824",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 676,
+     "written": 676,
+     "mnist": [
+      9146,
+      5906,
+      3427
+     ],
+     "read": "676",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 22,
+   "photo": {
+    "turn": -5.250893745571375,
+    "scale": 0.6657209579832851,
+    "shear": -0.03381601357832551,
+    "blur": 0.8232570531545207,
+    "shadow": 0.20691692620748656,
+    "noise": 4.177633424755186,
+    "jpeg": 0.8603727594483643
+   },
+   "ms": 7228,
+   "marks": [
+    {
+     "q": 1,
+     "read": "112",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "7",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "139",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "555",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "502",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "853",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "612",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "235",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 678,
+     "written": 112,
+     "mnist": [
+      9846,
+      8543,
+      5053
+     ],
+     "read": "112",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 711,
+     "written": 7,
+     "mnist": [
+      2567
+     ],
+     "read": "7",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 186,
+     "written": 139,
+     "mnist": [
+      239,
+      7292,
+      3504
+     ],
+     "read": "139",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 520,
+     "written": 555,
+     "mnist": [
+      5874,
+      654,
+      6981
+     ],
+     "read": "555",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 538,
+     "written": 502,
+     "mnist": [
+      6136,
+      4531,
+      6180
+     ],
+     "read": "502",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 460,
+     "written": 853,
+     "mnist": [
+      2393,
+      1473,
+      6289
+     ],
+     "read": "853",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 612,
+     "written": 612,
+     "mnist": [
+      8441,
+      6162,
+      7955
+     ],
+     "read": "612",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 235,
+     "written": 235,
+     "mnist": [
+      863,
+      7804,
+      478
+     ],
+     "read": "235",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 23,
+   "photo": {
+    "turn": 1.051376335322857,
+    "scale": 0.7806650537066162,
+    "shear": 0.004091414287686348,
+    "blur": 0.8162372186779976,
+    "shadow": 0.16025095753138885,
+    "noise": 0.18723642406985164,
+    "jpeg": 0.8946617640322074
+   },
+   "ms": 4176,
+   "marks": [
+    {
+     "q": 1,
+     "read": "> 66",
+     "awarded": 0,
+     "status": "flagged"
+    },
+    {
+     "q": 2,
+     "read": "4 4 5",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "7 0 5",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "1 8 . 6",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "3 6 8",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "9 6 6",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "2 3 2",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "9 7 1",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 566,
+     "written": 766,
+     "mnist": [
+      8265,
+      7152,
+      508
+     ],
+     "read": "> 66",
+     "awarded": 0,
+     "status": "flagged"
+    },
+    {
+     "q": 2,
+     "key": 368,
+     "written": 445,
+     "mnist": [
+      1786,
+      2251,
+      4131
+     ],
+     "read": "4 4 5",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 705,
+     "written": 705,
+     "mnist": [
+      370,
+      6643,
+      3929
+     ],
+     "read": "7 0 5",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 448,
+     "written": 186,
+     "mnist": [
+      9593,
+      6403,
+      952
+     ],
+     "read": "1 8 . 6",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 817,
+     "written": 368,
+     "mnist": [
+      3138,
+      7585,
+      7597
+     ],
+     "read": "3 6 8",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 707,
+     "written": 966,
+     "mnist": [
+      8642,
+      7709,
+      9976
+     ],
+     "read": "9 6 6",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 232,
+     "written": 232,
+     "mnist": [
+      4965,
+      1062,
+      6123
+     ],
+     "read": "2 3 2",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 971,
+     "written": 971,
+     "mnist": [
+      8358,
+      3378,
+      6891
+     ],
+     "read": "9 7 1",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 24,
+   "photo": {
+    "turn": -0.05409260094165802,
+    "scale": 0.6883609166834503,
+    "shear": -0.014113658964633942,
+    "blur": 0.5138163749361411,
+    "shadow": 0.028601276816334575,
+    "noise": 1.308301757555455,
+    "jpeg": 0.7137257236987352
+   },
+   "ms": 3841,
+   "marks": [
+    {
+     "q": 1,
+     "read": "92.3",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "667",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "343",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "542",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "717",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "3/2",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "759",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "893",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 971,
+     "written": 923,
+     "mnist": [
+      6210,
+      6041,
+      7905
+     ],
+     "read": "92.3",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 209,
+     "written": 667,
+     "mnist": [
+      6252,
+      2947,
+      7238
+     ],
+     "read": "667",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 343,
+     "written": 343,
+     "mnist": [
+      3390,
+      9873,
+      7119
+     ],
+     "read": "343",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 542,
+     "written": 542,
+     "mnist": [
+      2078,
+      4269,
+      9500
+     ],
+     "read": "542",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 717,
+     "written": 717,
+     "mnist": [
+      2474,
+      6356,
+      1175
+     ],
+     "read": "717",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 449,
+     "written": 312,
+     "mnist": [
+      5074,
+      4733,
+      4456
+     ],
+     "read": "3/2",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 759,
+     "written": 759,
+     "mnist": [
+      5858,
+      3928,
+      7680
+     ],
+     "read": "759",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 893,
+     "written": 893,
+     "mnist": [
+      2179,
+      4947,
+      3221
+     ],
+     "read": "893",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 25,
+   "photo": {
+    "turn": 4.522538606077433,
+    "scale": 0.7089249421842396,
+    "shear": -0.008940956573933363,
+    "blur": 0.6585427096579224,
+    "shadow": 0.216803380579222,
+    "noise": 1.4504144489765167,
+    "jpeg": 0.6771927107591181
+   },
+   "ms": 4219,
+   "marks": [
+    {
+     "q": 1,
+     "read": "943",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "587",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "125",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "442",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "814",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "628",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "623",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "102",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 735,
+     "written": 943,
+     "mnist": [
+      4182,
+      3621,
+      5067
+     ],
+     "read": "943",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 424,
+     "written": 587,
+     "mnist": [
+      3552,
+      8932,
+      5728
+     ],
+     "read": "587",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 125,
+     "written": 125,
+     "mnist": [
+      3648,
+      980,
+      674
+     ],
+     "read": "125",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 50,
+     "written": 442,
+     "mnist": [
+      881,
+      5822,
+      6010
+     ],
+     "read": "442",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 104,
+     "written": 814,
+     "mnist": [
+      5976,
+      6310,
+      9972
+     ],
+     "read": "814",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 628,
+     "written": 628,
+     "mnist": [
+      8191,
+      9351,
+      9263
+     ],
+     "read": "628",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 275,
+     "written": 623,
+     "mnist": [
+      9454,
+      5895,
+      2853
+     ],
+     "read": "623",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 692,
+     "written": 102,
+     "mnist": [
+      168,
+      3310,
+      9225
+     ],
+     "read": "102",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 26,
+   "photo": {
+    "turn": 7.718179810792208,
+    "scale": 0.6854144602548331,
+    "shear": 0.009844149556010961,
+    "blur": 1.0469234286574647,
+    "shadow": 0.19317362207220867,
+    "noise": 9.961412633769214,
+    "jpeg": 0.7042368061607703
+   },
+   "ms": 6380,
+   "marks": [
+    {
+     "q": 1,
+     "read": "897",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "639",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "100",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "55",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "301",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "335",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "6/8",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "213",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 897,
+     "written": 897,
+     "mnist": [
+      2561,
+      5894,
+      4784
+     ],
+     "read": "897",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 608,
+     "written": 639,
+     "mnist": [
+      3554,
+      2624,
+      7588
+     ],
+     "read": "639",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 601,
+     "written": 100,
+     "mnist": [
+      8376,
+      9377,
+      5990
+     ],
+     "read": "100",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 55,
+     "written": 55,
+     "mnist": [
+      7643,
+      7284
+     ],
+     "read": "55",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 301,
+     "written": 301,
+     "mnist": [
+      3739,
+      1231,
+      682
+     ],
+     "read": "301",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 22,
+     "written": 335,
+     "mnist": [
+      9202,
+      4026,
+      6067
+     ],
+     "read": "335",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 618,
+     "written": 618,
+     "mnist": [
+      3518,
+      8324,
+      1124
+     ],
+     "read": "6/8",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 213,
+     "written": 213,
+     "mnist": [
+      5634,
+      4525,
+      2408
+     ],
+     "read": "213",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 27,
+   "photo": {
+    "turn": -2.0453789867460728,
+    "scale": 0.6538757244125009,
+    "shear": 0.031850918214768174,
+    "blur": 0.5659666374558583,
+    "shadow": 0.15296044814167545,
+    "noise": 11.844678478315473,
+    "jpeg": 0.7350121475988999
+   },
+   "ms": 5619,
+   "marks": [
+    {
+     "q": 1,
+     "read": "678",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "203",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "279",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "209",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "354",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "58",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "926",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "424",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 684,
+     "written": 678,
+     "mnist": [
+      3051,
+      551,
+      6603
+     ],
+     "read": "678",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 203,
+     "written": 203,
+     "mnist": [
+      222,
+      8382,
+      5062
+     ],
+     "read": "203",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 279,
+     "written": 279,
+     "mnist": [
+      5455,
+      3309,
+      8593
+     ],
+     "read": "279",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 209,
+     "written": 209,
+     "mnist": [
+      1863,
+      9223,
+      6967
+     ],
+     "read": "209",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 354,
+     "written": 354,
+     "mnist": [
+      402,
+      4310,
+      6924
+     ],
+     "read": "354",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 58,
+     "written": 58,
+     "mnist": [
+      3311,
+      7339
+     ],
+     "read": "58",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 869,
+     "written": 926,
+     "mnist": [
+      3394,
+      4350,
+      4980
+     ],
+     "read": "926",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 424,
+     "written": 424,
+     "mnist": [
+      8395,
+      6677,
+      5294
+     ],
+     "read": "424",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 28,
+   "photo": {
+    "turn": -5.571584537625313,
+    "scale": 0.7805457881651818,
+    "shear": -0.033969386871904136,
+    "blur": 0.5922743228729814,
+    "shadow": 0.19435905190184713,
+    "noise": 15.81534772273153,
+    "jpeg": 0.6761262603336945
+   },
+   "ms": 8625,
+   "marks": [
+    {
+     "q": 1,
+     "read": "899",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "636",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "449",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "299",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "756",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "921",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "58",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "50",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 837,
+     "written": 899,
+     "mnist": [
+      2451,
+      4358,
+      5344
+     ],
+     "read": "899",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 636,
+     "written": 636,
+     "mnist": [
+      9053,
+      8607,
+      8744
+     ],
+     "read": "636",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 451,
+     "written": 449,
+     "mnist": [
+      9276,
+      5696,
+      8076
+     ],
+     "read": "449",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 476,
+     "written": 299,
+     "mnist": [
+      7245,
+      4154,
+      593
+     ],
+     "read": "299",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 756,
+     "written": 756,
+     "mnist": [
+      6119,
+      6491,
+      2286
+     ],
+     "read": "756",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 921,
+     "written": 921,
+     "mnist": [
+      2916,
+      3384,
+      8138
+     ],
+     "read": "921",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 58,
+     "written": 58,
+     "mnist": [
+      7578,
+      1033
+     ],
+     "read": "58",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 603,
+     "written": 50,
+     "mnist": [
+      132,
+      9221
+     ],
+     "read": "50",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 29,
+   "photo": {
+    "turn": 5.480549469590187,
+    "scale": 0.6071554850786924,
+    "shear": -0.014690008088946343,
+    "blur": 0.8310056092450395,
+    "shadow": 0.2236966741969809,
+    "noise": 9.041790308430791,
+    "jpeg": 0.8142846736125647
+   },
+   "ms": 4872,
+   "marks": [
+    {
+     "q": 1,
+     "read": "180",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "983",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "389",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "759",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "456",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "853",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "340",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "298",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 133,
+     "written": 180,
+     "mnist": [
+      7832,
+      580,
+      7967
+     ],
+     "read": "180",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 252,
+     "written": 983,
+     "mnist": [
+      3970,
+      7552,
+      9975
+     ],
+     "read": "983",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 969,
+     "written": 389,
+     "mnist": [
+      8655,
+      7433,
+      1554
+     ],
+     "read": "389",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 999,
+     "written": 759,
+     "mnist": [
+      3011,
+      2832,
+      3850
+     ],
+     "read": "759",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 435,
+     "written": 456,
+     "mnist": [
+      9350,
+      4300,
+      472
+     ],
+     "read": "456",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 853,
+     "written": 853,
+     "mnist": [
+      8075,
+      1334,
+      6593
+     ],
+     "read": "853",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 340,
+     "written": 340,
+     "mnist": [
+      4366,
+      2715,
+      1972
+     ],
+     "read": "340",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 798,
+     "written": 798,
+     "mnist": [
+      2578,
+      8623,
+      7720
+     ],
+     "read": "298",
+     "awarded": 0,
+     "status": "verified"
+    }
+   ]
+  },
+  {
+   "sheet": 30,
+   "photo": {
+    "turn": -0.4246637001633644,
+    "scale": 0.7394883211236447,
+    "shear": 0.0025035269744694234,
+    "blur": 0.5196170322597027,
+    "shadow": 0.18438609765144065,
+    "noise": 6.099403657950461,
+    "jpeg": 0.7593969889450818
+   },
+   "ms": 5923,
+   "marks": [
+    {
+     "q": 1,
+     "read": "966",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "read": "992",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "read": "142",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "read": "178",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "read": "467",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "read": "282",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "read": "101",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "read": "814",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ],
+   "answers": [
+    {
+     "q": 1,
+     "key": 304,
+     "written": 966,
+     "mnist": [
+      7224,
+      3560,
+      4832
+     ],
+     "read": "966",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 2,
+     "key": 992,
+     "written": 992,
+     "mnist": [
+      7697,
+      5050,
+      4189
+     ],
+     "read": "992",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 3,
+     "key": 490,
+     "written": 142,
+     "mnist": [
+      3638,
+      9526,
+      387
+     ],
+     "read": "142",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 4,
+     "key": 178,
+     "written": 178,
+     "mnist": [
+      9682,
+      2104,
+      4253
+     ],
+     "read": "178",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 5,
+     "key": 678,
+     "written": 467,
+     "mnist": [
+      7669,
+      4499,
+      7960
+     ],
+     "read": "467",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 6,
+     "key": 545,
+     "written": 282,
+     "mnist": [
+      8693,
+      3559,
+      1506
+     ],
+     "read": "282",
+     "awarded": 0,
+     "status": "verified"
+    },
+    {
+     "q": 7,
+     "key": 101,
+     "written": 101,
+     "mnist": [
+      4972,
+      2944,
+      6445
+     ],
+     "read": "101",
+     "awarded": 1,
+     "status": "verified"
+    },
+    {
+     "q": 8,
+     "key": 814,
+     "written": 814,
+     "mnist": [
+      2774,
+      3281,
+      6931
+     ],
+     "read": "814",
+     "awarded": 1,
+     "status": "verified"
+    }
+   ]
+  }
+ ]
+}

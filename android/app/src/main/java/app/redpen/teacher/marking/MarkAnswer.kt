@@ -29,7 +29,7 @@ object Marker {
     private suspend fun markFromRead(question: Question, read: String, source: ReadSource, force: InferenceMode?): Mark = when (question) {
         is Question.Objective -> markObjective(question, read, source)
         is Question.Short -> markShort(question, read, source)
-        is Question.Numeric -> withMethodMarks(question, markNumeric(question, read, source), read) { steps -> judgePoints(read, steps, emptyList(), source, force, question.prompt).first }
+        is Question.Numeric -> flagNearMiss(question, withMethodMarks(question, markNumeric(question, read, source), read) { steps -> judgePoints(read, steps, emptyList(), source, force, question.prompt).first })
         is Question.Points -> {
             val (found, rejected) = judgePoints(read, question.points, question.reject, source, force, question.prompt)
             markPoints(question, read, source, found, rejected)
@@ -60,7 +60,7 @@ object Marker {
                 is Question.Objective -> markObjective(q, read, ReadSource.IN_CLOUD)
                 is Question.Short -> markShort(q, read, ReadSource.IN_CLOUD)
                 is Question.Points -> Ai.checkPointsBatch(read, q.points, q.reject, q.prompt).let { (found, rejected) -> markPoints(q, read, ReadSource.IN_CLOUD, found, rejected) }
-                is Question.Numeric -> withMethodMarks(q, markNumeric(q, read, ReadSource.IN_CLOUD), read) { steps -> Ai.checkPointsBatch(read, steps, emptyList(), q.prompt).first }
+                is Question.Numeric -> flagNearMiss(q, withMethodMarks(q, markNumeric(q, read, ReadSource.IN_CLOUD), read) { steps -> Ai.checkPointsBatch(read, steps, emptyList(), q.prompt).first })
             }
         }
     }

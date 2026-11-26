@@ -7,7 +7,7 @@ import { readAnswer } from '../ai/read';
 import { readPage } from '../ai/readPage';
 import { checkPointsBatch, readAnswersBatch, type CropToRead } from '../ai/batch';
 import type { ReadMode } from '../ai/models';
-import { markNumeric, markObjective, markPoints, markShort } from './engine';
+import { flagNearMiss, markNumeric, markObjective, markPoints, markShort } from './engine';
 import { parseNumericAnswer, textSimilarity, workingSteps } from './normalize';
 import { contradictionReason, workingContradictsKey } from './working';
 import { batchingEnabled } from '../ai/batch';
@@ -38,7 +38,7 @@ async function markFromRead(question: Question, read: string, source: ReadSource
 
 /** Wrong final answer but correct working still earns method marks (WAEC-style). */
 async function markNumericWithMethod(question: NumericQuestion, read: string, source: ReadSource, mode?: ReadMode): Promise<Mark> {
-  return withMethodMarks(question, markNumeric(question, read, source), read, async (steps) => (await judgePoints(read, steps, [], source, mode, question.prompt)).found);
+  return flagNearMiss(question, await withMethodMarks(question, markNumeric(question, read, source), read, async (steps) => (await judgePoints(read, steps, [], source, mode, question.prompt)).found));
 }
 
 /**
@@ -72,7 +72,7 @@ export async function markAnswersBatch(questions: Question[], crops: CropToRead[
       const { found, rejected } = await checkPointsBatch(read, question.points, question.reject, question.prompt);
       marks.push(markPoints(question, read, 'in_cloud', found, rejected));
     } else if (question.type === 'numeric') {
-      marks.push(await withMethodMarks(question, markNumeric(question, read, 'in_cloud'), read, async (steps) => (await checkPointsBatch(read, steps, [], question.prompt)).found));
+      marks.push(flagNearMiss(question, await withMethodMarks(question, markNumeric(question, read, 'in_cloud'), read, async (steps) => (await checkPointsBatch(read, steps, [], question.prompt)).found)));
     } else {
       marks.push(question.type === 'objective' ? markObjective(question, read, 'in_cloud') : markShort(question, read, 'in_cloud'));
     }

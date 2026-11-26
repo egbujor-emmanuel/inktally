@@ -120,3 +120,38 @@ export function markPoints(
     `Found: ${found.join('; ')}.`, ...(missing ? [`${question.max - awarded} more point(s) needed for full marks.`] : []),
   ], extra);
 }
+
+/** The final number as written: the last run of digits (with any dots or slashes in it) after the last "=". */
+function writtenNumber(read: string): string {
+  const tail = read.includes('=') ? read.slice(read.lastIndexOf('=') + 1) : read;
+  const runs = tail.replace(/(\d),(?=\d{3}\b)/g, '$1').match(/\d[\d./]*/g);
+  return runs ? runs[runs.length - 1].replace(/[./]+$/, '') : '';
+}
+
+function oneEditApart(a: string, b: string): boolean {
+  if (a === b || Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  const restA = a.slice(i + (a.length >= b.length ? 1 : 0));
+  const restB = b.slice(i + (b.length >= a.length ? 1 : 0));
+  return restA === restB;
+}
+
+/** Shortest key worth checking: below this, almost every wrong answer is one character from the key. */
+const NEAR_MISS_MIN_LENGTH = 3;
+
+/**
+ * A wrong number one character away from the key ("52.1" or "6/8" for 521 or 618, "263" for 203) is how a misread
+ * looks, not only how a wrong answer looks: the mark stands, but the teacher is asked to check the handwriting
+ * (MNIST benchmark, 26 Nov: all 5 unflagged wrong marks were correct answers misread by one character).
+ */
+export function flagNearMiss(question: NumericQuestion, mark: Mark): Mark {
+  if (mark.awarded >= mark.max || mark.status === 'flagged' || mark.status === 'reviewed') return mark;
+  const written = writtenNumber(mark.read);
+  if (!written) return mark;
+  const near = question.accept.map((a) => String(a)).find((key) => key.replace(/\D/g, '').length >= NEAR_MISS_MIN_LENGTH && oneEditApart(written, key));
+  return near === undefined ? mark : {
+    ...mark, status: 'flagged',
+    reasons: [...mark.reasons, `“${written}” is one character away from the key ${near}: check the handwriting before accepting this mark.`],
+  };
+}

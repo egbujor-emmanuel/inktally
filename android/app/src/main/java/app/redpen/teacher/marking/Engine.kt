@@ -95,3 +95,34 @@ fun markPoints(q: Question.Points, read: String, source: ReadSource, claimedPoin
     val missing = q.points.size > found.size && awarded < q.max
     return r(awarded, settled(source), listOf("Found: ${found.joinToString("; ")}.") + if (missing) listOf("${q.max - awarded} more point(s) needed for full marks.") else emptyList())
 }
+
+// ---- near-miss numbers (same as web engine.ts flagNearMiss) ----
+
+/** The final number as written: the last run of digits (with any dots or slashes in it) after the last "=". */
+private fun writtenNumber(read: String): String {
+    val tail = if ('=' in read) read.substring(read.lastIndexOf('=') + 1) else read
+    val runs = Regex("""\d[\d./]*""").findAll(tail.replace(Regex("""(\d),(?=\d{3}(?!\d))"""), "$1")).map { it.value }.toList()
+    return runs.lastOrNull()?.trimEnd('.', '/') ?: ""
+}
+
+private fun oneEditApart(a: String, b: String): Boolean {
+    if (a == b || abs(a.length - b.length) > 1) return false
+    var i = 0
+    while (i < a.length && i < b.length && a[i] == b[i]) i++
+    val restA = a.substring(minOf(a.length, i + if (a.length >= b.length) 1 else 0))
+    val restB = b.substring(minOf(b.length, i + if (b.length >= a.length) 1 else 0))
+    return restA == restB
+}
+
+private const val NEAR_MISS_MIN_LENGTH = 3
+
+private fun keyText(v: Double): String = if (v == Math.floor(v) && abs(v) < 1e15) v.toLong().toString() else v.toString()
+
+/** A wrong number one character from the key is how a misread looks: the mark stands, the teacher checks the handwriting. */
+fun flagNearMiss(q: Question.Numeric, mark: Mark): Mark {
+    if (mark.awarded >= mark.max || mark.status == MarkStatus.FLAGGED || mark.status == MarkStatus.REVIEWED) return mark
+    val written = writtenNumber(mark.read)
+    if (written.isEmpty()) return mark
+    val near = q.accept.map(::keyText).firstOrNull { key -> key.count { it.isDigit() } >= NEAR_MISS_MIN_LENGTH && oneEditApart(written, key) } ?: return mark
+    return mark.copy(status = MarkStatus.FLAGGED, reasons = mark.reasons + "“$written” is one character away from the key $near: check the handwriting before accepting this mark.")
+}
