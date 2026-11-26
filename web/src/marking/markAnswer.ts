@@ -18,9 +18,9 @@ import { isPrivate } from '../ai/privacy';
  * Marking-point checks: one request for all of a question's points when the answer was read in the cloud (fast, and
  * the cloud model handles the longer prompt); one small request per point on the device (Gemini Nano's limits).
  */
-async function judgePoints(read: string, points: readonly string[], reject: readonly string[], source: ReadSource, mode?: ReadMode): Promise<{ found: string[]; rejected: string[] }> {
-  if (source === 'in_cloud' && batchingEnabled()) return checkPointsBatch(read, points, reject);
-  const { found, rejected } = await checkPoints(read, points, reject, mode);
+async function judgePoints(read: string, points: readonly string[], reject: readonly string[], source: ReadSource, mode: ReadMode | undefined, question: string): Promise<{ found: string[]; rejected: string[] }> {
+  if (source === 'in_cloud' && batchingEnabled()) return checkPointsBatch(read, points, reject, question);
+  const { found, rejected } = await checkPoints(read, points, reject, mode, question);
   return { found, rejected };
 }
 
@@ -30,7 +30,7 @@ async function markFromRead(question: Question, read: string, source: ReadSource
     case 'short': return markShort(question, read, source);
     case 'numeric': return markNumericWithMethod(question, read, source, mode);
     case 'points': {
-      const { found, rejected } = await judgePoints(read, question.points, question.reject ?? [], source, mode);
+      const { found, rejected } = await judgePoints(read, question.points, question.reject ?? [], source, mode, question.prompt);
       return markPoints(question, read, source, found, rejected);
     }
   }
@@ -38,7 +38,7 @@ async function markFromRead(question: Question, read: string, source: ReadSource
 
 /** Wrong final answer but correct working still earns method marks (WAEC-style). */
 async function markNumericWithMethod(question: NumericQuestion, read: string, source: ReadSource, mode?: ReadMode): Promise<Mark> {
-  return withMethodMarks(question, markNumeric(question, read, source), read, async (steps) => (await judgePoints(read, steps, [], source, mode)).found);
+  return withMethodMarks(question, markNumeric(question, read, source), read, async (steps) => (await judgePoints(read, steps, [], source, mode, question.prompt)).found);
 }
 
 /**
@@ -69,10 +69,10 @@ export async function markAnswersBatch(questions: Question[], crops: CropToRead[
     if (!reads.has(crop.q)) throw new Error(`The cloud did not return answer ${crop.q}`);
     const read = reads.get(crop.q) ?? '';
     if (question.type === 'points') {
-      const { found, rejected } = await checkPointsBatch(read, question.points, question.reject);
+      const { found, rejected } = await checkPointsBatch(read, question.points, question.reject, question.prompt);
       marks.push(markPoints(question, read, 'in_cloud', found, rejected));
     } else if (question.type === 'numeric') {
-      marks.push(await withMethodMarks(question, markNumeric(question, read, 'in_cloud'), read, async (steps) => (await checkPointsBatch(read, steps)).found));
+      marks.push(await withMethodMarks(question, markNumeric(question, read, 'in_cloud'), read, async (steps) => (await checkPointsBatch(read, steps, [], question.prompt)).found));
     } else {
       marks.push(question.type === 'objective' ? markObjective(question, read, 'in_cloud') : markShort(question, read, 'in_cloud'));
     }

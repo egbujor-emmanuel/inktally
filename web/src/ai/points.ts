@@ -47,19 +47,20 @@ export function parsePresent(reply: string): boolean {
  * Returns the marking points the model judges present, and — only when none are found —
  * which "do not accept" statements the answer makes (so a known wrong answer is a confident zero).
  */
-export async function checkPoints(answer: string, points: readonly string[], reject: readonly string[] = [], mode?: ReadMode): Promise<PointsResult> {
+export async function checkPoints(answer: string, points: readonly string[], reject: readonly string[] = [], mode?: ReadMode, question = ''): Promise<PointsResult> {
   if (!answer.trim()) return { found: [], rejected: [], sources: [] };
   const found: string[] = [];
   const rejected: string[] = [];
   const sources: ReadSource[] = [];
   answer = asPromptData(answer);
+  const asked = asPromptData(question);
   const rejectList = reject.length ? reject.map((r) => `"${r}"`).join(', ') : 'none';
   for (const point of points) {
-    if (await askPresent(fillTemplate(config('prompt_point_check'), { answer, point, reject: rejectList }), mode, sources)) found.push(point);
+    if (await askPresent(fillTemplate(config('prompt_point_check'), { answer, question: asked, point, reject: rejectList }), mode, sources)) found.push(point);
   }
   if (!found.length) {
     for (const statement of reject) {
-      if (await askPresent(fillTemplate(config('prompt_point_check'), { answer, point: statement, reject: 'none' }), mode, sources)) rejected.push(statement);
+      if (await askPresent(fillTemplate(config('prompt_point_check'), { answer, question: asked, point: statement, reject: 'none' }), mode, sources)) rejected.push(statement);
     }
   }
   return { found, rejected, sources };

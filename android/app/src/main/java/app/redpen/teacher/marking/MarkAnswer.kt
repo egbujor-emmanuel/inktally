@@ -23,15 +23,15 @@ object Marker {
     }
 
     /** One request for all of a question's points when read in the cloud; one small request per point on the device (same as web judgePoints). */
-    private suspend fun judgePoints(read: String, points: List<String>, reject: List<String>, source: ReadSource, force: InferenceMode?): Pair<List<String>, List<String>> =
-        if (source == ReadSource.IN_CLOUD && Ai.batchingEnabled()) Ai.checkPointsBatch(read, points, reject) else Ai.checkPoints(read, points, reject, force)
+    private suspend fun judgePoints(read: String, points: List<String>, reject: List<String>, source: ReadSource, force: InferenceMode?, question: String): Pair<List<String>, List<String>> =
+        if (source == ReadSource.IN_CLOUD && Ai.batchingEnabled()) Ai.checkPointsBatch(read, points, reject, question) else Ai.checkPoints(read, points, reject, force, question)
 
     private suspend fun markFromRead(question: Question, read: String, source: ReadSource, force: InferenceMode?): Mark = when (question) {
         is Question.Objective -> markObjective(question, read, source)
         is Question.Short -> markShort(question, read, source)
-        is Question.Numeric -> withMethodMarks(question, markNumeric(question, read, source), read) { steps -> judgePoints(read, steps, emptyList(), source, force).first }
+        is Question.Numeric -> withMethodMarks(question, markNumeric(question, read, source), read) { steps -> judgePoints(read, steps, emptyList(), source, force, question.prompt).first }
         is Question.Points -> {
-            val (found, rejected) = judgePoints(read, question.points, question.reject, source, force)
+            val (found, rejected) = judgePoints(read, question.points, question.reject, source, force, question.prompt)
             markPoints(question, read, source, found, rejected)
         }
     }
@@ -59,8 +59,8 @@ object Marker {
             when (q) {
                 is Question.Objective -> markObjective(q, read, ReadSource.IN_CLOUD)
                 is Question.Short -> markShort(q, read, ReadSource.IN_CLOUD)
-                is Question.Points -> Ai.checkPointsBatch(read, q.points, q.reject).let { (found, rejected) -> markPoints(q, read, ReadSource.IN_CLOUD, found, rejected) }
-                is Question.Numeric -> withMethodMarks(q, markNumeric(q, read, ReadSource.IN_CLOUD), read) { steps -> Ai.checkPointsBatch(read, steps, emptyList()).first }
+                is Question.Points -> Ai.checkPointsBatch(read, q.points, q.reject, q.prompt).let { (found, rejected) -> markPoints(q, read, ReadSource.IN_CLOUD, found, rejected) }
+                is Question.Numeric -> withMethodMarks(q, markNumeric(q, read, ReadSource.IN_CLOUD), read) { steps -> Ai.checkPointsBatch(read, steps, emptyList(), q.prompt).first }
             }
         }
     }
