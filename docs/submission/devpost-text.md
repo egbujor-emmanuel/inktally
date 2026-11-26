@@ -41,7 +41,7 @@ Also used: **App Check** (reCAPTCHA Enterprise on web, Play Integrity in release
 - **Public handwriting benchmark (MNIST):** real handwritten digits written into 30 printed InkTally sheets and photographed with turns, blur, shadow and noise: **229 / 240** numbers read exactly, and every misread of a correct answer is now flagged for the teacher instead of marked wrong.
 - **Private mode on the live site with no on-device model available: 5 / 5 checks, 0 pupil requests sent.**
 - A live click-through of every feature on the deployed site: **18/18** steps, desktop and phone; Quick mark gave the true score in **5 of 5** runs.
-- **175** web unit tests and the matching Android tests; Android CI taps through every screen on an emulator.
+- **177** web unit tests and the matching Android tests; Android CI taps through every screen on an emulator.
 
 ## What we learned
 
