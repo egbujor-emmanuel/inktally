@@ -1,7 +1,7 @@
 // Lighthouse (mobile) on the live app, after passing the preview passcode in the same Chrome profile.
 import { chromium } from '@playwright/test';
 import lighthouse from 'lighthouse';
-const U = process.argv[2] ?? 'https://redpen-hybrid.web.app';
+const U = process.argv[2] ?? 'https://inktally.web.app';
 const PORT = 9333;
 const ctx = await chromium.launchPersistentContext('', { channel: 'chrome', headless: true, args: [`--remote-debugging-port=${PORT}`] });
 const page = ctx.pages()[0] ?? await ctx.newPage();

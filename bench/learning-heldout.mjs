@@ -12,7 +12,7 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const SITE = process.env.REDPEN_URL || 'https://redpen-hybrid.web.app';
+const SITE = process.env.REDPEN_URL || 'https://inktally.web.app';
 const CODE = process.env.REDPEN_CODE;
 const DIR = process.env.SHEETS || 'heldout';
 const PROFILE = process.env.CHROME_PROFILE || '/tmp/chrome-profile';

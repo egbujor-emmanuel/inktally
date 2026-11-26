@@ -8,7 +8,7 @@ import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const DIR = process.argv[2];
-const URL_ = process.argv[3]?.startsWith('http') ? process.argv[3] : 'https://redpen-hybrid.web.app';
+const URL_ = process.argv[3]?.startsWith('http') ? process.argv[3] : 'https://inktally.web.app';
 if (!DIR) throw new Error('Pass the folder with script photos');
 const OUT = resolve(import.meta.dirname, 'out');
 mkdirSync(OUT, { recursive: true });

@@ -4,7 +4,7 @@
 import { chromium } from '@playwright/test';
 import { resolve } from 'node:path';
 
-const URL_ = process.argv[2]?.startsWith('http') ? process.argv[2] : 'https://redpen-hybrid.web.app';
+const URL_ = process.argv[2]?.startsWith('http') ? process.argv[2] : 'https://inktally.web.app';
 const SAMPLES = resolve(import.meta.dirname, '../../samples');
 const checks = [];
 const check = async (name, fn) => {

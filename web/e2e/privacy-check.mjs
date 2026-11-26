@@ -9,7 +9,7 @@ import { chromium } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const URL_ = process.argv[2] ?? 'https://redpen-hybrid.web.app';
+const URL_ = process.argv[2] ?? 'https://inktally.web.app';
 const SAMPLES = resolve(import.meta.dirname, '../../samples');
 const OUT = resolve(import.meta.dirname, 'out');
 // The tag's fixed part; each app start adds a random key after "ref", which only the app's drafting code knows.

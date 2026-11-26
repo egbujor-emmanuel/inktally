@@ -2,7 +2,7 @@
 // Usage: REDPEN_CODE=... node e2e/a11y-audit.mjs [url]
 import { chromium } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-const U = process.argv[2] ?? 'https://redpen-hybrid.web.app';
+const U = process.argv[2] ?? 'https://inktally.web.app';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
 const page = await ctx.newPage();

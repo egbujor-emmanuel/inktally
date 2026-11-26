@@ -6,7 +6,7 @@ import { chromium } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const URL_ = process.argv[2]?.startsWith('http') ? process.argv[2] : 'https://redpen-hybrid.web.app';
+const URL_ = process.argv[2]?.startsWith('http') ? process.argv[2] : 'https://inktally.web.app';
 const CODE = process.env.REDPEN_CODE ?? '';
 const SAMPLES = resolve('../samples');
 const OUT = resolve('e2e/out/offline'); mkdirSync(OUT, { recursive: true });

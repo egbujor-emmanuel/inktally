@@ -5,7 +5,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import ExcelJS from 'exceljs';
 import { resolve } from 'node:path';
 
-const URL_ = process.argv[2]?.startsWith('http') ? process.argv[2] : 'https://redpen-hybrid.web.app';
+const URL_ = process.argv[2]?.startsWith('http') ? process.argv[2] : 'https://inktally.web.app';
 const MOBILE = process.argv.includes('--mobile');
 const CODE = process.env.REDPEN_CODE ?? '';
 const SAMPLES = resolve('../samples');

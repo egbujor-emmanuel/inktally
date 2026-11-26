@@ -1,7 +1,7 @@
 // Live site under the Content-Security-Policy: App Check, Firestore, fonts, Excel (exceljs) and PDF (jsPDF) must work
 // with zero CSP violations. No AI calls.
 import { chromium } from '@playwright/test';
-const U = process.argv[2] ?? 'https://redpen-hybrid.web.app';
+const U = process.argv[2] ?? 'https://inktally.web.app';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
 await ctx.addInitScript(() => { Object.defineProperty(navigator, 'canShare', { value: undefined }); });
