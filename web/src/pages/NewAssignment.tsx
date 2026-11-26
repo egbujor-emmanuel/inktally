@@ -8,6 +8,7 @@ import { useOnline } from '../hooks/useStatus';
 import { friendlyCloudError } from '../ai/errors';
 import { ensureUser } from '../firebase/app';
 import { Busy, Card, ErrorText, Field, GhostButton, LevelField, PageTitle, PenButton } from '../ui/Kit';
+import { usePrivateMode } from '../ai/privacy';
 
 const MAX_PDF_BYTES = 15_000_000;
 
@@ -73,9 +74,14 @@ export function NewAssignment() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const privateMode = usePrivateMode();
+  /** Private mode: a photo could show a pupil's writing, so the teacher confirms it is only the paper or the guide. */
+  const [onlyTeacherMaterial, setOnlyTeacherMaterial] = useState(false);
 
   const hasGuide = guidePhotos.length > 0 || guidePdf !== null || guideText.trim() !== '';
   const hasPaper = paperPhotos.length > 0 || paperPdf !== null || paperText.trim() !== '';
+  const hasFiles = paperPhotos.length > 0 || paperPdf !== null || guidePhotos.length > 0 || guidePdf !== null;
+  const needsConfirm = privateMode && hasFiles && !onlyTeacherMaterial;
 
   async function handleDraft() {
     setError(null);
@@ -139,7 +145,15 @@ export function NewAssignment() {
           textPlaceholder={'1. 56 (1 mark)\n2. Abuja — accept FCT (1 mark)'} onError={setError} />
       </Card>
       <div className="px-4">
-        <PenButton className="w-full" disabled={!isOnline || drafting || (!hasPaper && !hasGuide)} onClick={() => void handleDraft()}>{draftLabel}</PenButton>
+        {privateMode && hasFiles && (
+          <label className="mb-2 flex items-start gap-2.5 text-[15px]">
+            <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-pen" checked={onlyTeacherMaterial} onChange={(e) => setOnlyTeacherMaterial(e.target.checked)} />
+            <span>These photos and files show only the question paper or my marking guide, with no pupil’s writing
+              <span className="block text-[13px] text-ink-soft">Private mode is on: they will be sent to the cloud to draft the answer key.</span>
+            </span>
+          </label>
+        )}
+        <PenButton className="w-full" disabled={!isOnline || drafting || (!hasPaper && !hasGuide) || needsConfirm} onClick={() => void handleDraft()}>{draftLabel}</PenButton>
         {isOnline && !drafting && !hasPaper && !hasGuide && <p className="pt-1.5 text-center text-[13px] text-ink-soft">Add the question paper or your marking scheme above first.</p>}
       </div>
       <ErrorText message={error} />

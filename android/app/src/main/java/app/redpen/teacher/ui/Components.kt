@@ -166,7 +166,7 @@ fun StatusStrip(trailing: @Composable () -> Unit = {}) {
                 dot = if (online) RP.Device else RP.Flag, colour = RP.Ink)
             Chip(deviceText, dot = if (device == DeviceModel.State.Ready) RP.Device else RP.Cloud)
             val privateMode by app.redpen.teacher.ai.Privacy.on.collectAsState()
-            if (privateMode) Chip("Private: pupils’ work stays here", dot = RP.Device, colour = RP.Ink)
+            if (privateMode) Chip("Private: no pupil work to cloud AI", dot = RP.Device, colour = RP.Ink)
             val total = (counts[ReadSource.ON_DEVICE] ?: 0) + (counts[ReadSource.IN_CLOUD] ?: 0)
             if (total > 0) Chip("${counts[ReadSource.ON_DEVICE]} on-device · ${counts[ReadSource.IN_CLOUD]} cloud", colour = RP.Ink)
             trailing()

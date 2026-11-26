@@ -83,6 +83,7 @@ export async function cloudCheck(assignment: Assignment, submissions: Submission
   const learned: ReadingHint[] = [];
   hooks.onProgress?.(0, total);
   for (const s of targets) {
+    if (isPrivate()) break; // switched on mid-check: stop quietly, nothing more is sent
     if (!navigator.onLine) break;
     try {
       const checked = await checkOne(assignment, s);

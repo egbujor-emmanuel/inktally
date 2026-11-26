@@ -53,6 +53,10 @@ A wrong mark costs a student. The threats here are mostly the AI itself: a model
 | The network refuses any cloud AI request carrying pupils' work, before it is sent, even if the SDK falls back to the cloud by itself | `privacy.test.ts` › the guard refuses before anything is sent; every Gemini endpoint is covered | `PrivacyTest.theCloudCheckAndAnyUntaggedCloudCallAreRefused` (checked before any request is built) |
 | The cloud check makes no request in Private mode | `privacyRouting.test.ts` › the cloud check does nothing: no request is made | (`CloudCheckRun.run` returns before reading) |
 | Only a key drafted from the teacher's own material may reach the cloud; a key drafted from a pupil's page may not | `privacyRouting.test.ts` › a key drafted from the teacher's own guide is tagged; a key drafted from a pupil's page never is | `PrivacyTest.theTeachersOwnGuideMayStillDraftAKey` |
+| The teacher-material tag cannot be forged: it carries a random key made at each app start, so a pupil's answer or a Remote Config value cannot contain it (security review, 26 Nov) | `privacy.test.ts` › the tag cannot be forged | `PrivacyTest.theTagCannotBeForgedByAPupilOrTheOldFixedSentence` |
+| A request shaped like pupil work (an image part or a student's answer) is refused whatever host it goes to | `privacy.test.ts` › pupil-shaped requests are refused whatever the host | (all calls are built in `Ai.kt`, checked below) |
+| Only the model layer creates AI models, so no call can skip the Private mode routing | `privacy.test.ts` › only the model layer creates AI models | `PrivacyTest.onlyAiKtCreatesAiModels…` |
+| Catch-up sheets (built from pupils' wrong answers) are refused in Private mode; photos drafted into a key need the teacher to confirm they hold no pupil writing | `remediation.ts` throws `PrivateModeError`; New assignment's confirmation box | same rule in `Ai.kt` (untagged) and `NewAssignmentScreen` |
 | Photos never leave the device, in any mode | photos and answer boxes are stored only in IndexedDB (`data/store.ts` `saveCrop`), never in Firestore | stored only in app files (`Repo.saveCrop`) |
 
 ## 4. Data and platform security

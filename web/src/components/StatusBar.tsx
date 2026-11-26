@@ -38,7 +38,7 @@ export function StatusBar({ trailing }: { trailing?: ReactNode }) {
         <Chip dot={ready ? 'var(--color-device)' : 'var(--color-cloud)'}>
           {device.progress !== null ? `Downloading Gemini Nano… ${Math.round(device.progress * 100)}%` : DEVICE_COPY[device.availability]}
         </Chip>
-        {privateMode && <Chip dot="var(--color-device)" strong>Private: pupils’ work stays here</Chip>}
+        {privateMode && <Chip dot="var(--color-device)" strong>Private: no pupil work to cloud AI</Chip>}
         {total > 0 && <Chip strong>{counts.on_device} on-device · {counts.in_cloud} cloud</Chip>}
         {trailing}
       </div>

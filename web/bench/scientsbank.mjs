@@ -34,7 +34,7 @@ await page.evaluate(async (template) => {
   globalThis.markOne = async (it) => {
     const question = { q: 1, type: 'points', prompt: it.question, max: 1, points: [it.reference_answer] };
     const started = performance.now();
-    const { found, rejected } = await checkPointsBatch(it.student_answer, question.points, [], ...(template ? [template] : []));
+    const { found, rejected } = await checkPointsBatch(it.student_answer, question.points, [], ...(template ? [template, it.question] : []));
     const mark = markPoints(question, it.student_answer, 'in_cloud', found, rejected);
     return { awarded: mark.awarded, status: mark.status, ms: Math.round(performance.now() - started) };
   };

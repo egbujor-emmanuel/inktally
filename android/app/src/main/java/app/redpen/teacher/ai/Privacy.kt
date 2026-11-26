@@ -17,7 +17,12 @@ import kotlinx.coroutines.flow.StateFlow
 object Privacy {
     private const val PREFS = "inktally"
     private const val KEY = "privateMode"
-    const val TEACHER_MATERIAL = "Source: the teacher’s own question paper or marking guide. No pupil work is included."
+    /**
+     * A random key made fresh every time the app starts (same as web): only drafting code adds it, so nothing a pupil
+     * writes and no Remote Config value can contain the tag.
+     */
+    private val SESSION_KEY = java.util.UUID.randomUUID().toString().replace("-", "")
+    val TEACHER_MATERIAL = "Source: the teacher’s own question paper or marking guide (no pupil work), ref $SESSION_KEY."
     const val BLOCKED = "Private mode is on, so pupils’ work is read only on this device and never sent to the cloud."
 
     private val _on = MutableStateFlow(false)
@@ -42,7 +47,7 @@ object Privacy {
      */
     fun allows(privateMode: Boolean, cloud: Boolean, deviceReady: Boolean, requestText: String): Boolean = when {
         !privateMode -> true
-        cloud -> TEACHER_MATERIAL in requestText
+        cloud -> SESSION_KEY in requestText
         else -> deviceReady
     }
 

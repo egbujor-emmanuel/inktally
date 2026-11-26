@@ -62,6 +62,7 @@ object CloudCheckRun {
         val learned = mutableListOf<ReadingHint>()
         onProgress(0, total)
         for (s in targets) {
+            if (app.redpen.teacher.ai.Privacy.isPrivate) break // switched on mid-check: stop quietly, nothing more is sent
             if (!Connectivity.online.value) break
             try {
                 val checked = checkOne(ctx, a, s)

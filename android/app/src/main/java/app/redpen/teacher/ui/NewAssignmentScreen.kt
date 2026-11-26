@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -107,6 +108,12 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
     }
     val guidePhoto = rememberPhotoInput(onPhoto = { guideImages = guideImages + it }, onError = { error = it })
 
+    val privateMode by app.redpen.teacher.ai.Privacy.on.collectAsState()
+    /** Private mode: a photo could show a pupil's writing, so the teacher confirms it is only the paper or the guide (same as web). */
+    var onlyTeacherMaterial by remember { mutableStateOf(false) }
+    val hasFiles = images.isNotEmpty() || pdf != null || guideImages.isNotEmpty() || guidePdf != null
+    val needsConfirm = privateMode && hasFiles && !onlyTeacherMaterial
+
     fun draft() {
         error = null; drafting = true
         scope.launch {
@@ -185,10 +192,19 @@ fun NewAssignmentScreen(onSaved: (String) -> Unit) {
                     placeholder = "1. 56 (1 mark)\n2. Abuja — accept FCT (1 mark)", singleLine = false, minLines = 3, maxLength = 20_000)
             }
         }
+        if (privateMode && hasFiles) item {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).toggleable(onlyTeacherMaterial, role = androidx.compose.ui.semantics.Role.Checkbox) { onlyTeacherMaterial = it }) {
+                androidx.compose.material3.Checkbox(onlyTeacherMaterial, onCheckedChange = null)
+                Column(Modifier.padding(start = 8.dp)) {
+                    Text("These photos and files show only the question paper or my marking guide, with no pupil’s writing", fontSize = 15.sp)
+                    Text("Private mode is on: they will be sent to the cloud to draft the answer key.", color = RP.InkSoft, fontSize = 13.sp)
+                }
+            }
+        }
         item {
             PenButton(if (drafting) "Reading…" else if (!online) "Drafting needs internet" else if (hasGuide) "Use my marking scheme" else "Draft marking scheme", ::draft,
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                enabled = online && !drafting && (images.isNotEmpty() || pdf != null || typed.isNotBlank() || hasGuide))
+                enabled = online && !drafting && !needsConfirm && (images.isNotEmpty() || pdf != null || typed.isNotBlank() || hasGuide))
         }
         if (online && !drafting && images.isEmpty() && pdf == null && typed.isBlank() && !hasGuide) item {
             Text("Add the question paper or your marking scheme above first.", color = RP.InkSoft, fontSize = 13.sp,

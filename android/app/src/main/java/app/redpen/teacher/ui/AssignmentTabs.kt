@@ -188,7 +188,7 @@ fun MarkTab(a: Assignment, submissions: List<Submission>, profile: Profile, queu
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Column(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                ModeOption(sheetMode, "Printed InkTally sheet", "Names never leave the device · works fully offline") { sheetMode = true }
+                ModeOption(sheetMode, "Printed InkTally sheet", "Names never go to the AI · works fully offline") { sheetMode = true }
                 ModeOption(!sheetMode, "Exercise book page", "No printer needed · best when online") { sheetMode = false }
             }
         }

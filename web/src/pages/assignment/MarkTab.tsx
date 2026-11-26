@@ -117,7 +117,7 @@ export function MarkTab({ assignment, submissions, queue }: Props) {
   return (
     <div className="grid gap-3 pb-10">
       <div className="grid gap-1.5 px-4" role="radiogroup" aria-label="What are you photographing?">
-        <ModeOption selected={mode === 'sheet'} title="Printed InkTally sheet" subtitle="Names never leave the device · works fully offline" onSelect={() => setMode('sheet')} />
+        <ModeOption selected={mode === 'sheet'} title="Printed InkTally sheet" subtitle="Names never go to the AI · works fully offline" onSelect={() => setMode('sheet')} />
         <ModeOption selected={mode === 'page'} title="Exercise book page" subtitle="No printer needed · best when online" onSelect={() => setMode('page')} />
       </div>
       <Card>

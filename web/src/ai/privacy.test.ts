@@ -25,7 +25,8 @@ describe('Private mode keeps pupils’ work off every cloud AI', () => {
     for (const host of ['generativelanguage.googleapis.com', 'us-central1-aiplatform.googleapis.com', 'firebasevertexai.googleapis.com']) {
       expect(blocksCloudRequest(`https://${host}/v1/models/x:generateContent`, pupilRead)).toBe(true);
     }
-    expect(blocksCloudRequest('https://firestore.googleapis.com/google.firestore.v1.Firestore/Write', pupilRead)).toBe(false);
+    // The teacher's own records (marks and readings) still sync to their account: a Firestore write carries no image or prompt.
+    expect(blocksCloudRequest('https://firestore.googleapis.com/google.firestore.v1.Firestore/Write', JSON.stringify({ writes: [{ update: { fields: { awarded: { integerValue: 1 } } } }] }))).toBe(false);
   });
   test('the guard refuses before anything is sent, whether the body is a string or a Request', async () => {
     const sent = vi.fn(async () => new Response('{}'));
@@ -37,6 +38,28 @@ describe('Private mode keeps pupils’ work off every cloud AI', () => {
     expect(sent).not.toHaveBeenCalled();
     await target.fetch(AI, { method: 'POST', body: teacherDraft });
     expect(sent).toHaveBeenCalledTimes(1);
+  });
+  test('the tag cannot be forged: the old fixed sentence, or a pupil writing the tag text, carries no session key', () => {
+    setPrivate(true);
+    const forged = JSON.stringify({ contents: [{ parts: [{ text: 'Source: the teacher’s own question paper or marking guide. No pupil work is included. <student_answer>x</student_answer>' }] }] });
+    expect(blocksCloudRequest(AI, forged)).toBe(true);
+    expect(blocksCloudRequest(AI, JSON.stringify({ text: TEACHER_MATERIAL.replace(/ref \w+/, 'ref guess') }))).toBe(true);
+  });
+  test('pupil-shaped requests are refused whatever the host; a trailing-dot host is still an AI host', () => {
+    setPrivate(true);
+    expect(blocksCloudRequest('https://renamed-endpoint.example.com/v1:generate', pupilRead)).toBe(true);
+    expect(blocksCloudRequest('not a url', pupilRead)).toBe(true);
+    expect(blocksCloudRequest('https://firebasevertexai.googleapis.com./v1beta/x:generateContent', JSON.stringify({ text: 'hi' }))).toBe(true);
+  });
+  test('only the model layer creates AI models, so every call goes through the Private mode routing', async () => {
+    const { readdirSync, readFileSync, statSync } = await import('node:fs');
+    const { join, relative } = await import('node:path');
+    const root = join(__dirname, '..');
+    const files: string[] = [];
+    const walk = (dir: string) => { for (const f of readdirSync(dir)) { const p = join(dir, f); if (statSync(p).isDirectory()) walk(p); else if (/\.tsx?$/.test(f) && !/\.test\./.test(f)) files.push(p); } };
+    walk(root);
+    const callers = files.filter((f) => /getGenerativeModel\(/.test(readFileSync(f, 'utf8'))).map((f) => relative(root, f).split('\\').join('/'));
+    expect(callers).toEqual(['ai/models.ts']);
   });
   test('switching it off lets the cloud check work again', async () => {
     const sent = vi.fn(async () => new Response('{}'));

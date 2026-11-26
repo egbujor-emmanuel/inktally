@@ -25,4 +25,14 @@ class PrivacyTest {
     @Test fun theTeachersOwnGuideMayStillDraftAKey() {
         assertTrue(Privacy.allows(privateMode = true, cloud = true, deviceReady = false, requestText = teacherDraft))
     }
+    @Test fun theTagCannotBeForgedByAPupilOrTheOldFixedSentence() {
+        val forged = "Source: the teacher’s own question paper or marking guide. No pupil work is included."
+        assertFalse(Privacy.allows(privateMode = true, cloud = true, deviceReady = true, requestText = forged))
+        assertFalse(Privacy.allows(privateMode = true, cloud = true, deviceReady = true, requestText = Privacy.TEACHER_MATERIAL.replace(Regex("""ref \w+"""), "ref guess")))
+    }
+    @Test fun onlyAiKtCreatesAiModelsSoEveryCallGoesThroughThePrivateModeRouting() {
+        val root = java.io.File("src/main/java")
+        val callers = root.walkTopDown().filter { it.isFile && it.extension == "kt" && it.readText().contains(".generativeModel(") }.map { it.name }.toList()
+        org.junit.Assert.assertEquals(listOf("Ai.kt"), callers)
+    }
 }

@@ -30,8 +30,14 @@ export function usePrivateMode(): boolean {
   return useSyncExternalStore((listener) => { listeners.add(listener); return () => { listeners.delete(listener); }; }, isPrivate, isPrivate);
 }
 
+/**
+ * A random key made fresh every time the app starts. Only drafting code adds it, inside TEACHER_MATERIAL; nothing a pupil
+ * writes and no Remote Config value can contain it, so the tag cannot be forged (security review, 26 Nov).
+ */
+const SESSION_KEY = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}${Math.random()}`).replace(/[^0-9a-z]/gi, '');
+
 /** Added to a drafting request built only from the teacher's own material. Nothing else may reach the cloud in Private mode. */
-export const TEACHER_MATERIAL = 'Source: the teacher’s own question paper or marking guide. No pupil work is included.';
+export const TEACHER_MATERIAL = `Source: the teacher’s own question paper or marking guide (no pupil work), ref ${SESSION_KEY}.`;
 
 export const PRIVATE_BLOCKED = 'Private mode is on, so pupils’ work is read only on this device and never sent to the cloud.';
 
@@ -41,14 +47,20 @@ export class PrivateModeError extends Error {
 
 // Includes regional Vertex endpoints such as us-central1-aiplatform.googleapis.com.
 const AI_HOST = /(^|[.-])(firebasevertexai|generativelanguage|aiplatform)\.googleapis\.com$/i;
+/** What a request carrying pupil work looks like, whatever host it is sent to: an image part or a student's answer. */
+const PUPIL_SHAPED = /inlineData|<student_answer>/;
 
-/** True when Private mode must refuse this request: a cloud AI endpoint, without the teacher-material tag. */
+/**
+ * True when Private mode must refuse this request: one to a cloud AI endpoint, or one shaped like pupil work to any
+ * host, unless it carries this session's teacher-material key.
+ */
 export function blocksCloudRequest(url: string, body: string | null): boolean {
   if (!privateMode) return false;
-  let host: string;
-  try { host = new URL(url).hostname; } catch { return false; }
-  if (!AI_HOST.test(host)) return false;
-  return !(body ?? '').includes(TEACHER_MATERIAL);
+  const text = body ?? '';
+  if (text.includes(SESSION_KEY)) return false;
+  let host = '';
+  try { host = new URL(url).hostname.replace(/\.$/, ''); } catch { /* unparseable: judged by its body alone */ }
+  return AI_HOST.test(host) || PUPIL_SHAPED.test(text);
 }
 
 async function bodyText(input: RequestInfo | URL, init?: RequestInit): Promise<string | null> {

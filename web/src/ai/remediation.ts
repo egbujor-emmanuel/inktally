@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { Question } from '../domain/types';
 import { asPromptData, fillTemplate } from './config';
 import { authorGenerate, config } from './models';
+import { isPrivate, PrivateModeError } from './privacy';
 import { recordInference } from './telemetry';
 
 const CATCH_UP_SCHEMA = Schema.object({
@@ -22,6 +23,8 @@ export type CatchUpSheet = z.infer<typeof CatchUp>;
 const MAX_MISTAKES_SENT = 25;
 
 export async function makeCatchUp(question: Question, mistakes: string[], subject: string, level: string): Promise<CatchUpSheet> {
+  // Catch-up sheets are written from pupils' wrong answers: never in Private mode.
+  if (isPrivate()) throw new PrivateModeError();
   const unique = [...new Set(mistakes.map((m) => m.trim()).filter(Boolean))].slice(0, MAX_MISTAKES_SENT);
   if (!unique.length) throw new Error('No mistakes to work from yet.');
   const prompt = fillTemplate(config('prompt_remediation'), {

@@ -36,8 +36,8 @@ await page.getByText('Try it with a sample').waitFor({ timeout: 120_000 });
 await step('Private mode switched on in School details', async () => {
   await page.goto(`${URL_}/school`, { timeout: 120_000 });
   await page.getByRole('checkbox', { name: /Private mode/ }).check();
-  await page.getByText('Private: pupils’ work stays here').first().waitFor({ timeout: 10_000 });
-  return 'status bar shows "Private: pupils’ work stays here"';
+  await page.getByText('Private: no pupil work to cloud AI').first().waitFor({ timeout: 10_000 });
+  return 'status bar shows "Private: no pupil work to cloud AI"';
 });
 
 await step('a printed sheet photo is saved for on-device marking, not read in the cloud', async () => {
