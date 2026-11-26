@@ -12,7 +12,8 @@ import { resolve } from 'node:path';
 const URL_ = process.argv[2] ?? 'https://redpen-hybrid.web.app';
 const SAMPLES = resolve(import.meta.dirname, '../../samples');
 const OUT = resolve(import.meta.dirname, 'out');
-const TAG = 'Source: the teacher’s own question paper or marking guide. No pupil work is included.';
+// The tag's fixed part; each app start adds a random key after "ref", which only the app's drafting code knows.
+const TAG = 'Source: the teacher’s own question paper or marking guide (no pupil work), ref ';
 const AI = /(firebasevertexai|generativelanguage|aiplatform)\.googleapis\.com/;
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true });

@@ -1,11 +1,11 @@
 {
-  "at": "2026-11-25T23:28:58.487Z",
+  "at": "2026-11-26T02:13:00.174Z",
   "site": "https://redpen-hybrid.web.app",
   "steps": [
     {
       "name": "Private mode switched on in School details",
       "ok": true,
-      "detail": "status bar shows \"Private: pupils’ work stays here\""
+      "detail": "status bar shows \"Private: no pupil work to cloud AI\""
     },
     {
       "name": "a printed sheet photo is saved for on-device marking, not read in the cloud",
